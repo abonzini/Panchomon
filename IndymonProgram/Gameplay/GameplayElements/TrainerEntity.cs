@@ -31,7 +31,7 @@ namespace Gameplay.GameplayElements
             return Name;
         }
         /// <summary>
-        /// Saves the CSV of this trainer per indymon S2 spreadsheet standard
+        /// Saves the CSV of this trainer per Panchomon spreadsheet standard
         /// </summary>
         /// <param name="directoryPath">Directory where the csv will be saved</param>
         public void SaveTrainerCsv(string directoryPath)

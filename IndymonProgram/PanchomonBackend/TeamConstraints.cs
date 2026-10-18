@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace IndymonBackendProgram
+namespace PanchomonBackendProgram
 {
     [JsonConverter(typeof(StringEnumConverter))]
     public enum ConstraintOperation

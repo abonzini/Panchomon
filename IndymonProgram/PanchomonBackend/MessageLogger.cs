@@ -1,11 +1,11 @@
 ﻿using System.Text;
 
-namespace IndymonBackendProgram
+namespace PanchomonBackendProgram
 {
     public class MessageLogger
     {
         const string BASIC_TITLE = "<EVENT TITLE HERE>";
-        const string BASIC_SIGNATURE = "<@&1430941258041266358>"; // The role of the Indymon Revival group signature
+        const string BASIC_SIGNATURE = "<@&1430941258041266358>"; // The role of the Panchomon group signature
         public string EventTitle = $"# {BASIC_TITLE}";
         public StringBuilder PreEventText = new StringBuilder();
         public StringBuilder EventText = new StringBuilder();

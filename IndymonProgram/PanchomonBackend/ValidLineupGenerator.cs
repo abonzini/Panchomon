@@ -1,6 +1,6 @@
 ﻿using Gameplay.GameplayElements;
 
-namespace IndymonBackendProgram
+namespace PanchomonBackendProgram
 {
     public static class ValidLineupGenerator
     {

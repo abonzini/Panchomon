@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36616.10
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IndymonBackendProgram", "IndymonBackend\IndymonBackendProgram.csproj", "{657D17E3-D6F7-406F-86B2-C3833D2CA1B0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PanchomonBackend", "PanchomonBackend\PanchomonBackend.csproj", "{657D17E3-D6F7-406F-86B2-C3833D2CA1B0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 	ProjectSection(SolutionItems) = preProject
@@ -11,8 +11,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utilities", "Utilities\Utilities.csproj", "{E6C45427-C620-4710-B7F2-BC31FC636262}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutomatedTeamBuilder", "AutomatedTeamBuilder\AutomatedTeamBuilder.csproj", "{FE5C5FB3-7B73-4BE3-AF2F-16DEECAFBBEB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gameplay", "Gameplay\Gameplay.csproj", "{AB06BC6D-4F74-50CA-4DD7-541EBBF9B34C}"
 EndProject
@@ -32,10 +30,6 @@ Global
 		{E6C45427-C620-4710-B7F2-BC31FC636262}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E6C45427-C620-4710-B7F2-BC31FC636262}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E6C45427-C620-4710-B7F2-BC31FC636262}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FE5C5FB3-7B73-4BE3-AF2F-16DEECAFBBEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FE5C5FB3-7B73-4BE3-AF2F-16DEECAFBBEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FE5C5FB3-7B73-4BE3-AF2F-16DEECAFBBEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FE5C5FB3-7B73-4BE3-AF2F-16DEECAFBBEB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AB06BC6D-4F74-50CA-4DD7-541EBBF9B34C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AB06BC6D-4F74-50CA-4DD7-541EBBF9B34C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB06BC6D-4F74-50CA-4DD7-541EBBF9B34C}.Release|Any CPU.ActiveCfg = Release|Any CPU

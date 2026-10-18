@@ -4,7 +4,7 @@ using Gameplay.GameplayElementsContainer;
 using GameSimulator;
 using Utilities;
 
-namespace IndymonBackendProgram
+namespace PanchomonBackendProgram
 {
     class ExplorationPrizeList
     {

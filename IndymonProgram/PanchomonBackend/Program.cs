@@ -3,7 +3,7 @@ using Gameplay.GameplayElements;
 using Gameplay.GameplayElementsContainer;
 using Newtonsoft.Json;
 
-namespace IndymonBackendProgram
+namespace PanchomonBackendProgram
 {
     public static class Program
     {
@@ -16,7 +16,7 @@ namespace IndymonBackendProgram
             // Parsing
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("Indymon manager program ☺");
+            Console.WriteLine("Panchomon manager program ☺");
             Console.CursorVisible = false;
             // Will explore backwards until mechanics data is found (useful). Save spreadsheet url only in mechanics back end, will parse from there. Single origin this time, will do all operations
             string MECHANICS_DATA_FILE = "mechanics_data.txt";
@@ -56,7 +56,7 @@ namespace IndymonBackendProgram
             {
                 explorationManager = JsonConvert.DeserializeObject<ExplorationManager>(File.ReadAllText(Path.Combine(directoryPath, EXPLORATION_JSON_FILE)), jsonSettings);
             }
-            // Beginning of indymon program
+            // Beginning of program
             string InputString;
             do
             {
