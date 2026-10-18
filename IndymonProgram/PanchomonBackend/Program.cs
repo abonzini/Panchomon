@@ -1,0 +1,359 @@
+﻿using Gameplay.GameEngine;
+using Gameplay.GameplayElements;
+using Gameplay.GameplayElementsContainer;
+using Newtonsoft.Json;
+
+namespace PanchomonBackendProgram
+{
+    public static class Program
+    {
+        static void Main()
+        {
+            // Things (restore later)
+            TournamentManager tournamentManager = new TournamentManager();
+            ExplorationManager explorationManager = new ExplorationManager();
+            //ExplorationManager explorationManager = new ExplorationManager();
+            // Parsing
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("Panchomon manager program ☺");
+            Console.CursorVisible = false;
+            // Will explore backwards until mechanics data is found (useful). Save spreadsheet url only in mechanics back end, will parse from there. Single origin this time, will do all operations
+            string MECHANICS_DATA_FILE = "mechanics_data.txt";
+            string directoryPath = Directory.GetCurrentDirectory();
+            Console.WriteLine($"Checking file in {directoryPath}");
+            string filePath = Path.Combine(directoryPath, MECHANICS_DATA_FILE);
+            while (!File.Exists(filePath))
+            {
+                if (directoryPath == null || directoryPath == "")
+                {
+                    throw new Exception("Backend file was not found in any previous directory");
+                }
+                directoryPath = Path.GetDirectoryName(directoryPath);
+                Console.WriteLine($"Checking file in {directoryPath}");
+                filePath = Path.Combine(directoryPath, MECHANICS_DATA_FILE);
+            }
+            Console.WriteLine($"Path found at {filePath}\n");
+            GameplayElementsContainer.GlobalData.InitializeData(directoryPath, MECHANICS_DATA_FILE);
+
+            // Then the trainer data back end
+            //string DUNGEON_DATA_DIR = "dungeons";
+            //GameDataContainers.GlobalGameData.InitializeDungeonData(Path.Combine(directoryPath, DUNGEON_DATA_DIR));
+            // Finally, proper data of possible ongoing sims
+            string TOURNAMENT_JSON_FILE = "current_tournament.json";
+            string EXPLORATION_JSON_FILE = "current_expl.json";
+            //string EXPLORATION_JSON_FILE = "current_exploration.json";
+            JsonSerializerSettings jsonSettings = new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto,
+                Formatting = Formatting.Indented
+            };
+            if (Path.Exists(Path.Combine(directoryPath, TOURNAMENT_JSON_FILE)))
+            {
+                tournamentManager = JsonConvert.DeserializeObject<TournamentManager>(File.ReadAllText(Path.Combine(directoryPath, TOURNAMENT_JSON_FILE)), jsonSettings);
+            }
+            if (Path.Exists(Path.Combine(directoryPath, EXPLORATION_JSON_FILE)))
+            {
+                explorationManager = JsonConvert.DeserializeObject<ExplorationManager>(File.ReadAllText(Path.Combine(directoryPath, EXPLORATION_JSON_FILE)), jsonSettings);
+            }
+            // Beginning of program
+            string InputString;
+            do
+            {
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.White;
+                MainMenuInstructions();
+                InputString = Console.ReadLine();
+                switch (InputString)
+                {
+                    case "-3":
+                        // Not used often, probably only when new elements are added
+                        foreach (TrainerEntity trainer in GameplayElementsContainer.GlobalData.Trainers.Values)
+                        {
+                            foreach (PokemonEntity mon in trainer.Pokemon)
+                            {
+                                GameplayElementsContainer.UpdatePokemon(mon, GameplayElementsContainer.GlobalData.CommonRng);
+                            }
+                        }
+                        foreach (PokemonEntity mon in GameplayElementsContainer.GlobalData.BoxedMons.Values)
+                        {
+                            GameplayElementsContainer.UpdatePokemon(mon, GameplayElementsContainer.GlobalData.CommonRng);
+                        }
+                        break;
+                    case "-2":
+                        Console.Write($"Which debug level?");
+                        foreach (DebugLevel dbl in Enum.GetValues<DebugLevel>()) { Console.Write($"{dbl} "); }
+                        Console.WriteLine();
+                        GameplayElementsContainer.GlobalData.CurrentDebugLevel = Enum.Parse<DebugLevel>(Console.ReadLine());
+                        break;
+                    case "-1":
+                        // Not used often, probably only for the beginning
+                        foreach (TrainerEntity trainer in GameplayElementsContainer.GlobalData.Trainers.Values)
+                        {
+                            foreach (PokemonEntity mon in trainer.Pokemon)
+                            {
+                                GameplayElementsContainer.GlobalData.RandomizePokemon(mon, GameplayElementsContainer.GlobalData.CommonRng);
+                            }
+                        }
+                        foreach (PokemonEntity mon in GameplayElementsContainer.GlobalData.BoxedMons.Values)
+                        {
+                            GameplayElementsContainer.GlobalData.RandomizePokemon(mon, GameplayElementsContainer.GlobalData.CommonRng);
+                        }
+                        break;
+                    case "0":
+                        Console.WriteLine("Serializing jsons");
+                        File.WriteAllText(Path.Combine(directoryPath, TOURNAMENT_JSON_FILE), JsonConvert.SerializeObject(tournamentManager, jsonSettings));
+                        File.WriteAllText(Path.Combine(directoryPath, EXPLORATION_JSON_FILE), JsonConvert.SerializeObject(explorationManager, jsonSettings));
+                        break;
+                    case "1":
+                        SpreadsheetBuilderUtils.RollAndExportDungeons(directoryPath);
+                        SpreadsheetBuilderUtils.ExportGlossary(directoryPath);
+                        SpreadsheetBuilderUtils.ExportAllBoxedMons(directoryPath);
+                        SpreadsheetBuilderUtils.ExportCramTypes(directoryPath);
+                        // Message generation
+                        MessageLogger finalMessage = new MessageLogger();
+                        Console.WriteLine("Name of next event?");
+                        string nextEvent = Console.ReadLine();
+                        finalMessage.EventTitle = "## And that's it!";
+                        finalMessage.EventText.AppendLine($"Next week, the {nextEvent} will be hosted.");
+                        Console.WriteLine("Add extra explanation or nothing if blank");
+                        finalMessage.EventText.AppendLine(Console.ReadLine());
+                        finalMessage.EventText.AppendLine();
+                        finalMessage.EventText.AppendLine("For those interested, this is the weather report for all the dungeons this week:");
+                        foreach (Dungeon dung in GameplayElementsContainer.GlobalData.Dungeons.Values.OrderBy(d => d.Name))
+                        {
+                            Weather dungWeather = GameplayElementsContainer.GlobalData.Weathers[dung.CurrentWeather.Name];
+                            finalMessage.EventText.AppendLine($"- The {dung.Name} is currently experiencing {dung.CurrentWeather.Name} ({dungWeather.GetDescription()}). Additionally, the danger level forecasted for next week is {new string('★', dung.Difficulty)}");
+                        }
+                        finalMessage.EventText.AppendLine("Do keep in mind that, the higher the Danger Level of a dungeon, the stronger and more dangerous the wild Pokemon are!");
+                        finalMessage.EventText.AppendLine();
+                        finalMessage.EventText.AppendLine($"Good luck trainers, as usual, you have until Thursday 11:59 PM to submit any weekly action, by default, trainers will go to the {nextEvent} event, or assigned to a random exploration if ineligible.");
+                        finalMessage.SaveToFile(Path.Combine(directoryPath, "ENDING.txt"));
+                        break;
+                    case "2":
+                        foreach (TrainerEntity trainer in GameplayElementsContainer.GlobalData.Trainers.Values)
+                        {
+                            // Will quickly export all trainers csvs, useful for cleanup functions
+                            trainer.SaveTrainerCsv(directoryPath);
+                        }
+                        break;
+                    case "3":
+                        tournamentManager = new TournamentManager
+                        {
+                            DirectoryPath = directoryPath
+                        };
+                        tournamentManager.GenerateNewTournament();
+                        break;
+                    case "4":
+                        tournamentManager.ExecuteTournament();
+                        break;
+                    case "5":
+                        explorationManager = new ExplorationManager
+                        {
+                            DirectoryPath = directoryPath
+                        };
+                        explorationManager.InitializeExploration();
+                        break;
+                    case "6":
+                        explorationManager.ExecuteExploration();
+                        break;
+                    case "7":
+                        // Free real estate
+                        break;
+                    case "8":
+                        //{
+                        //    Console.WriteLine($"Drawing random favour, please select the category (ortherwise random): [{string.Join(',', [.. Enum.GetValues(typeof(TrainerRank))])}]");
+                        //    List<string> trainerBag = [];
+                        //    if (Enum.TryParse(Console.ReadLine().ToUpper(), out TrainerRank rank))
+                        //    {
+                        //        trainerBag = [.. GameplayElementsContainer.GlobalMechanicsData.TrainerLookup.Where(i => i.Value == rank).Select(i => i.Key)]; // Get keys of trainers filter'd by rank
+                        //    }
+                        //    else
+                        //    {
+                        //        trainerBag = [.. GameplayElementsContainer.GlobalMechanicsData.TrainerLookup.Select(i => i.Key)]; // Use the whole pool
+                        //    }
+                        //    Console.WriteLine("How many pulls?");
+                        //    int pulls = int.Parse(Console.ReadLine());
+                        //    GeneralUtilities.ShuffleList(trainerBag);
+                        //    List<string> obtainedTrainers = trainerBag[0..pulls];
+                        //    Console.WriteLine(string.Join(", ", obtainedTrainers));
+                        //}
+                        break;
+                    case "9":
+                        //{
+                        //    Console.WriteLine("Which trainer to pull from?");
+                        //    string trainerName = Console.ReadLine();
+                        //    if (GameDataContainers.GlobalGameData.FamousNpcData.TryGetValue(trainerName, out Trainer trainer)) { }
+                        //    else if (GameDataContainers.GlobalGameData.NpcData.TryGetValue(trainerName, out trainer)) { }
+                        //    else throw new Exception("Trainer didn't exist");
+                        //    TrainerPokemon chosenMon = GeneralUtilities.GetRandomPick(trainer.PartyPokemon);
+                        //    Pokemon monData = GameplayElementsContainer.GlobalMechanicsData.Dex[chosenMon.Species];
+                        //    while (monData.Prevo != null) // Go deep into beginning of line
+                        //    {
+                        //        monData = monData.Prevo;
+                        //    }
+                        //    Console.WriteLine($"Obtained {monData.Name}");
+                        //}
+                        break;
+                    case "10":
+                        //{
+                        //    ExplorationPrizes newPrizes = new ExplorationPrizes();
+                        //    Console.WriteLine($"Which trainer? [{string.Join(", ", [.. GameDataContainers.GlobalGameData.TrainerData.Values.Where(t => t.Favours.Count > 0).Select(t => t.Name)])}");
+                        //    string option = Console.ReadLine();
+                        //    Trainer trainer = GameDataContainers.GlobalGameData.TrainerData[option];
+                        //    Console.WriteLine($"And which favour? [{string.Join(", ", [.. trainer.Favours.Keys.Select(t => t.Name)])}]");
+                        //    option = Console.ReadLine();
+                        //    Trainer favourTrainer = trainer.Favours.Where(t => t.Key.Name == option).First().Key;
+                        //    Console.WriteLine($"Which dungeon? {string.Join(", ", [.. GameDataContainers.GlobalGameData.Dungeons.Keys])}");
+                        //    option = Console.ReadLine();
+                        //    Dungeon theDungeon = GameDataContainers.GlobalGameData.Dungeons[option];
+                        //    int nCommons = 0, nRares = 0;
+                        //    List<int> rewardOptions = []; // 0,1,2 depending on what the dungeon can give you, disk plate or IMP
+                        //    if (theDungeon.Events.Any(e => e.EventType == RoomEventType.PARADOX)) rewardOptions.Add(0);
+                        //    if (theDungeon.Events.Any(e => e.EventType == RoomEventType.RESEARCHER)) rewardOptions.Add(1);
+                        //    if (theDungeon.Events.Any(e => e.EventType == RoomEventType.IMP_GAIN)) rewardOptions.Add(2);
+                        //    if (theDungeon.Events.Any(e => e.EventType == RoomEventType.APRICORN)) rewardOptions.Add(3);
+                        //    int diskPlateOrImp = GeneralUtilities.GetRandomPick(rewardOptions);
+                        //    switch (favourTrainer.TrainerRank)
+                        //    {
+                        //        case TrainerRank.GYM:
+                        //            nCommons = 2;
+                        //            nRares = 1;
+                        //            break;
+                        //        case TrainerRank.ELITE4:
+                        //            nCommons = 4;
+                        //            nRares = 1;
+                        //            break;
+                        //        case TrainerRank.CHAMPION:
+                        //            nCommons = 4;
+                        //            nRares = 2;
+                        //            break;
+                        //        case TrainerRank.UNRANKED:
+                        //        default:
+                        //            nCommons = 2;
+                        //            nRares = 0;
+                        //            break;
+                        //    }
+                        //    Console.WriteLine($"<@{trainer.DiscordNumber}> sent their friend {favourTrainer.Name} to explore the {theDungeon.Name} (Used a favour)");
+                        //    for (int i = 0; i < nCommons; i++)
+                        //    {
+                        //        ItemReward item = GeneralUtilities.GetRandomPick(theDungeon.CommonItems);
+                        //        int count = GeneralUtilities.GetRandomNumber(item.Min, item.Max + 1);
+                        //        newPrizes.AddReward(item.Name, count);
+                        //        Console.WriteLine($"Obtained {item.Name} x{count}");
+                        //    }
+                        //    switch (diskPlateOrImp)
+                        //    {
+                        //        case 0: // Disk
+                        //            string chosenMove = GeneralUtilities.GetRandomPick(GameplayElementsContainer.GlobalMechanicsData.Moves.Keys.ToList());
+                        //            string diskName = $"{chosenMove} {SetItem.ADVANCED_DISK}"; // Create the advanced disk
+                        //            newPrizes.AddReward(diskName, 1);
+                        //            Console.WriteLine($"Obtained {diskName}");
+                        //            break;
+                        //        case 1: // Plate
+                        //            List<string> platesList = [.. GameplayElementsContainer.GlobalMechanicsData.BattleItems.Keys.Where(i => i.ToLower().Contains("plate"))];
+                        //            string chosenPlate = GeneralUtilities.GetRandomPick(platesList);
+                        //            newPrizes.AddReward(chosenPlate, 1);
+                        //            Console.WriteLine($"Obtained {chosenPlate}");
+                        //            break;
+                        //        case 2: // IMP
+                        //            int impGain = GeneralUtilities.GetRandomNumber(2, 4); // 2-3 IMP
+                        //            newPrizes.AddImp(impGain);
+                        //            Console.WriteLine($"Obtained {impGain} IMP");
+                        //            break;
+                        //        case 3: // Apricorn
+                        //            List<string> commonApricorns = ["Red", "Yellow", "Blue", "Green"];
+                        //            List<string> rareApricorns = ["Black", "White"];
+                        //            List<string> obtainedApricorns = [];
+                        //            // 5 commons and 2 rares
+                        //            for (int i = 0; i < 3; i++)
+                        //            {
+                        //                obtainedApricorns.Add(GeneralUtilities.GetRandomPick(commonApricorns));
+                        //            }
+                        //            for (int i = 0; i < 1; i++)
+                        //            {
+                        //                obtainedApricorns.Add(GeneralUtilities.GetRandomPick(rareApricorns));
+                        //            }
+                        //            foreach (string apricorn in obtainedApricorns)
+                        //            {
+                        //                newPrizes.AddReward(apricorn + " Apricorn", 1); // Add them
+                        //            }
+                        //            Console.WriteLine($"Obtained apricorns ({string.Join(", ", obtainedApricorns)})");
+                        //            break;
+                        //        default:
+                        //            throw new Exception("Unreachabale code");
+                        //    }
+                        //    for (int i = 0; i < nRares; i++)
+                        //    {
+                        //        ItemReward item = GeneralUtilities.GetRandomPick(theDungeon.RareItems);
+                        //        int count = GeneralUtilities.GetRandomNumber(item.Min, item.Max + 1);
+                        //        newPrizes.AddReward(item.Name, count);
+                        //        Console.WriteLine($"Obtained {item.Name} x{count}");
+                        //    }
+                        //    GeneralUtilities.AddtemToCountDictionary(trainer.Favours, favourTrainer, -1, true);
+                        //    newPrizes.TransferToTrainer(trainer);
+                        //    IndymonUtilities.WarnTrainer(trainer);//Warn trainer of the exceeded items
+                        //    string trainerFilePath = Path.Combine(directoryPath, $"{trainer.Name.ToUpper().Replace(" ", "").Replace("?", "")}.trainer");
+                        //    trainer.SaveTrainerCsv(trainerFilePath);
+                        //}
+                        break;
+                    case "11":
+                        //{
+                        //    Console.WriteLine($"Which dungeons? {string.Join(", ", [.. GameDataContainers.GlobalGameData.Dungeons.Keys])}");
+                        //    string input = Console.ReadLine();
+                        //    List<string> dungeons = [.. input.Split(',')];
+                        //    Console.WriteLine("How many mons?");
+                        //    int count = int.Parse(Console.ReadLine());
+                        //    List<string> foundMons = [];
+                        //    foreach (string nextDungeon in dungeons)
+                        //    {
+                        //        Dungeon theDungeon = GameDataContainers.GlobalGameData.Dungeons[nextDungeon.Trim()];
+                        //        List<string> possibleMons = theDungeon.PokemonEachFloor[0];
+                        //        GeneralUtilities.ShuffleList(possibleMons);
+                        //        foundMons.AddRange(possibleMons[0..count]);
+                        //    }
+                        //    Console.WriteLine(string.Join(", ", foundMons));
+                        //}
+                        break;
+                    case "12":
+                        //explorationManager = new ExplorationManager
+                        //{
+                        //    DirectoryPath = directoryPath
+                        //};
+                        //explorationManager.TestDungeonImage();
+                        break;
+                    default:
+                        break;
+                }
+                Console.WriteLine("");
+            } while (InputString.ToLower() != "q");
+
+            Console.WriteLine("Session finished. Have a good day and don't forget to update spreadsheet!");
+        }
+        /// <summary>
+        /// Prints main menu instructions
+        /// </summary>
+        static void MainMenuInstructions()
+        {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine(
+                "-3 - Does a pass in the current set of trainer's mons, adds additional abilities/moves if they were added later on\n" +
+                "-2 - Change current debug level\n" +
+                "-1 - DANGER ZONE: Randomizes every mon in every team including boxes\n" +
+                "0 - Save current tourn/expl data\n" +
+                "1 - Export all updated generated spreadsheet elements (boxes, cram-o-matic, glossary, updated dungeon diffs)\n" +
+                "2 - Export all players csv data\n" +
+                "3 - Generate a new tournament\n" +
+                "4 - Execute initialized tournament\n" +
+                "5 - Generate exploration, choose place, player, etc\n" +
+                "6 - Execute current exploration\n"
+            //"7 - Nothing\n" +
+            //"8 - Draw from Favour Gacha\n" +
+            //"9 - Random 'Baby' Pokemon from trainer (Favor resolution)\n" +
+            //"10 - Random exploration rewards (tiered favor resolutions)\n" +
+            //"11 - Random exploration mons (for beginning of trainer's adventures)\n" +
+            //"12 - Test Dungeon Drawing"
+            );
+        }
+    }
+}

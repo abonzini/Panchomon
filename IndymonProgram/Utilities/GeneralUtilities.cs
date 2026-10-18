@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+﻿using System.Globalization;
 
 namespace Utilities
 {
@@ -19,13 +19,12 @@ namespace Utilities
         /// <summary>
         /// General method to add an item to a dictionary
         /// </summary>
-        /// <typeparam name="T"></typeparam>
         /// <param name="dict">Dictionary to add to</param>
         /// <param name="item">Item to add</param>
         /// <param name="count">How many to add</param>
-        /// <param name="eliminateIf0">If subtracting, and the result is less than 0, remove the thing</param>
+        /// <param name="maxKeys">How many uniquekeys this dict can have</param>
         /// <returns>The final count of the item</returns>
-        public static int AddtemToCountDictionary<T>(Dictionary<T, int> dict, T item, int count = 1, bool eliminateIf0 = false)
+        public static int AddtemToCountDictionary<T>(Dictionary<T, int> dict, T item, int count, int maxKeys = int.MaxValue)
         {
             int itemCount = count;
             if (!dict.TryAdd(item, count)) // Try to add if not exists already
@@ -33,44 +32,33 @@ namespace Utilities
                 itemCount = dict[item];
                 itemCount += count;
                 dict[item] = itemCount;
-                if (eliminateIf0 && itemCount <= 0) dict.Remove(item);
+                if (itemCount <= 0) // Remove the item if negative
+                {
+                    dict.Remove(item);
+                    itemCount = 0;
+                }
+            }
+            else
+            {
+                if (dict.Count > maxKeys) // The addition of this item caused a key overflow
+                {
+                    dict.Remove(item);
+                    itemCount = 0;
+                }
             }
             return itemCount;
         }
         /// <summary>
-        /// Performs a Fischer Yates shuffling of an array
-        /// </summary>
-        /// <param name="list">List to shuffle</param>
-        /// <param name="offset">Which index to start the shuffle</param>
-        /// <param name="number">How many elements will be shuffled starting from the index</param>
-        public static void ShuffleList<T>(List<T> list, int offset, int number)
-        {
-            int n = number;
-            while (n > 1) // Fischer yates
-            {
-                n--;
-                int k = GetRandomNumber(n + 1);
-                (list[offset + k], list[offset + n]) = (list[offset + n], list[offset + k]); // Swap
-            }
-        }
-        /// <summary>
-        /// Performs a Fischer Yates shuffling of an array
-        /// </summary>
-        /// <param name="list">List to shuffle</param>
-        public static void ShuffleList<T>(List<T> list)
-        {
-            ShuffleList(list, 0, list.Count);
-        }
-        /// <summary>
-        /// Shuffle a list with F-Y but with a deterministic (i..e repeatable) rng
+        /// Shuffle a list with F-Y but with a deterministic (i.e. repeatable) rng
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="list">List to shuffle</param>
         /// <param name="offset">Where to start shuffle</param>
         /// <param name="number">How many elements to shuffle</param>
         /// <param name="rng">The rng</param>
-        public static void ShuffleListDeterministic<T>(List<T> list, int offset, int number, Random rng)
+        public static void ShuffleList<T>(List<T> list, int offset, int number, Random rng)
         {
+            rng ??= new Random(); // New rng if passed a null one
             int n = number;
             while (n > 1) // Fischer yates
             {
@@ -84,94 +72,116 @@ namespace Utilities
         /// </summary>
         /// <param name="list">List to shuffle</param>
         /// <param name="rng">The rng</param>
-        public static void ShuffleListDeterministic<T>(List<T> list, Random rng)
+        public static void ShuffleList<T>(List<T> list, Random rng)
         {
-            ShuffleListDeterministic(list, 0, list.Count, rng);
+            ShuffleList(list, 0, list.Count, rng);
         }
-        // For the complex RNG
-        static readonly List<int> _rngNumbers = [];
-        static int _currentRngIndex = 0;
-        static readonly SemaphoreSlim _rngSemaphore = new SemaphoreSlim(1, 1);
-        const int RNG_LIST_SIZE = 1000;
-        const int MAX_INT = 1000000; // Idk
+        /// <summary>
+        /// Generates an integer between min-max that decays exponentially
+        /// </summary>
+        /// <param name="min">Min value</param>
+        /// <param name="max">Max value</param>
+        /// <param name="decay">Decay exponent</param>
+        /// <param name="rng">Rng to use to roll</param>
+        /// <returns>The generated random number</returns>
+        public static int GetRandomDecayingNumber(int min, int max, double decay, Random rng)
+        {
+            double amplitude = max - min;
+            return min + (int)Math.Round(Math.Pow(rng.NextDouble(), decay) * amplitude);
+        }
+        /// <summary>
+        /// Creates a random number thta is sortable, by transforming a weight into a softmax index
+        /// </summary>
+        /// <param name="weight">Weight input (needs to be in relative similarity to others, with higher being more likely)</param>
+        /// <param name="rng">Rng to use</param>
+        /// <returns></returns>
+        public static double GetSortableRandomWeight(double weight, Random rng)
+        {
+            double logRandom = -Math.Log(rng.NextDouble());
+            logRandom /= weight;
+            return logRandom;
+        }
         /// <summary>
         /// Gets random [min-max)
         /// </summary>
         /// <param name="minInclusive">[min</param>
         /// <param name="maxExclusive">max)</param>
-        /// <returns></returns>
-        public static int GetRandomNumber(int minInclusive, int maxExclusive)
+        /// <param name="rng">The rng</param>
+        /// <returns>Random int</returns>
+        public static int GetRandomNumber(int minInclusive, int maxExclusive, Random rng)
         {
-            _rngSemaphore.Wait();
-            if (_currentRngIndex >= _rngNumbers.Count)
-            {
-                _currentRngIndex = 0;
-                _rngNumbers.Clear();
-                for (int i = 0; i < RNG_LIST_SIZE; i++)
-                {
-                    _rngNumbers.Add(RandomNumberGenerator.GetInt32(MAX_INT));
-                }
-            }
-            int result = _rngNumbers[_currentRngIndex] % (maxExclusive - minInclusive); // Trim to range
-            _currentRngIndex++; // Will check next index later
-            result += minInclusive;
-            _rngSemaphore.Release();
+            rng ??= new Random(); // New rng if passed a null one
+            int result = rng.Next(minInclusive, maxExclusive);
             return result;
         }
         /// <summary>
         /// Same but [0,max)
         /// </summary>
         /// <param name="maxExclusive">max)</param>
-        /// <returns></returns>
-        public static int GetRandomNumber(int maxExclusive)
+        /// <param name="rng">The rng</param>
+        /// <returns>Random int</returns>
+        public static int GetRandomNumber(int maxExclusive, Random rng)
         {
-            return GetRandomNumber(0, maxExclusive);
-        }
-        /// <summary>
-        /// Same but [0,MAX_INT)
-        /// </summary>
-        /// <returns></returns>
-        public static int GetRandomNumber()
-        {
-            return GetRandomNumber(0, int.MaxValue);
+            return GetRandomNumber(0, maxExclusive, rng);
         }
         /// <summary>
         /// Gets random pick of an element from a list
         /// </summary>
         /// <param name="list">List where to choose from</param>
+        /// <param name="rng">The rng</param>
         /// <returns>Element, not removed from list</returns>
-        public static T GetRandomPick<T>(List<T> list)
+        public static T GetRandomPick<T>(List<T> list, Random rng)
         {
-            return list[GetRandomNumber(list.Count)];
+            return list[GetRandomNumber(list.Count, rng)];
+        }
+        /// <summary>
+        /// Returns an index of a list. The list contains the weights so that chance is weighted towards bigger indices. No need to be normalized
+        /// </summary>
+        /// <param name="weights">List of weight</param>
+        /// <returns>A random index within the list</returns>
+        public static int GetRandomWeightedIndex(List<double> weights, Random rng)
+        {
+            // Calculate picks now
+            double totalSum = weights.Sum();
+            // Once processed, I'll get a random number, uniform within sum
+            double hit = totalSum * rng.NextDouble();
+            // Finally, search for which element is the winner, one by one
+            totalSum = 0;
+            for (int i = 0; i < weights.Count; i++)
+            {
+                if (weights[i] + totalSum >= hit)
+                {
+                    return i;
+                }
+                totalSum += weights[i];
+            }
+            throw new Exception("Impossible chance reached");
         }
         /// <summary>
         /// Gets a random element from a dictionary
         /// </summary>
         /// <param name="dict">The dictionary</param>
+        /// <param name="rng">The rng</param>
         /// <returns>A random key value pick from dictionary</returns>
-        public static KeyValuePair<T, U> GetRandomKvp<T, U>(Dictionary<T, U> dict)
+        public static KeyValuePair<T, U> GetRandomKvp<T, U>(Dictionary<T, U> dict, Random rng)
         {
-            T key = GetRandomPick(dict.Keys.ToList());
+            T key = GetRandomPick(dict.Keys.ToList(), rng);
             return new KeyValuePair<T, U>(key, dict[key]);
         }
         /// <summary>
-        /// Returns an array where every element is the max of all elements of array. Assumes all sub-arrays to be same size
+        /// Creates a string that is the APA capitalization of an input string
         /// </summary>
-        /// <param name="arrays">Array of arrays that contain numbers</param>
-        /// <returns>A single array with the max value for each index</returns>
-        public static List<double> ArrayMax(List<List<double>> arrays)
+        /// <param name="str">String to capitalize</param>
+        /// <returns>A new APA capitalized string</returns>
+        public static string ApaCapitalize(string str)
         {
-            double[] result = new double[arrays[0].Count]; // Prepares an array with the size pre-determined and all arrays need to be this size
-            for (int i = 0; i < result.Length; i++)
+            string[] strings = str.Split(' ');
+            for (int i = 0; i < strings.Length; i++)
             {
-                double maxValue = double.NegativeInfinity;
-                foreach (List<double> array in arrays)
-                {
-                    maxValue = Math.Max(maxValue, array[i]);
-                }
-                result[i] = maxValue;
+                string newString = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(strings[i].ToLower());
+                strings[i] = newString;
             }
-            return [.. result];
+            return string.Join(" ", strings);
         }
     }
 }

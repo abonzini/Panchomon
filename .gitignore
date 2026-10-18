@@ -63,5 +63,9 @@ tourn_stats.*
 current_*.json
 *.trainer
 *.expl
-SETS.txt
+*.gloss
+*.box
+*.cram
+*.dung
+ENDING.txt
 TOURNAMENT.txt
