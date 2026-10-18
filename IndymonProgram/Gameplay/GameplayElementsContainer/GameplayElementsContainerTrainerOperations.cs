@@ -65,7 +65,6 @@ namespace Gameplay.GameplayElementsContainer
             {
                 PokemonEntity newMon = new PokemonEntity()
                 {
-                    Name = chosenSpecies.Name,
                     Species = chosenSpecies,
                     PokeBall = PokeBalls["Poke Ball"], // All npc mons have a pokeball unless specified otherwise
                     IsShiny = npcRng.Next(0, shinyChance) == 0

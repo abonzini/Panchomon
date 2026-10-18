@@ -24,10 +24,8 @@ namespace Gameplay.GameEngine
     /// </summary>
     public class PokemonInstance
     {
-        public string Name = "";
-        public PokemonSpecies Species = null;
+        public PokemonEntity AssociatedEntity = null;
         public double HpPercent = 1;
-        public bool IsShiny = false;
         public List<NonVolatileStatus> NonVolatileStatusConditions = [];
         public HashSet<AdditionalPokemonParameter> AdditionalParameters = [];
         public BattleAvailability Availability = BattleAvailability.READY;

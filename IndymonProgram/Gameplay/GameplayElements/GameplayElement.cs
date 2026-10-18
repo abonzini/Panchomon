@@ -5,7 +5,7 @@
     /// </summary>
     public class GameplayElement
     {
-        public string Name = "";
+        public virtual string Name { get; set; } = ""; // This means the name could technically be overriden
         protected string _description = "";
         public virtual string GetDescription()
         {

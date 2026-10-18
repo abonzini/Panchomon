@@ -329,8 +329,8 @@
             "Type": "EVO",
             "Category": "NEUTRAL",
             "PreEventString": "Inside of a glass panel, a purple evolution crystal is connected to a number of cables. It whispers: YE WHO SEEK AWAKENING, LET US BEGIN.",
-            "EncounterSuccessString": "The evolution crystal lost most of its power, will take  abit before it can recharge.",
-            "EncounterFailureString": "There's nothing here for you. The evolution crystal doesn't react anymore."
+            "EncounterSuccessString": "The evolution crystal lost most of its power, will take a bit before it can recharge.",
+            "EncounterFailureString": "There's nothing here for you. The evolution crystal doesn't react further."
         },
         {
             "Type": "HP_HEAL",
@@ -421,7 +421,7 @@
             "Type": "CAMPING",
             "Category": "NEUTRAL",
             "PreEventString": "You find an old lunch table. The perfect place for a picnic.",
-            "EncounterSuccessString": "Yum!",
+            "EncounterSuccessString": "Your team ate the $1. Yum!",
             "EncounterFailureString": "If you had a sandwich, you could take a lunch break in here..."
         },
         {

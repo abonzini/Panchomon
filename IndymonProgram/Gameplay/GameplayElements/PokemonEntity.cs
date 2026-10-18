@@ -12,6 +12,7 @@
         public Ability[] Abilities = [null, null, null]; // Abilities is always a 3-element list
         public bool[] AbilityActive = [true, false, false];
         public HeldItem HeldItem = null;
+        public override string Name { get => Species.Name; set => base.Name = value; } // Getter's name is always the species, no need to actually ever be different
         public override string ToString()
         {
             return Nickname != "" ? $"{Nickname} ({Name})" : Name;

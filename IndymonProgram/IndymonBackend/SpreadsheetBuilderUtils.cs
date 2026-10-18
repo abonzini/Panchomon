@@ -29,12 +29,11 @@ namespace IndymonBackendProgram
             GameplayElementsContainer.GlobalData.PokeBalls.ToList().ForEach(x => glossary[x.Key] = x.Value.GetDescription());
             GameplayElementsContainer.GlobalData.SandwichLookup.ToList().ForEach(x => glossary[x.Key] = x.Value.GetDescription());
             // Only put the box mons that are still boxed
-            foreach (TrainerEntity trainer in GameplayElementsContainer.GlobalData.Trainers.Values)
+            foreach (KeyValuePair<string, PokemonEntity> boxedMonKvp in GameplayElementsContainer.GlobalData.BoxedMons)
             {
-                foreach (string boxedMonName in trainer.BoxedMons)
+                if (!boxedMonKvp.Key.Contains("-wild")) // Do not add wild mons to glossary
                 {
-                    PokemonEntity boxedMon = GameplayElementsContainer.GlobalData.BoxedMons[boxedMonName];
-                    glossary[boxedMonName] = boxedMon.GetDescription();
+                    glossary[boxedMonKvp.Key] = boxedMonKvp.Value.GetDescription();
                 }
             }
             // Put current dungeon weathers
@@ -53,20 +52,17 @@ namespace IndymonBackendProgram
         public static void ExportAllBoxedMons(string directoryPath)
         {
             StringBuilder fileBuilder = new StringBuilder();
-            foreach (TrainerEntity trainer in GameplayElementsContainer.GlobalData.Trainers.Values)
+            foreach (KeyValuePair<string, PokemonEntity> boxedMonKvp in GameplayElementsContainer.GlobalData.BoxedMons)
             {
-                foreach (string boxedMonName in trainer.BoxedMons)
-                {
-                    PokemonEntity boxedMon = GameplayElementsContainer.GlobalData.BoxedMons[boxedMonName];
-                    fileBuilder.Append($"{boxedMonName},");
-                    fileBuilder.Append($"{boxedMon.Name},");
-                    fileBuilder.Append($"{boxedMon.Nickname},");
-                    fileBuilder.Append($"{boxedMon.PokeBall},");
-                    fileBuilder.Append($"{(string.Join(',', boxedMon.Moves.Select(m => m != null ? m.Name : "")))},");
-                    fileBuilder.Append($"{boxedMon.Nature},");
-                    fileBuilder.Append($"{(string.Join(',', boxedMon.Abilities.Select(a => a != null ? a.Name : "")))}");
-                    fileBuilder.AppendLine("");
-                }
+                PokemonEntity boxedMon = boxedMonKvp.Value;
+                fileBuilder.Append($"{boxedMonKvp.Key},");
+                fileBuilder.Append($"{boxedMon.Name},");
+                fileBuilder.Append($"{boxedMon.Nickname},");
+                fileBuilder.Append($"{boxedMon.PokeBall},");
+                fileBuilder.Append($"{(string.Join(',', boxedMon.Moves.Select(m => m != null ? m.Name : "")))},");
+                fileBuilder.Append($"{boxedMon.Nature},");
+                fileBuilder.Append($"{(string.Join(',', boxedMon.Abilities.Select(a => a != null ? a.Name : "")))}");
+                fileBuilder.AppendLine("");
             }
             // File complete, save
             File.WriteAllText(Path.Combine(directoryPath, $".box"), fileBuilder.ToString());

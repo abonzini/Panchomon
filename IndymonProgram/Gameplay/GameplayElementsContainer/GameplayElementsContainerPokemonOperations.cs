@@ -12,10 +12,7 @@ namespace Gameplay.GameplayElementsContainer
         /// <returns></returns>
         PokemonEntity GenerateBlankPokemon(string Species)
         {
-            PokemonEntity newPokemon = new PokemonEntity
-            {
-                Name = Species
-            };
+            PokemonEntity newPokemon = new PokemonEntity();
             if (Species.Contains('★'))
             {
                 newPokemon.IsShiny = true;
@@ -108,6 +105,21 @@ namespace Gameplay.GameplayElementsContainer
                     mon.Abilities[i] = availableAbilities[i];
                 }
             }
+        }
+        /// <summary>
+        /// Adds a pokemon entity to the box system for temporary or permanent storage
+        /// </summary>
+        /// <param name="mon">Which mon to add</param>
+        /// <param name="id">Id of mon to add</param>
+        public void AddMonToBox(PokemonEntity mon, string id)
+        {
+            string newId = $"{mon.Name}-{id}"; // Uses this mon ID
+            int idOffset = 0;
+            while (!BoxedMons.ContainsKey(newId))
+            {
+                newId = $"{mon.Name}-{id}{++idOffset}"; // Add more and more until there's an index I can use
+            }
+            BoxedMons.Add(newId, mon);
         }
     }
 }

@@ -316,6 +316,8 @@ namespace Gameplay.GameplayElementsContainer
         void FillPlayers(string sheetId, string sheetTab)
         {
             Console.WriteLine("Filling Player Trainer data");
+            // Keeping in mind the box will only contain, by the end of this process, mons that are actually used
+            Dictionary<string, PokemonEntity> usedBoxedMons = new Dictionary<string, PokemonEntity>();
             // Parse csv
             string csv = GeneralUtilities.GetCsvFromGoogleSheets(sheetId, sheetTab);
             string[] rows = csv.Split("\n");
@@ -484,9 +486,10 @@ namespace Gameplay.GameplayElementsContainer
                                 field = nextLine[j + x];
                                 if (field != "" && BoxedMons.Count < TrainerEntity.MAX_NUMBER_BAG)
                                 {
-                                    if (BoxedMons.ContainsKey(field)) // Theres a mon with that id in the box and i have space
+                                    if (BoxedMons.TryGetValue(field, out PokemonEntity boxedMon)) // Theres a mon with that id in the box and i have space
                                     {
                                         newTrainer.BoxedMons.Add(field);
+                                        usedBoxedMons.Add(field, boxedMon);
                                     }
                                     else
                                     {
@@ -500,6 +503,8 @@ namespace Gameplay.GameplayElementsContainer
                     Trainers.Add(name, newTrainer);
                 }
             }
+            // Finally, the boxed mons in usedBoxedMons are only the ones still owned by players
+            BoxedMons = usedBoxedMons;
         }
         /// <summary>
         /// Parses the dungeon data, both the mechanics side locally + their current state in the sheet

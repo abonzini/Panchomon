@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Utilities;
 
 namespace Gameplay.GameplayElements
 {
@@ -128,6 +129,42 @@ namespace Gameplay.GameplayElements
             fileBuilder.AppendLine(",,,,,,,,,,,,,,,,,,,,.");
             // File complete, save
             File.WriteAllText(Path.Combine(directoryPath, $"{Name.ToUpper()}.trainer"), fileBuilder.ToString());
+        }
+        /// <summary>
+        /// Evolves a trainer's mon using the desired evo plate (evo may still be random!)
+        /// </summary>
+        /// <param name="monToEvolve">Which mon to evolve</param>
+        /// <param name="plateUsed">Which plate to use</param>
+        /// <param name="rng">Rng to use</param>
+        public void EvolveProcess(PokemonEntity monToEvolve, EvoPlate plateUsed, Random rng)
+        {
+            if (!Pokemon.Contains(monToEvolve)) throw new Exception("The trainer doesn't own this Pokemon!");
+            PokemonSpecies chosenEvo = GeneralUtilities.GetRandomPick([.. monToEvolve.Species.Evos.Where(e => e.Types.Item1 == plateUsed.Type || e.Types.Item2 == plateUsed.Type)], rng); // Gets the potential evos and chooses one of them
+            // Do abilities now. The issue with abilities is that sometimes mons abilities will switch on evo and sometimes from many->1 or whatever so I make a list
+            List<Ability> abiltiesOnlyInPrevo = [.. monToEvolve.Species.Abilities.Where(a => !chosenEvo.Abilities.Contains(a))];
+            List<Ability> abiltiesOnlyInEvo = [.. chosenEvo.Abilities.Where(a => !monToEvolve.Species.Abilities.Contains(a))];
+            GeneralUtilities.ShuffleList(abiltiesOnlyInEvo, rng); // Shuffle it a bit in case there's many new ones
+            // Ok finally do the evo itself
+            monToEvolve.Species = chosenEvo;
+            GeneralUtilities.AddtemToCountDictionary(EvoPlates, plateUsed, -1); // Remove the evo plate
+            // And now a quickeroony ability swap (or add!) in case of new or obsolete abilities
+            int evoI = 0;
+            for (int i = 0; i < monToEvolve.Abilities.Length; i++) // Go one by one in abilities and set them
+            {
+                Ability nextAbility = monToEvolve.Abilities[i];
+                if (abiltiesOnlyInPrevo.Contains(nextAbility)) // This ability needs to be removed as it was only in the prevo
+                {
+                    if (abiltiesOnlyInEvo.Count > evoI) // Can add a new one!
+                    {
+                        monToEvolve.Abilities[i] = abiltiesOnlyInEvo[evoI];
+                    }
+                    else // Ability then needs to be removed (and disabled, unfortunately the gummy is lost)
+                    {
+                        monToEvolve.Abilities[i] = null;
+                        monToEvolve.AbilityActive[i] = false;
+                    }
+                }
+            }
         }
     }
 }
