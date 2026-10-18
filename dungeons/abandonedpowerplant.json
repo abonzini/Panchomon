@@ -337,7 +337,7 @@
             "Category": "REFRESH",
             "PreEventString": "You find an old first-aid kit.",
             "EncounterSuccessString": "Your Pokemon have recovered some health.",
-            "EncounterFailureString": "None of your Pokemon are injured, you leve it there just in case anyone else needs it."
+            "EncounterFailureString": "None of your Pokemon are injured, you leave it there just in case anyone else needs it."
         },
         {
             "Type": "FULL_RESTORE",
@@ -383,7 +383,7 @@
             "EncounterSuccessString": "Unfortunately, a live wire is touching the water! $1 is electrocuted and is now paralyzed!",
             "EncounterFailureString": "Yikes! Better be careful.",
             "Params": [
-                "PARALYSIS"
+                "Paralysis"
             ]
         },
         {

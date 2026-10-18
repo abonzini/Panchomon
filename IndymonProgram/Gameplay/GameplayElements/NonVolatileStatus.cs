@@ -10,6 +10,11 @@
                 Name = "None",
                 _description = "Handle for no status (will be gone soon ig as soon as I start adding stuff)"
             };
+            yield return new NonVolatileStatus()
+            {
+                Name = "Paralysis",
+                _description = "Mon is Paralyzed, it's speed is 25% of its maximum"
+            };
         }
     }
 }

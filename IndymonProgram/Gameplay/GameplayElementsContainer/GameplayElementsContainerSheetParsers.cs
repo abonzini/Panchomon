@@ -117,9 +117,9 @@ namespace Gameplay.GameplayElementsContainer
                 if (theAbility != "" && Abilities.TryGetValue(theAbility, out nextValidAbility)) thePokemon.Abilities.Add(nextValidAbility);
                 theAbility = fields[ABILITY_3_FIELD].Trim();
                 if (theAbility != "" && Abilities.TryGetValue(theAbility, out nextValidAbility)) thePokemon.Abilities.Add(nextValidAbility);
-                if (thePokemon.Name.ToLower().Contains("unown")) // Unown will also carryall other abilities
+                if (thePokemon.Name.ToLower().Contains("unown")) // Unown will also carry all other abilities
                 {
-                    char letter = (thePokemon.Name == "Unown") ? 'a' : thePokemon.Name.ToLower().Last();
+                    char letter = thePokemon.Name.ToLower().Last();
                     thePokemon.Abilities.UnionWith([.. Abilities.Values.Where(a => a.Name.ToLower().StartsWith(letter))]); // Add moves filtering by unown letter
                 }
                 // Prevos
@@ -160,7 +160,7 @@ namespace Gameplay.GameplayElementsContainer
                             thePokemon.Moveset.Clear(); // Remove whatever was there before, i can learn all anyway
                             if (thePokemon.Name.ToLower().Contains("unown"))
                             {
-                                char letter = (thePokemon.Name == "Unown") ? 'a' : thePokemon.Name.ToLower().Last();
+                                char letter = thePokemon.Name.ToLower().Last();
                                 thePokemon.Moveset.UnionWith([.. Moves.Values.Where(m => m.Name.ToLower().StartsWith(letter))]); // Add moves filtering by unown letter
                             }
                             else

@@ -62,6 +62,8 @@ namespace Gameplay.GameplayElements
         PREVIOUS_FLOOR, /// Any Pokemon from a floor down (or current if min floor)
         FIRST_FLOOR, /// Any Pokemon from first floor specifically
         FAMILY, /// All the prevos of any mon already drafted (if applicable), naturally this only makes sense for enemy 2 by using enemy 1 as a ref
+        SPECIFIC_TRAINER, /// A specific trainer NPC, obtained from Params
+        UNOWN, /// A set of unown whose word is in the Param
     }
     [JsonConverter(typeof(StringEnumConverter))]
     /// What type of item is used as equips and prizes
@@ -78,6 +80,7 @@ namespace Gameplay.GameplayElements
         EVO_PLATE, /// Prize is an evo plate
         SANDWICH, /// Prize is a procedurally generated sandwich
         IMP, /// Prize is some IMP
+        UNOWN, /// A reward corresponding to unown word in param
     }
     /// <summary>
     /// All the things needed to define an encounter's enemies
@@ -93,6 +96,7 @@ namespace Gameplay.GameplayElements
         public int Number { get; set; } = 1; /// How many enemies to add to this side
         public int MaxSimultaneousMons { get; set; } = GameplayElementsContainer.GameplayElementsContainer.DEFAULT_BATTLE_NMONS; /// How many enemies will appear at the same time on one side of the battle
         public bool Catchable { get; set; } = true; /// Would these be catchable? (also involve items)
+        public bool AutoDistribute { get; set; } = true; /// Whether to auto-arrange the mons of this group to be auto distibuted, otherwise all in a row (for unowns lol)
     }
     /// <summary>
     /// Defines a specific scripted encounter, all the elements which are encounter-specific and not used for the dungeon at large
@@ -112,6 +116,7 @@ namespace Gameplay.GameplayElements
         public bool UseEnemyCountSandwich { get; set; } = false;
         public List<WeatherForecast> WeatherOverride { get; set; } = [];
         public List<EnemyParams> Enemies { get; set; } = [];
+        public bool UseFollower { get; set; } = true; // If follower also plays here
         public override string ToString()
         {
             return Type.ToString();

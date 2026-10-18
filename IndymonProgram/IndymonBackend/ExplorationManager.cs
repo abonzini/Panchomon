@@ -428,6 +428,7 @@ namespace IndymonBackendProgram
             // Success or failure, they assemble the string, and then the string is printed in the end once loaded
             Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine($"{encounter.Type} - {encounter.PreEncounterString}"));
             // Now execute encounter
+            List<PokemonInstance> targetMons; // Aux list
             switch (encounter.Type)
             {
                 case EncounterType.BATTLE_AND_PRIZE:
@@ -450,560 +451,192 @@ namespace IndymonBackendProgram
                     }
                     break;
                 case EncounterType.EVO:
+                    Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(encounter.PreEncounterString)); // TODO: Also animation later on ig
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(p => p.AssociatedEntity.Species.Evos.Count > 0)];
+                    if (targetMons.Count > 0)
                     {
-                        Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(encounter.PreEncounterString)); // TODO: Also animation later on ig
-                        List<PokemonInstance> validMons = [.. _context.TrainerInstance.PokemonInTeam.Where(p => p.AssociatedEntity.Species.Evos.Count > 0)];
-                        if (validMons.Count > 0)
+                        foreach (PokemonInstance mon in targetMons)
                         {
-                            foreach (PokemonInstance mon in validMons)
+                            // Bit of a long one but basically, get all the evos that can consume any plate from the trainer in order to evolve
+                            List<PokemonSpecies> validEvos = [.. mon.AssociatedEntity.Species.Evos.Where(e => _context.TrainerEntity.EvoPlates.Keys.Any(p => p.Type == e.Types.Item1 || p.Type == e.Types.Item2))];
+                            if (validEvos.Count > 0)
                             {
-                                // Bit of a long one but basically, get all the evos that can consume any plate from the trainer in order to evolve
-                                List<PokemonSpecies> validEvos = [.. mon.AssociatedEntity.Species.Evos.Where(e => _context.TrainerEntity.EvoPlates.Keys.Any(p => p.Type == e.Types.Item1 || p.Type == e.Types.Item2))];
-                                if (validEvos.Count > 0)
-                                {
-                                    // Mon has a valid evo! Will evolve...
-                                    string preName = mon.AssociatedEntity.ToString();
-                                    PokemonSpecies chosenEvo = GeneralUtilities.GetRandomPick(validEvos, _context.Rng); // Get a random one
-                                    EvoPlate usedPlate = GeneralUtilities.GetRandomPick([.. _context.TrainerEntity.EvoPlates.Keys.Where(p => p.Type == chosenEvo.Types.Item1 || p.Type == chosenEvo.Types.Item2)], _context.Rng); // Get a random plate needed
-                                    _context.TrainerEntity.EvolveProcess(mon.AssociatedEntity, usedPlate, _context.Rng); // Atp this mon should have evolved
-                                    Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine($"{preName} has evolved into {mon.AssociatedEntity.Name} using the {usedPlate.Name}!")); // TODO: Also animation later on ig
-                                }
+                                // Mon has a valid evo! Will evolve...
+                                string preName = mon.AssociatedEntity.ToString();
+                                PokemonSpecies chosenEvo = GeneralUtilities.GetRandomPick(validEvos, _context.Rng); // Get a random one
+                                EvoPlate usedPlate = GeneralUtilities.GetRandomPick([.. _context.TrainerEntity.EvoPlates.Keys.Where(p => p.Type == chosenEvo.Types.Item1 || p.Type == chosenEvo.Types.Item2)], _context.Rng); // Get a random plate needed
+                                _context.TrainerEntity.EvolveProcess(mon.AssociatedEntity, usedPlate, _context.Rng); // Atp this mon should have evolved
+                                Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine($"{preName} has evolved into {mon.AssociatedEntity.Name} using the {usedPlate.Name}!")); // TODO: Also animation later on ig
                             }
-                            Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(encounter.EncounterSuccessString)); // TODO: Also animation later on ig
                         }
-                        else // Nothing to evolve
-                        {
-                            Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(encounter.EncounterFailureString)); // TODO: Also animation later on ig
-                        }
+                        Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(encounter.EncounterSuccessString)); // TODO: Also animation later on ig
+                    }
+                    else // Nothing to evolve
+                    {
+                        Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(encounter.EncounterFailureString)); // TODO: Also animation later on ig
                     }
                     break;
                 case EncounterType.HP_HEAL:
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY && m.HpPercent < 1)];
+                    ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
+                    {
+                        mon.HpPercent += 0.3;
+                        mon.HpPercent = Math.Clamp(mon.HpPercent, 0, 1);
+                    });
                     break;
                 case EncounterType.FULL_RESTORE:
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY && m.HpPercent < 1).OrderBy(m => m.HpPercent)];
+                    targetMons = targetMons.Count > 0 ? [targetMons[0]] : []; // Get the first element only (or keep an empty list otherwise)
+                    ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
+                    {
+                        mon.HpPercent = 1;
+                    });
                     break;
                 case EncounterType.REVIVE:
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.FAINT)];
+                    targetMons = targetMons.Count > 0 ? [targetMons[0]] : []; // Get the first element only (or keep an empty list otherwise)
+                    ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
+                    {
+                        mon.HpPercent = 1;
+                        mon.Availability = BattleAvailability.READY;
+                    });
                     break;
                 case EncounterType.STATUS_CURE:
-                    break;
-                case EncounterType.JOINER:
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY && m.NonVolatileStatusConditions.Count > 0)];
+                    targetMons = targetMons.Count > 0 ? [targetMons[0]] : []; // Get the first element only (or keep an empty list otherwise)
+                    ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
+                    {
+                        mon.NonVolatileStatusConditions.Clear();
+                    });
                     break;
                 case EncounterType.DAMAGE_TRAP:
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY)];
+                    ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
+                    {
+                        mon.HpPercent -= 0.25;
+                        if (mon.HpPercent < 0)
+                        {
+                            mon.HpPercent = 0;
+                            mon.Availability = BattleAvailability.FAINT;
+                        }
+                    });
                     break;
                 case EncounterType.STATUS_TRAP:
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY)];
+                    targetMons = targetMons.Count > 0 ? [GeneralUtilities.GetRandomPick(targetMons, _context.Rng)] : []; // Get a random one of these
+                    ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
+                    {
+                        mon.NonVolatileStatusConditions.Add(GameplayElementsContainer.GlobalData.NvStatuses[encounter.Params[0]]);
+                    });
                     break;
                 case EncounterType.KILL_TRAP:
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY)];
+                    targetMons = targetMons.Count > 0 ? [GeneralUtilities.GetRandomPick(targetMons, _context.Rng)] : []; // Get a random one of these
+                    ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
+                    {
+                        mon.HpPercent = 0;
+                        mon.Availability = BattleAvailability.FAINT;
+                    });
+                    break;
+                case EncounterType.JOINER:
+                    // Get a mon from this floor, create a very basic instance, add to party and prizes
+                    {
+                        PokemonSpecies randomSpecies = GeneralUtilities.GetRandomPick([.. _context.EncounterTable.Where(m => m.Rank == Math.Clamp(_context.CurrentFloor + 1, 1, 3))], _context.Rng); // Find a random mon
+                        PokemonEntity newMon = new PokemonEntity()
+                        {
+                            Species = randomSpecies,
+                            PokeBall = GameplayElementsContainer.GlobalData.PokeBalls["Poke Ball"], // All npc mons have a pokeball unless specified otherwise
+                            IsShiny = _context.Rng.Next(0, _context.GetShinyChance()) == 0 // Depending on shiny chance ofc
+                        };
+                        GameplayElementsContainer.GlobalData.RandomizePokemon(newMon, _context.Rng); // Randomize the rest for this mon
+                        PokemonInstance joinerInstance = SimulatorHandler.InstancePokemon(newMon, _context.Rng); // Creates rest of instance
+                        // Finally, add the joiner to the team AND the catchtable
+                        _context.TrainerInstance.PokemonInTeam.Add(joinerInstance);
+                        AddMonToCatchTable(joinerInstance, 0);
+                        _context.UseSandwichEffect(SandwichEffectType.SHINY_CHANCE, s => { });
+                    }
                     break;
                 case EncounterType.NPC_BATTLE:
+                    // Npc rank will be diff dependant, so choose a combo of trainer ranks which will be used for filtering
+                    HashSet<TrainerRank> validRanks = new HashSet<TrainerRank>();
+                    if (_context.DungeonData.Difficulty <= 4) validRanks.Add(TrainerRank.UNRANKED);
+                    if (_context.DungeonData.Difficulty >= 4 && _context.DungeonData.Difficulty <= 5) validRanks.Add(TrainerRank.GYM);
+                    if (_context.DungeonData.Difficulty >= 4 && _context.DungeonData.Difficulty <= 6) validRanks.Add(TrainerRank.ELITE4);
+                    if (_context.DungeonData.Difficulty >= 5) validRanks.Add(TrainerRank.CHAMPION);
+                    // Pick a random one, keep name
+                    string chosenNpc = GeneralUtilities.GetRandomPick([.. GameplayElementsContainer.GlobalData.AllNpcTrainers.Where(n => validRanks.Contains(n.Value.TrainerRank))], _context.Rng).Key;
+                    Encounter npcBattleEncounter =
+                            new Encounter() // This encounter is simple because there's no scripted overrides just a Pokemon battle with some shit going on
+                            {
+                                Type = EncounterType.BATTLE_AND_PRIZE,
+                                Category = EncounterCategory.NEUTRAL,
+                                PreEncounterString = encounter.PreEncounterString,
+                                EncounterSuccessString = encounter.EncounterSuccessString,
+                                EncounterFailureString = encounter.EncounterFailureString,
+                                Params = [chosenNpc],
+                                PrizeType = EncounterItemType.NONE,
+                                WeatherOverride = encounter.WeatherOverride,
+                                UseFollower = false,
+                                Enemies = [
+                                    new EnemyParams() // Standard enemy params besides these (3 pokemon but variabel length and catchable
+                                    {
+                                        Type = EncounterEnemyType.SPECIFIC_TRAINER,
+                                        EquipType = EncounterItemType.COMMON_ITEM_POOL,
+                                        EquipChance = GameplayElementsContainer.NPC_ITEM_CHANCE,
+                                        Number = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
+                                        MaxSimultaneousMons = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
+                                        Catchable = false
+                                    }
+                                ]
+                            };
+                    // Finally, need to do some shenanigans with the trainer, including healing to full, using 3 mons max (reverted after!) and reviving mon if needed
+                    _context.TrainerInstance.MaxMonsUsed = GameplayElementsContainer.DEFAULT_BATTLE_NMONS;
+                    // Revive mons until there's at least 3 alive
+                    while (_context.TrainerInstance.PokemonInTeam.Count(m => m.Availability == BattleAvailability.READY) < GameplayElementsContainer.DEFAULT_BATTLE_NMONS)
+                    {
+                        targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability != BattleAvailability.READY)];
+                        PokemonInstance monToRevive = GeneralUtilities.GetRandomPick(targetMons, _context.Rng);
+                        monToRevive.HpPercent = 1;
+                        monToRevive.Availability = BattleAvailability.READY;
+                    }
+                    // Then heal top 3 mons to full hp
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY)]; // Get alive mons
+                    for (int i = 0; i < GameplayElementsContainer.DEFAULT_BATTLE_NMONS; i++)
+                    {
+                        targetMons[i].HpPercent = 1; // Done!
+                    }
+                    // Now run it
+                    ResolveBattleAndPrizeEncounter(npcBattleEncounter);
+                    _context.TrainerInstance.MaxMonsUsed = int.MaxValue; // Revert to trainer emptying their whole team in battles
                     break;
                 case EncounterType.UNOWN:
+                    string unownWord = GeneralUtilities.GetRandomPick([.. GameplayElementsContainer.GlobalData.UnownLookup.Keys], _context.Rng); // Find a random unown word
+                    Encounter unownBattleEncounter =
+                            new Encounter() // This encounter is simple because there's no scripted overrides just a Pokemon battle with some shit going on
+                            {
+                                Type = EncounterType.BATTLE_AND_PRIZE,
+                                Category = EncounterCategory.NEUTRAL,
+                                PreEncounterString = encounter.PreEncounterString,
+                                EncounterSuccessString = encounter.EncounterSuccessString,
+                                EncounterFailureString = encounter.EncounterFailureString,
+                                Params = [unownWord, unownWord],
+                                PrizeType = EncounterItemType.UNOWN,
+                                WeatherOverride = encounter.WeatherOverride,
+                                Enemies = [
+                                    new EnemyParams() // Standard enemy params besides these (3 pokemon but variabel length and catchable
+                                    {
+                                        Type = EncounterEnemyType.UNOWN,
+                                        Number = int.MaxValue, // All unowns at the same time
+                                        MaxSimultaneousMons = int.MaxValue,
+                                        StatMult = [1, 0.75, 0.75, 0.75, 0.75, 1], // Unowns will be slightly weaker to avoid curbstomp
+                                        AutoDistribute = false
+                                    }
+                                ]
+                            };
                     break;
                 default:
                     throw new Exception($"This encounter type {encounter.Type} is not known");
             }
-            /*
-                case RoomEventType.HEAL:
-                    {
-                        GenericMessageCommand(roomEvent.PreEventString);
-                        foreach (TrainerPokemon mon in _trainer.BattleTeam)
-                        {
-                            mon.HealthPercentage += 33;
-                            if (mon.HealthPercentage > 100) mon.HealthPercentage = 100;
-                        }
-                        UpdateTrainerDataInfo(); // Updates numbers in chart
-                        GenericMessageCommand(roomEvent.PostEventString);
-                    }
-                    break;
-                case RoomEventType.DAMAGE_TRAP:
-                    {
-                        GenericMessageCommand(roomEvent.PreEventString);
-                        foreach (TrainerPokemon mon in _trainer.BattleTeam)
-                        {
-                            mon.HealthPercentage -= 25;
-                            if (mon.HealthPercentage <= 0) mon.HealthPercentage = 1;
-                        }
-                        UpdateTrainerDataInfo(); // Updates numbers in chart
-                        GenericMessageCommand(roomEvent.PostEventString);
-                    }
-                    break;
-                case RoomEventType.CURE:
-                    {
-                        GenericMessageCommand(roomEvent.PreEventString);
-                        foreach (TrainerPokemon mon in _trainer.BattleTeam)
-                        {
-                            mon.NonVolatileStatus = "";
-                        }
-                        UpdateTrainerDataInfo(); // Updates numbers in chart
-                        GenericMessageCommand(roomEvent.PostEventString);
-                    }
-                    break;
-                case RoomEventType.BIG_HEAL:
-                    {
-                        TrainerPokemon mon = _trainer.BattleTeam.OrderBy(p => p.HealthPercentage).FirstOrDefault();
-                        mon.HealthPercentage = 100;
-                        string message = roomEvent.PreEventString.Replace("$1", mon.GetInformalName());
-                        GenericMessageCommand(roomEvent.PreEventString);
-                        UpdateTrainerDataInfo(); // Updates numbers in chart
-                        message = roomEvent.PostEventString.Replace("$1", mon.GetInformalName());
-                        GenericMessageCommand(message);
-                    }
-                    break;
-                case RoomEventType.STATUS_TRAP:
-                    {
-                        string status = roomEvent.SpecialParams;
-                        List<TrainerPokemon> possibleMons = [.. _trainer.BattleTeam.Where(m => m.NonVolatileStatus == "")]; // Get mons without status
-                        GenericMessageCommand(roomEvent.PreEventString);
-                        if (possibleMons.Count > 0)
-                        {
-                            TrainerPokemon mon = GeneralUtilities.GetRandomPick(possibleMons);
-                            mon.NonVolatileStatus = status;
-                            string postMessage = roomEvent.PostEventString.Replace("$1", mon.GetInformalName());
-                            GenericMessageCommand(postMessage);
-                        }
-                        UpdateTrainerDataInfo(); // Updates numbers in chart
-                    }
-                    break;
-                case RoomEventType.POKEMON_BATTLE:
-                    // Similar to aplha but there's 3 enemy mons
-                    {
-                        int numberOfMons = 3;
-                        numberOfMons += _context.GetExtraWildPokemon(); // How many extra mons this fight will have
-                        numberOfMons = Math.Clamp(numberOfMons, 1, 24); // Absolute showdown limits
-                        // Items obtained during the fight (commons)
-                        int uniqueItems = numberOfMons;
-                        List<ItemReward> items = new List<ItemReward>();
-                        for (int i = 0; i < uniqueItems; i++)
-                        {
-                            // Prize pool will contain common items
-                            ItemReward nextItem = GeneralUtilities.GetRandomPick(_dungeonData.CommonItems);
-                            items.Add(nextItem);
-                        }
-                        // Add Pokemon, they will have items
-                        List<string> pokemonThisFloor = [];
-                        for (int i = 0; i < numberOfMons; i++) // Generate party of random mons
-                        {
-                            string nextPokemon = GeneralUtilities.GetRandomPick(_dungeonData.PokemonEachFloor[floor]);
-                            pokemonThisFloor.Add(nextPokemon); // Add mon to the set
-                        }
-                        GenericMessageCommand(roomEvent.PreEventString);
-                        Trainer wildMonsTrainer = GenerateEnemyTrainer("WildMons", pokemonThisFloor, [.. items.Select(i => i.Name)], 100, 100, true);
-                        DefineEnemySet(wildMonsTrainer, 24, false); // Defines the enemy set (dumb mons tho)
-                        GenericMessageCommand($"Pokemon encountered: {string.Join(", ", pokemonThisFloor)}");
-                        Console.Write("Encounter resolution: ");
-                        PreFightTrainerMods();
-                        int remainingMons = ResolveEncounter(_trainer, wildMonsTrainer);
-                        if (remainingMons == 0) // Means player lost
-                        {
-                            roomCleared = false; // Failure at clearing room
-                        }
-                        else
-                        {
-                            Console.WriteLine("Player won");
-                            UpdateTrainerDataInfo(); // Updates numbers in chart
-                            string postMessage = roomEvent.PostEventString.Replace("$1", string.Join(',', [.. items.Select(i => i.Name)]));
-                            GenericMessageCommand(postMessage);
-                            foreach (ItemReward item in items) // Add all items to Prizes
-                            {
-                                int amount = GeneralUtilities.GetRandomNumber(item.Min, item.Max + 1);
-                                amount = (int)((amount * _context.GetItemMult()) + 0.5); // Item multiplier obtained at random
-                                if (amount < 1) amount = 1;
-                                _prizes.AddReward(item.Name, amount);
-                            }
-                            foreach (TrainerPokemon pokemonSpecies in wildMonsTrainer.BattleTeam)
-                            {
-                                _prizes.AddMon(pokemonSpecies, floor + 1);
-                            }
-                            _context.UseSandwichEffect(SandwichEffectType.ITEM_DROP, GenericMessageCommand);
-                            _context.UseSandwichEffect(SandwichEffectType.SHINY_CHANCE, GenericMessageCommand);
-                            PostFightTrainerMods();
-                        }
-                    }
-                    break;
-                case RoomEventType.SWARM:
-                    // Similar to aplha but there's 6 enemy mons
-                    {
-                        int numberOfMons = 6;
-                        numberOfMons += _context.GetExtraWildPokemon(); // How many extra mons this fight will have
-                        numberOfMons = Math.Clamp(numberOfMons, 1, 24); // Absolute showdown limits
-                        List<string> pokemonThisFloor = [];
-                        for (int i = 0; i < numberOfMons; i++) // Generate party of random mons always from 0
-                        {
-                            string nextPokemon = GeneralUtilities.GetRandomPick(_dungeonData.PokemonEachFloor[0]);
-                            pokemonThisFloor.Add(nextPokemon); // Add mon to the set
-                        }
-                        GenericMessageCommand(roomEvent.PreEventString);
-                        GenericMessageCommand($"Pokemon encountered: {string.Join(", ", pokemonThisFloor)}");
-                        Trainer swarmTrainer = GenerateEnemyTrainer("Swarm", pokemonThisFloor, [], 60, 75, true); // Lvl between 60-75
-                        DefineEnemySet(swarmTrainer, 24, false); // Defines the enemy set (dumb mons tho)
-                        Console.Write("Encounter resolution: ");
-                        PreFightTrainerMods();
-                        int remainingMons = ResolveEncounter(_trainer, swarmTrainer);
-                        if (remainingMons == 0) // Means player lost
-                        {
-                            roomCleared = false; // Failure at clearing room
-                        }
-                        else
-                        {
-                            Console.WriteLine("Player won");
-                            UpdateTrainerDataInfo(); // Updates numbers in chart
-                            GenericMessageCommand(roomEvent.PostEventString);
-                            foreach (TrainerPokemon pokemonSpecies in swarmTrainer.BattleTeam)
-                            {
-                                _prizes.AddMon(pokemonSpecies, 0);
-                            }
-                            _context.UseSandwichEffect(SandwichEffectType.SHINY_CHANCE, GenericMessageCommand);
-                            PostFightTrainerMods();
-                        }
-                    }
-                    break;
-                case RoomEventType.UNOWN:
-                    // Weird one, select 6 unowns, give them random moves
-                    {
-                        KeyValuePair<string, string> unownChosen = GeneralUtilities.GetRandomKvp(MechanicsDataContainers.GlobalMechanicsData.UnownLookup);
-                        // Calculate the lvl of these dudes
-                        int averageLevel = _trainer.BattleTeam.Select(m => m.Level).Sum();
-                        averageLevel /= unownChosen.Key.Length; // Unown level will be dependent on the trainer lvl but toned down if more unown than mons
-                        int minLvl = 9 * averageLevel / 10;
-                        int maxLvl = 11 * averageLevel / 10;
-                        minLvl = Math.Clamp(minLvl, 65, 100); // But always between 65-100
-                        maxLvl = Math.Clamp(maxLvl, 65, 100);
-                        // Then make the team
-                        Console.WriteLine($"Unown battle, will form word {unownChosen.Key} with reward {unownChosen.Value.Trim()}");
-                        List<string> pokemonThisFloor = [];
-                        for (int i = 0; i < unownChosen.Key.Length; i++) // Generate party of random unowns
-                        {
-                            char letter = unownChosen.Key[i]; // Obtain next unown
-                            string nextPokemon = (letter == 'A') ? "Unown" : $"Unown-{letter}"; // Get the correct unown
-                            pokemonThisFloor.Add(nextPokemon); // Add mon to the set
-                        }
-                        GenericMessageCommand(roomEvent.PreEventString);
-                        Trainer unownTrainer = GenerateEnemyTrainer("Symbols", pokemonThisFloor, [], minLvl, maxLvl, false, [.. unownChosen.Key.Select(c => c.ToString())]); // Unowns are unshuffled so they can form the phrase, they also got nickname
-                        DefineEnemySet(unownTrainer, 24, false); // Defines the enemy set (smart unowns was proven to be too good so let's use dumb unowns instead)
-                        Console.Write("Encounter resolution: ");
-                        PreFightTrainerMods();
-                        int remainingMons = ResolveEncounter(_trainer, unownTrainer);
-                        if (remainingMons == 0) // Means player lost
-                        {
-                            roomCleared = false; // Failure at clearing room
-                        }
-                        else
-                        {
-                            Console.WriteLine("Player won");
-                            UpdateTrainerDataInfo(); // Updates numbers in chart
-                            string postMessage = roomEvent.PostEventString.Replace("$1", unownChosen.Value.Trim());
-                            GenericMessageCommand(postMessage);
-                            foreach (TrainerPokemon pokemonSpecies in unownTrainer.BattleTeam)
-                            {
-                                _prizes.AddMon(pokemonSpecies, 1); // Rank 1
-                            }
-                            _prizes.AddReward(unownChosen.Value.Trim(), 1); // Add the unown reward
-                            _context.UseSandwichEffect(SandwichEffectType.SHINY_CHANCE, GenericMessageCommand);
-                            PostFightTrainerMods();
-                        }
-                    }
-                    break;
-                case RoomEventType.FIRELORD:
-                    // Weird one, weakened legendary with rare item
-                    {
-                        // Which mon will be chosen
-                        ItemReward itemPrize = GeneralUtilities.GetRandomPick(_dungeonData.RareItems); // Get a random rare item
-                        List<string> validMons = ["Moltres", "Entei", "Ho-Oh", "Groudon", "Heatran", "Chi-Yu", "Koraidon", "Volcaion", "Blacephalon"];
-                        string pokemonSpecies = GeneralUtilities.GetRandomPick(validMons);
-                        string message = roomEvent.PreEventString.Replace("$1", pokemonSpecies);
-                        GenericMessageCommand(message);
-                        Trainer bossTrainer = GenerateEnemyTrainer("Firelord", [pokemonSpecies], [], 50, 65, true);
-                        DefineEnemySet(bossTrainer, 24, true); // Smart set
-                        Console.Write("Encounter resolution: ");
-                        PreFightTrainerMods();
-                        int remainingMons = ResolveEncounter(_trainer, bossTrainer);
-                        if (remainingMons == 0) // Means player lost
-                        {
-                            roomCleared = false; // Failure at clearing room
-                        }
-                        else
-                        {
-                            Console.WriteLine("Player won");
-                            UpdateTrainerDataInfo(); // Updates numbers in chart
-                            int rewardQuantity = GeneralUtilities.GetRandomNumber(itemPrize.Min, itemPrize.Max + 1);
-                            rewardQuantity = (int)((rewardQuantity * _context.GetItemMult()) + 0.5); // Item multiplier obtained at random
-                            if (rewardQuantity < 1) rewardQuantity = 1;
-                            message = roomEvent.PostEventString.Replace("$1", itemPrize.Name);
-                            GenericMessageCommand(message);
-                            _prizes.AddReward(itemPrize.Name, rewardQuantity);
-                            _prizes.AddMons(bossTrainer.BattleTeam, 4); // Add the mon (masterball tho)
-                            _context.UseSandwichEffect(SandwichEffectType.ITEM_DROP, GenericMessageCommand);
-                            _context.UseSandwichEffect(SandwichEffectType.SHINY_CHANCE, GenericMessageCommand);
-                            PostFightTrainerMods();
-                        }
-                    }
-                    break;
-                case RoomEventType.GIANT_POKEMON:
-                    // Dumb single pokemon with a rare item but the mon is lvl 110-125
-                    {
-                        // Which mon will be chosen
-                        ItemReward itemPrize = GeneralUtilities.GetRandomPick(_dungeonData.RareItems); // Get a random rare item
-                        List<string> validMons = [.. _dungeonData.PokemonEachFloor[floor]];
-                        string pokemonSpecies = GeneralUtilities.GetRandomPick(validMons);
-                        string message = roomEvent.PreEventString.Replace("$1", pokemonSpecies);
-                        GenericMessageCommand(message);
-                        Trainer giantMon = GenerateEnemyTrainer("MutantPokemon", [pokemonSpecies], [], 110, 126, true);
-                        DefineEnemySet(giantMon, 24, false); // Not smart
-                        giantMon.BattleTeam[0].HealthPercentage = 50;
-                        giantMon.BattleTeam[0].NonVolatileStatus = "brn";
-                        Console.Write("Encounter resolution: ");
-                        PreFightTrainerMods();
-                        int remainingMons = ResolveEncounter(_trainer, giantMon);
-                        if (remainingMons == 0) // Means player lost
-                        {
-                            roomCleared = false; // Failure at clearing room
-                        }
-                        else
-                        {
-                            Console.WriteLine("Player won");
-                            UpdateTrainerDataInfo(); // Updates numbers in chart
-                            int rewardQuantity = GeneralUtilities.GetRandomNumber(itemPrize.Min, itemPrize.Max + 1);
-                            rewardQuantity = (int)((rewardQuantity * _context.GetItemMult()) + 0.5); // Item multiplier obtained at random
-                            if (rewardQuantity < 1) rewardQuantity = 1;
-                            message = roomEvent.PostEventString.Replace("$1", itemPrize.Name);
-                            GenericMessageCommand(message);
-                            _prizes.AddReward(itemPrize.Name, rewardQuantity);
-                            _prizes.AddMons(giantMon.BattleTeam, floor + 1);
-                            _context.UseSandwichEffect(SandwichEffectType.ITEM_DROP, GenericMessageCommand);
-                            _context.UseSandwichEffect(SandwichEffectType.SHINY_CHANCE, GenericMessageCommand);
-                            PostFightTrainerMods();
-                        }
-                    }
-                    break;
-                case RoomEventType.MIRROR_MATCH:
-                    // Fight against yourself but a couple levels lower
-                    {
-                        Trainer copiedTeam = new Trainer()
-                        {
-                            Name = "Illusion",
-                            Avatar = _trainer.Avatar,
-                            BattleTeam = [] // Will add mons later
-                        };
-                        foreach (TrainerPokemon mon in _trainer.BattleTeam)
-                        {
-                            int level = GeneralUtilities.GetRandomNumber(75, 91); // Get lvls 75-90
-                            TrainerPokemon copiedMon = new TrainerPokemon()
-                            {
-                                Species = mon.Species,
-                                Nickname = mon.Nickname,
-                                IsShiny = mon.IsShiny,
-                                SetItem = mon.SetItem,
-                                ModItem = mon.ModItem,
-                                BattleItem = mon.BattleItem,
-                                ChosenAbility = mon.ChosenAbility,
-                                ChosenMoveset = mon.ChosenMoveset,
-                                Evs = mon.Evs,
-                                Nature = mon.Nature,
-                                TeraType = mon.TeraType,
-                                HealthPercentage = mon.HealthPercentage,
-                                NonVolatileStatus = mon.NonVolatileStatus,
-                                Logic = mon.Logic,
-                                Level = GeneralUtilities.GetRandomNumber(70, 80 + 1) // Random low level
-                            };
-                            copiedTeam.BattleTeam.Add(copiedMon);
-                        }
-                        GenericMessageCommand(roomEvent.PreEventString);
-                        PreFightTrainerMods();
-                        int remainingMons = ResolveEncounter(_trainer, copiedTeam);
-                        if (remainingMons == 0) // Means player lost
-                        {
-                            roomCleared = false; // Failure at clearing room
-                        }
-                        else
-                        {
-                            Console.WriteLine("Player won");
-                            foreach (TrainerPokemon mon in _trainer.BattleTeam)
-                            {
-                                mon.HealFull(); // Heall all mons as reward
-                            }
-                            UpdateTrainerDataInfo(); // Updates numbers in chart
-                            GenericMessageCommand(roomEvent.PostEventString);
-                            PostFightTrainerMods();
-                        }
-                    }
-                    break;
-                case RoomEventType.PLOT_CLUE:
-                    {
-                        PlotMessageCommand(roomEvent.PreEventString);
-                        PlotMessageCommand(roomEvent.PostEventString);
-                        if (roomEvent.SpecialParams != "")
-                        {
-                            _prizes.AddReward(roomEvent.SpecialParams, 1); // Add item if plot event has it
-                        }
-                    }
-                    break;
-                case RoomEventType.JOINER:
-                    // Mon that joins the team for adventures, always catchable
-                    {
-                        List<string> validMons = [.. _dungeonData.PokemonEachFloor[floor]];
-                        string pokemonSpecies = GeneralUtilities.GetRandomPick(validMons);
-                        Trainer placeholderTrainer = GenerateEnemyTrainer("Whatever", [pokemonSpecies], [], 100, 100, false);
-                        DefineEnemySet(placeholderTrainer, 24, false); // Not smart
-                        Console.WriteLine($"Joiner {pokemonSpecies}");
-                        string joinerString = roomEvent.PreEventString.Replace("$1", pokemonSpecies);
-                        GenericMessageCommand(joinerString); // Prints the message but we know it could have a $1
-                        string nickName = $"{pokemonSpecies} friend";
-                        if (nickName.Length > 18) // Sanitize, name has to be shorter than 19 and no spaces
-                        {
-                            nickName = nickName[..18].Trim();
-                        }
-                        TrainerPokemon joiner = placeholderTrainer.BattleTeam.First();
-                        joiner.Nickname = nickName;
-                        Console.Write("Added to team");
-                        _trainer.BattleTeam.Add(joiner);
-                        joinerString = roomEvent.PostEventString.Replace("$1", pokemonSpecies);
-                        GenericMessageCommand(joinerString);
-                        _prizes.AddMon(joiner, 0); // Add mon to lowest floor (free basically)
-                        UpdateTrainerDataInfo(); // Updates numbers in chart
-                        _context.UseSandwichEffect(SandwichEffectType.SHINY_CHANCE, GenericMessageCommand);
-                    }
-                    break;
-                case RoomEventType.NPC_BATTLE:
-                    {
-                        Trainer randomNpc = GeneralUtilities.GetRandomKvp(GameDataContainers.GlobalGameData.NpcData).Value; // Get random npc
-                        // Define trainer in the same way we defined our own for exploration
-                        List<PossibleTeamBuild> possibleBuilds = TeamBuilder.GetTrainersPossibleBuilds(randomNpc, _trainer.BattleTeam.Count, [new Constraint()], true); // Since there's no constraint, will get a build consisting of all my mons, matched to trainer's
-                        TeamBuilder.AssembleTrainersBattleTeam(randomNpc, Math.Min(MAX_TRAINER_MONS, _trainer.BattleTeam.Count), possibleBuilds, true); // Chooses one of the sets, prepares the mons, seed 0
-                        // Now, make the trainer choose it's team sets!
-                        HashSet<Pokemon> enemyMons = new HashSet<Pokemon>();
-                        enemyMons.UnionWith([.. _dungeonData.PokemonEachFloor[0].Select(m => MechanicsDataContainers.GlobalMechanicsData.Dex[m])]); // Add all mons from all floors
-                        enemyMons.UnionWith([.. _dungeonData.PokemonEachFloor[1].Select(m => MechanicsDataContainers.GlobalMechanicsData.Dex[m])]);
-                        enemyMons.UnionWith([.. _dungeonData.PokemonEachFloor[2].Select(m => MechanicsDataContainers.GlobalMechanicsData.Dex[m])]);
-                        enemyMons.UnionWith([.. _dungeonData.PokemonEachFloor[3].Select(m => MechanicsDataContainers.GlobalMechanicsData.Dex[m])]);
-                        TeamBuilder.DefineTrainerSets(randomNpc, true, _dungeonData.DungeonArchetypes, _dungeonData.DungeonWeather, _dungeonData.DungeonTerrain, new Constraint(), [.. enemyMons]); // Team build but with the dungeon's weather and such 
-                        randomNpc.RestoreAll();
-                        Console.WriteLine($"Fighting {randomNpc.Name}");
-                        string npcString = roomEvent.PreEventString.Replace("$1", randomNpc.Name);
-                        GenericMessageCommand(npcString); // Prints the message but we know it could have a $1
-                        // Heal first nMons
-                        foreach (TrainerPokemon mon in _trainer.BattleTeam)
-                        {
-                            mon.HealFull();
-                        }
-                        Console.Write("Encounter resolution: ");
-                        PreFightTrainerMods();
-                        int remainingMons = ResolveEncounter(_trainer, randomNpc);
-                        if (remainingMons == 0) // Means player lost
-                        {
-                            roomCleared = false; // Failure at clearing room
-                        }
-                        else
-                        {
-                            Console.WriteLine("Player won");
-                            UpdateTrainerDataInfo(); // Updates numbers in chart
-                            _prizes.AddReward(randomNpc.Name, 1);
-                            npcString = roomEvent.PostEventString.Replace("$1", randomNpc.Name);
-                            GenericMessageCommand(npcString);
-                            PostFightTrainerMods();
-                        }
-                    }
-                    break;
-                case RoomEventType.APRICORN: // Bug and apricorns
-                    {
-                        List<string> possiblePokemon = ["Forretress", "Ambipom", "Scyther", "Scizor", "Pinsir", "Heracross", "Shuckle", "Beedrill", "Arbok", "Butterfree", "Venomoth"];
-                        string enemySpecies = GeneralUtilities.GetRandomPick(possiblePokemon); // Get a random one of these
-                        string apricornString = roomEvent.PreEventString.Replace("$1", enemySpecies);
-                        GenericMessageCommand(apricornString); // Prints the message but we know it could have a $1
-                        Trainer alphaTrainer = GenerateEnemyTrainer("Tree Dweller", [enemySpecies], [], 100, 100, true);
-                        DefineEnemySet(alphaTrainer, 24, true); // Defines the enemy set (smart for an alpha challenge)
-                        Console.Write("Encounter resolution: ");
-                        PreFightTrainerMods();
-                        int remainingMons = ResolveEncounter(_trainer, alphaTrainer);
-                        if (remainingMons == 0) // Means player lost
-                        {
-                            roomCleared = false; // Failure at clearing room
-                        }
-                        else
-                        {
-                            List<string> commonApricorns = ["Red", "Yellow", "Blue", "Green"];
-                            List<string> rareApricorns = ["Black", "White"];
-                            List<string> obtainedApricorns = [];
-                            // 5 commons and 2 rares
-                            for (int i = 0; i < 3; i++)
-                            {
-                                obtainedApricorns.Add(GeneralUtilities.GetRandomPick(commonApricorns));
-                            }
-                            for (int i = 0; i < 1; i++)
-                            {
-                                obtainedApricorns.Add(GeneralUtilities.GetRandomPick(rareApricorns));
-                            }
-                            UpdateTrainerDataInfo(); // Updates numbers in chart
-                            apricornString = roomEvent.PostEventString.Replace("$1", string.Join(", ", obtainedApricorns.ToHashSet())); // To hash set to avoid duplicates
-                            GenericMessageCommand(apricornString); // Prints the message but we know it could have a $1
-                            foreach (string apricorn in obtainedApricorns)
-                            {
-                                _prizes.AddReward(apricorn + " Apricorn", 1); // Add them
-                            }
-                            _prizes.AddMons(alphaTrainer.BattleTeam, 2); // All bugs are rank 2 idc
-                            _context.UseSandwichEffect(SandwichEffectType.ITEM_DROP, GenericMessageCommand);
-                            _context.UseSandwichEffect(SandwichEffectType.SHINY_CHANCE, GenericMessageCommand);
-                            PostFightTrainerMods();
-                        }
-                    }
-                    break;
-                case RoomEventType.REGISTEEL: // Dramatic drawing of registeel eyes
-                    ClearScreenCommand();
-                    DrawRegiEye(35, 0, 1000);
-                    DrawRegiEye(37, 0, 1000);
-                    DrawRegiEye(38, 1, 500);
-                    DrawRegiEye(37, 2, 333);
-                    DrawRegiEye(35, 2, 333);
-                    DrawRegiEye(34, 1, 200);
-                    DrawRegiEye(36, 1, 200);
-                    NopWithWaitCommand(3000);
-                    break;
-                case RoomEventType.REGIROCK: // Dramatic drawing of regirock eyes
-                    ClearScreenCommand();
-                    DrawRegiEye(37, 4, 2000);
-                    DrawRegiEye(38, 4, 0);
-                    DrawRegiEye(36, 4, 2000);
-                    DrawRegiEye(38, 5, 0);
-                    DrawRegiEye(38, 3, 0);
-                    DrawRegiEye(36, 5, 0);
-                    DrawRegiEye(36, 3, 2000);
-                    NopWithWaitCommand(1000);
-                    break;
-                case RoomEventType.REGICE: // Dramatic drawing of regice eyes
-                    ClearScreenCommand();
-                    DrawRegiEye(58, 8, 1000);
-                    DrawRegiEye(58, 7, 0);
-                    DrawRegiEye(58, 9, 1000);
-                    DrawRegiEye(60, 8, 0);
-                    DrawRegiEye(56, 8, 500);
-                    DrawRegiEye(59, 8, 0);
-                    DrawRegiEye(57, 8, 500);
-                    NopWithWaitCommand(3000);
-                    break;
-                case RoomEventType.REGIELEKI: // Dramatic drawing of regigas eyes
-                    ClearScreenCommand();
-                    DrawRegiEye(13, 3, 250);
-                    DrawRegiEye(14, 3, 250);
-                    DrawRegiEye(12, 3, 250);
-                    DrawRegiEye(15, 4, 0);
-                    DrawRegiEye(15, 2, 250);
-                    DrawRegiEye(11, 2, 0);
-                    DrawRegiEye(11, 4, 250);
-                    NopWithWaitCommand(3000);
-                    break;
-                case RoomEventType.REGIDRAGO: // Dramatic drawing of regigas eyes (53,10)
-                    ClearScreenCommand();
-                    DrawRegiEye(53, 11, 1000);
-                    DrawRegiEye(53, 12, 0);
-                    DrawRegiEye(52, 10, 0);
-                    DrawRegiEye(54, 10, 1000);
-                    DrawRegiEye(51, 9, 0);
-                    DrawRegiEye(53, 9, 0);
-                    DrawRegiEye(55, 9, 1000);
-                    NopWithWaitCommand(1000);
-                    break;
-                default:
-                    break;
-            }
-            return roomCleared;
-            */
         }
         /// <summary>
         /// Function that digs until the end to find every single relative of the desired Pokemon Species (i.e. it finds all alternates and prevos)
@@ -1030,7 +663,14 @@ namespace IndymonBackendProgram
         /// <param name="encounter"></param>
         void ResolveBattleAndPrizeEncounter(Encounter encounter)
         {
+            // Automatic string reading-writing
             int paramsIndex = 0; // Index that will navigate through scripted battle's params
+            List<string> proceduralStrings = []; // Will be assembled in some cases like when a random boss is found or sth. Also adds the params
+            // The way the proc string will work is
+            //  1 - The selected trainers, this is to name them in $1 (e.g. "Brock wants to battle!")
+            //  2-n - The groups of mons, one by one. This is done to isolate Boss + Mobs
+            // last - The prize(s) gathered. If the encounter designer knows what to look for, they can extract all corresponding strings
+            // Enemy containers
             List<TrainerInstance> allEnemyInstances = []; // Contains all generated enemy instances that will participate in this fight
             // Potential prize tables, if the event allows it, both pokemon and items but only filled if catchable
             List<PokemonInstance> catchableEnemyMons = [];
@@ -1040,6 +680,10 @@ namespace IndymonBackendProgram
             foreach (EnemyParams enemy in encounter.Enemies) // Instance, one by one
             {
                 List<string> itemsUsed = []; // Items that have been used by enemy, there can be duplicates
+                if (enemy.Type == EncounterEnemyType.SPECIFIC_TRAINER)
+                {
+                    proceduralStrings.Add(encounter.Params[paramsIndex]); // If a specific trainer, add it here too as otherwise it won't be added to procedural strings to consumptions
+                }
                 // Assemble what the enemy can be, and what can it have
                 HashSet<PokemonSpecies> availablePokemonSpecies = enemy.Type switch
                 {
@@ -1049,6 +693,7 @@ namespace IndymonBackendProgram
                     EncounterEnemyType.PREVIOUS_FLOOR => [.. _context.EncounterTable.Where(m => m.Rank == Math.Clamp(_context.CurrentFloor + 0, 1, 3))], // Make sure floor not out of bounds!
                     EncounterEnemyType.FIRST_FLOOR => [.. _context.EncounterTable.Where(m => m.Rank == 1)],
                     EncounterEnemyType.FAMILY => [.. GetFamilyHash(speciesUsed)],
+                    EncounterEnemyType.SPECIFIC_TRAINER => [], // Yeah this needs to be resolved later on
                     EncounterEnemyType.NONE => throw new Exception("Enemy was not defined properly and still has NONE as type"),
                     _ => throw new Exception("Unknown scripted enemy type"),
                 };
@@ -1064,14 +709,22 @@ namespace IndymonBackendProgram
                     _ => throw new Exception("Unknown scripted item type"),
                 };
                 // Then, time to assemble the enemy "NPC trainer"
-                NpcTrainer enemyTrainer = new NpcTrainer()
+                NpcTrainer enemyTrainer;
+                if (enemy.Type == EncounterEnemyType.SPECIFIC_TRAINER) // Fetch the NPC trainer directly from NPC list
                 {
-                    // No name or picture, would be left blank in renderer
-                    TrainerRank = TrainerRank.WILD_MONS,
-                    FullyLoadedData = true, // It's generated here...
-                    AvailablePokemon = [.. availablePokemonSpecies],
-                    AvailableItems = availableEquippableItems // Adds the potential items by name, the actual drop amount and prize type would be considered later (if the battle is won!)
-                };
+                    enemyTrainer = GameplayElementsContainer.GlobalData.AllNpcTrainers[encounter.Params[paramsIndex++]];
+                }
+                else // Otherwise generate the new NPC procedurally
+                {
+                    enemyTrainer = new NpcTrainer()
+                    {
+                        // No name or picture, would be left blank in renderer
+                        TrainerRank = TrainerRank.WILD_MONS,
+                        FullyLoadedData = true, // It's generated here...
+                        AvailablePokemon = [.. availablePokemonSpecies],
+                        AvailableItems = availableEquippableItems // Adds the potential items by name, the actual drop amount and prize type would be considered later (if the battle is won!)
+                    };
+                }
                 // How many mons will appear?
                 int nMons = enemy.Number;
                 if (encounter.UseEnemyCountSandwich) // Check if the sandwich can alter the count
@@ -1108,6 +761,7 @@ namespace IndymonBackendProgram
                     potentialPrizes.AddRange(itemsUsed);
                     catchableEnemyMons.AddRange(wildTrainerInstance.PokemonInTeam); // Add also the mons if catchable
                 }
+                proceduralStrings.Add(string.Join(", ", [.. wildTrainerInstance.PokemonInTeam.Select(p => p.AssociatedEntity.Species.Name).Distinct().Order()])); // Add this enemy to procedural strings
                 allEnemyInstances.Add(wildTrainerInstance); // Enemy is in now!
             }
             // Assembling of procedural strings
@@ -1132,11 +786,6 @@ namespace IndymonBackendProgram
                     ).Name], // Generate a random sandwich on the spot with a random effect, random duration and decaying power
                 _ => throw new Exception("Unknown scripted item type for prizes"),
             };
-            List<string> proceduralStrings = []; // Will be assembled in some cases like when a random boss is found or sth
-            if (catchableEnemyMons.Count > 0)
-            {
-                proceduralStrings.Add(string.Join(", ", [.. catchableEnemyMons.Select(p => p.AssociatedEntity.Species.Name).Distinct().Order()])); // Add string containing ALL enemies species (only once)
-            }
             if (potentialPrizes.Count > 0)
             {
                 proceduralStrings.Add(string.Join(", ", [.. potentialPrizes.Distinct().Order()])); // And also all items
@@ -1156,7 +805,7 @@ namespace IndymonBackendProgram
             bool playerWon = true; // Determines if the event was a success (true if no combat)
             if (allEnemyInstances.Count > 0)
             {
-                GameOutcome outcome = ResolveEncounter(allEnemyInstances, GetGameParameters());
+                GameOutcome outcome = ResolveEncounter(allEnemyInstances, GetGameParameters(encounter), encounter.UseFollower);
                 playerWon = outcome.WinningTeam == Side.BOTTOM; // Trainer won if bottom won
             }
             if (playerWon) // If won, can then assign the prizes and the capture tables
@@ -1202,7 +851,10 @@ namespace IndymonBackendProgram
                 }
             }
             // If a mon count or shiny sandwich was in effect, consume it
-            _context.UseSandwichEffect(SandwichEffectType.ENEMY_NUMBER, s => { });
+            if (encounter.UseEnemyCountSandwich)
+            {
+                _context.UseSandwichEffect(SandwichEffectType.ENEMY_NUMBER, s => { });
+            }
             _context.UseSandwichEffect(SandwichEffectType.SHINY_CHANCE, s => { });
             // Final things, check which string to output
             string encounterEndString = playerWon ? encounterWinString : encounterLoseString;
@@ -1311,13 +963,13 @@ namespace IndymonBackendProgram
         /// <param name="enemies">All enemy side instances with all the mons and shit ready</param>
         /// <param name="parameters">The game parameters for this game</param>
         /// <returns>The Game Outcome</returns>
-        GameOutcome ResolveEncounter(List<TrainerInstance> enemies, GameParameters parameters)
+        GameOutcome ResolveEncounter(List<TrainerInstance> enemies, GameParameters parameters, bool useFollower)
         {
             Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Pre wild vs enemies"));
             PreFightTrainerMods();
             List<TrainerInstance> allParticipants = [.. enemies];
             allParticipants.Add(_context.TrainerInstance);
-            if (_context.FollowerInstance != null) // Also add follower if any
+            if (useFollower && _context.FollowerInstance != null) // Also add follower if any
             {
                 allParticipants.Add(_context.FollowerInstance);
             }
@@ -1329,13 +981,23 @@ namespace IndymonBackendProgram
         /// <summary>
         /// Gets the standard game params to use in an exploration battle
         /// </summary>
+        /// <param name="encounter">Encounter, contains parameters that would be overriden</param>
         /// <returns>The params to be used</returns>
-        GameParameters GetGameParameters()
+        GameParameters GetGameParameters(Encounter encounter)
         {
+            Weather weather;
+            if (encounter.WeatherOverride.Count > 0)
+            {
+                int weatherOverrideIdx = GeneralUtilities.GetRandomWeightedIndex([.. encounter.WeatherOverride.Select(w => w.Chance)], _context.Rng);
+                weather = GameplayElementsContainer.GlobalData.Weathers[encounter.WeatherOverride[weatherOverrideIdx].Name];
+            }
+            else
+            {
+                weather = GameplayElementsContainer.GlobalData.Weathers[_context.DungeonData.CurrentWeather.Name];
+            }
             GameParameters parameters = new GameParameters()
             {
-                ForceWin = false, // These can actually end in a tie (player continues advancing forward)
-                Weathers = [GameplayElementsContainer.GlobalData.Weathers[_context.DungeonData.CurrentWeather.Name]], // Fetch the weather
+                Weathers = [weather], // Fetch the weather
                 FocusedSide = Side.BOTTOM // Player is the star here
             };
             return parameters;
@@ -1356,6 +1018,29 @@ namespace IndymonBackendProgram
             }
             GeneralUtilities.AddtemToCountDictionary(thisRankDict, monName, 1);
             GameplayElementsContainer.GlobalData.AddMonToBox(mon.AssociatedEntity, "wild"); // Add mon to box too, but as a "wild" trainer, so the Nature + Moves can persist
+        }
+        /// <summary>
+        /// Resolves an encounter that performs something depending on actions on mons
+        /// </summary>
+        /// <param name="encounter">Encounter to resolve</param>
+        /// <param name="mons">Mons to apply action to</param>
+        /// <param name="action">Action to apply</param>
+        static void ResolveActionOnMonsEncounter(Encounter encounter, List<PokemonInstance> mons, Action<PokemonInstance> action)
+        {
+            Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(encounter.PreEncounterString)); // TODO: Also animation later on ig
+            if (mons.Count > 0)
+            {
+                string successString = encounter.EncounterSuccessString.Replace("$1", string.Join(", ", mons.Select(m => m.AssociatedEntity.Name)));
+                foreach (PokemonInstance mon in mons)
+                {
+                    action(mon);
+                }
+                Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(successString)); // TODO: Also animation later on ig
+            }
+            else
+            {
+                Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(encounter.EncounterFailureString)); // TODO: Also animation later on ig
+            }
         }
     }
 }
