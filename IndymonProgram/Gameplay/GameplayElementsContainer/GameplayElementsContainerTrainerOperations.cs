@@ -31,7 +31,7 @@ namespace Gameplay.GameplayElementsContainer
         /// <returns>An instantiated trainer entity to use in battles and such. usedItems list will be also filled</returns>
         public TrainerEntity CreateNpcEntity(NpcTrainer npcTrainer, int nMons, int rngSeed, double itemChance, int shinyChance, List<string> usedItemsOut)
         {
-            if (!npcTrainer.FullyLoadedData) throw new Exception("Randomizing a trainer that has no data!");
+            if (!npcTrainer.FullyLoadedData) throw new Exception($"{npcTrainer.Name} has no data yet. Will need to add it so that they can battle!");
             Random npcRng = new Random(rngSeed);
             usedItemsOut.Clear();
             // Ok generate the trainer then
@@ -50,12 +50,13 @@ namespace Gameplay.GameplayElementsContainer
                 int i = 0;
                 while (totalYielded < nMons)
                 {
-                    if (i > allSpeciesShuffled.Count) // If reached end, reset and reshuffle list
+                    if (i >= allSpeciesShuffled.Count) // If reached end, reset and reshuffle list
                     {
                         i = 0;
                         GeneralUtilities.ShuffleList(allSpeciesShuffled, npcRng);
                     }
-                    yield return allSpeciesShuffled[i];
+                    totalYielded++;
+                    yield return allSpeciesShuffled[i++];
                 }
                 yield break;
             }

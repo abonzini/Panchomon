@@ -86,8 +86,20 @@ namespace Utilities
         /// <returns>The generated random number</returns>
         public static int GetRandomDecayingNumber(int min, int max, double decay, Random rng)
         {
-            int amplitude = max - min;
+            double amplitude = max - min;
             return min + (int)Math.Round(Math.Pow(rng.NextDouble(), decay) * amplitude);
+        }
+        /// <summary>
+        /// Creates a random number thta is sortable, by transforming a weight into a softmax index
+        /// </summary>
+        /// <param name="weight">Weight input (needs to be in relative similarity to others, with higher being more likely)</param>
+        /// <param name="rng">Rng to use</param>
+        /// <returns></returns>
+        public static double GetSortableRandomWeight(double weight, Random rng)
+        {
+            double logRandom = -Math.Log(rng.NextDouble());
+            logRandom /= weight;
+            return logRandom;
         }
         /// <summary>
         /// Gets random [min-max)

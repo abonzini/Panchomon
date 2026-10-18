@@ -31,5 +31,9 @@ namespace Gameplay.GameEngine
         public BattleAvailability Availability = BattleAvailability.READY;
         public double[] BaseStatMult = [1, 1, 1, 1, 1, 1];
         public double[] VolatileStatMult = [1, 1, 1, 1, 1, 1];
+        public override string ToString()
+        {
+            return $"{AssociatedEntity} ({HpPercent * 100}%)";
+        }
     }
 }

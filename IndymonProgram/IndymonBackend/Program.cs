@@ -11,6 +11,7 @@ namespace IndymonBackendProgram
         {
             // Things (restore later)
             TournamentManager tournamentManager = new TournamentManager();
+            ExplorationManager explorationManager = new ExplorationManager();
             //ExplorationManager explorationManager = new ExplorationManager();
             // Parsing
             Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -40,6 +41,7 @@ namespace IndymonBackendProgram
             //GameDataContainers.GlobalGameData.InitializeDungeonData(Path.Combine(directoryPath, DUNGEON_DATA_DIR));
             // Finally, proper data of possible ongoing sims
             string TOURNAMENT_JSON_FILE = "current_tournament.json";
+            string EXPLORATION_JSON_FILE = "current_expl.json";
             //string EXPLORATION_JSON_FILE = "current_exploration.json";
             JsonSerializerSettings jsonSettings = new JsonSerializerSettings
             {
@@ -50,10 +52,10 @@ namespace IndymonBackendProgram
             {
                 tournamentManager = JsonConvert.DeserializeObject<TournamentManager>(File.ReadAllText(Path.Combine(directoryPath, TOURNAMENT_JSON_FILE)), jsonSettings);
             }
-            //if (Path.Exists(Path.Combine(directoryPath, EXPLORATION_JSON_FILE)))
-            //{
-            //    explorationManager = JsonConvert.DeserializeObject<ExplorationManager>(File.ReadAllText(Path.Combine(directoryPath, EXPLORATION_JSON_FILE)), jsonSettings);
-            //}
+            if (Path.Exists(Path.Combine(directoryPath, EXPLORATION_JSON_FILE)))
+            {
+                explorationManager = JsonConvert.DeserializeObject<ExplorationManager>(File.ReadAllText(Path.Combine(directoryPath, EXPLORATION_JSON_FILE)), jsonSettings);
+            }
             // Beginning of indymon program
             string InputString;
             do
@@ -101,7 +103,7 @@ namespace IndymonBackendProgram
                     case "0":
                         Console.WriteLine("Serializing jsons");
                         File.WriteAllText(Path.Combine(directoryPath, TOURNAMENT_JSON_FILE), JsonConvert.SerializeObject(tournamentManager, jsonSettings));
-                        //File.WriteAllText(Path.Combine(directoryPath, EXPLORATION_JSON_FILE), JsonConvert.SerializeObject(explorationManager, jsonSettings));
+                        File.WriteAllText(Path.Combine(directoryPath, EXPLORATION_JSON_FILE), JsonConvert.SerializeObject(explorationManager, jsonSettings));
                         break;
                     case "1":
                         SpreadsheetBuilderUtils.RollAndExportDungeons(directoryPath);
@@ -120,7 +122,8 @@ namespace IndymonBackendProgram
                         finalMessage.EventText.AppendLine("For those interested, this is the weather report for all the dungeons this week:");
                         foreach (Dungeon dung in GameplayElementsContainer.GlobalData.Dungeons.Values.OrderBy(d => d.Name))
                         {
-                            finalMessage.EventText.AppendLine($"- The {dung.Name} is currently experiencing {dung.CurrentWeather.Name} ({dung.CurrentWeather.Description}). Additionally, the danger level forecasted for next week is {new string('★', dung.Difficulty)}");
+                            Weather dungWeather = GameplayElementsContainer.GlobalData.Weathers[dung.CurrentWeather.Name];
+                            finalMessage.EventText.AppendLine($"- The {dung.Name} is currently experiencing {dung.CurrentWeather.Name} ({dungWeather.GetDescription()}). Additionally, the danger level forecasted for next week is {new string('★', dung.Difficulty)}");
                         }
                         finalMessage.EventText.AppendLine("Do keep in mind that, the higher the Danger Level of a dungeon, the stronger and more dangerous the wild Pokemon are!");
                         finalMessage.EventText.AppendLine();
@@ -145,17 +148,17 @@ namespace IndymonBackendProgram
                         tournamentManager.ExecuteTournament();
                         break;
                     case "5":
-                        //explorationManager = new ExplorationManager
-                        //{
-                        //    DirectoryPath = directoryPath
-                        //};
-                        //explorationManager.InitializeExploration();
+                        explorationManager = new ExplorationManager
+                        {
+                            DirectoryPath = directoryPath
+                        };
+                        explorationManager.InitializeExploration();
                         break;
                     case "6":
-                        //explorationManager.ExecuteExploration();
+                        explorationManager.ExecuteExploration();
                         break;
                     case "7":
-                        //explorationManager.AnimateExploration();
+                        // Free real estate
                         break;
                     case "8":
                         //{
@@ -341,10 +344,10 @@ namespace IndymonBackendProgram
                 "1 - Export all updated generated spreadsheet elements (boxes, cram-o-matic, glossary, updated dungeon diffs)\n" +
                 "2 - Export all players csv data\n" +
                 "3 - Generate a new tournament\n" +
-                "4 - Execute initialized tournament\n"
-            //"5 - Generate exploration, choose place, player, etc\n" +
-            //"6 - Simulate current exploration\n" +
-            //"7 - Animate resolved exploration\n" +
+                "4 - Execute initialized tournament\n" +
+                "5 - Generate exploration, choose place, player, etc\n" +
+                "6 - Execute current exploration\n"
+            //"7 - Nothing\n" +
             //"8 - Draw from Favour Gacha\n" +
             //"9 - Random 'Baby' Pokemon from trainer (Favor resolution)\n" +
             //"10 - Random exploration rewards (tiered favor resolutions)\n" +

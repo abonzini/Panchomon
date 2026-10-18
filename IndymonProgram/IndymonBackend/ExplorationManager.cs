@@ -124,16 +124,16 @@ namespace IndymonBackendProgram
         public double GetExtraStatMult()
         {
             // Similarly to healing and stuff, each levels increases stats by 5% (so a mult of 1.05 to 1.25 but this mult should be additive i'd say?)
-            double totalLevelGain = 0; // Will be double to stack many double effects
+            double additionalStatMult = 1; // Will be double to stack many double effects
             List<Sandwich> validSandwichEffects = [.. _sandwichEffects.Where(s => s.Item1.Effect == SandwichEffectType.STAT_MULT).Select(s => s.Item1)]; // Get the valid sandwiches
             foreach (Sandwich sando in validSandwichEffects)
             {
-                double max = 0.05 * sando.Level; // Max healing
+                double max = 0.05 * sando.Level; // Max stat mult possible
                 double min = max - 0.5 * max * (sando.Duration - 1); // Reaches -MAX at duration 5
                 double randomFloat = min + ((max - min) * Rng.NextDouble());
-                totalLevelGain += randomFloat;
+                additionalStatMult += randomFloat;
             }
-            return totalLevelGain;
+            return additionalStatMult;
         }
         /// <summary>
         /// Uses the effect of a sandwich type
@@ -165,22 +165,23 @@ namespace IndymonBackendProgram
         // Private data to retrieve stuff
         readonly ExplorationContext _context = new ExplorationContext();
         // Public data (saved)
-        public string Dungeon { get; set; }
+        public string Dungeon { get; set; } = "";
         public int ExplorationSeed { get; set; }
         public (string, int, int) TrainerAndSeeds { get; set; } // Trainer seed, mon seed
         public string DirectoryPath { get; set; } = "";
+        public bool UseExplorationTicket { get; set; } = false;
+        public string ExplFavour { get; set; } = "";
         /// <summary>
         /// Sets up exploration basics to later run it
         /// </summary>
         /// <param name="directoryPath">Path where stuff will be put</param>
-        public void InitializeExploration(string directoryPath)
+        public void InitializeExploration()
         {
-            DirectoryPath = directoryPath;
             Random rng = GameplayElementsContainer.GlobalData.CommonRng;
             // First ask organizer to choose dungeon
             List<string> dungeonOptions = [.. GameplayElementsContainer.GlobalData.Dungeons.Keys];
             Console.WriteLine($"Creating a brand new exploration, which dungeon? (something else for random)\n{string.Join(", ", dungeonOptions)}");
-            string Dungeon = Console.ReadLine();
+            Dungeon = Console.ReadLine();
             if (!GameplayElementsContainer.GlobalData.Dungeons.ContainsKey(Dungeon)) // If invalid, pick a random dungeon then
             {
                 Dungeon = GeneralUtilities.GetRandomPick(dungeonOptions, rng);
@@ -189,7 +190,21 @@ namespace IndymonBackendProgram
             // Then which player
             List<string> validTrainers = [.. GameplayElementsContainer.GlobalData.Trainers.Keys];
             Console.WriteLine($"Which trainer will explore?\n{string.Join(", ", validTrainers)}");
-            TrainerAndSeeds = (Console.ReadLine(), rng.Next(), rng.Next());
+            TrainerEntity theTrainer = GameplayElementsContainer.GlobalData.Trainers[Console.ReadLine()];
+            TrainerAndSeeds = (theTrainer.Name, rng.Next(), rng.Next());
+            ExplorationSeed = rng.Next();
+            // Some extra trainer stuff
+            KeyItem explTicketItem = GameplayElementsContainer.GlobalData.KeyItems["Exploration Ticket"];
+            if (theTrainer.KeyItems.ContainsKey(explTicketItem)) // Fetch the expl ticket key item
+            {
+                Console.WriteLine("Use ticket? y/N");
+                UseExplorationTicket = Console.ReadLine().ToLower() == "y";
+            }
+            if (theTrainer.Favours.Count > 0)
+            {
+                Console.WriteLine($"Use Favour? {string.Join(", ", theTrainer.Favours.Keys.Select(t => t.Name))}");
+                ExplFavour = Console.ReadLine();
+            }
         }
         /// <summary>
         /// Begins an exploration, starts a simulation
@@ -221,15 +236,9 @@ namespace IndymonBackendProgram
                 PokemonInTeam = [.. _context.TrainerEntity.Pokemon.Select(p => SimulatorHandler.InstancePokemon(p, new Random(pokemonRng.Next())))]
             };
             // Check expl ticket
-            bool explTicket = false;
-            KeyItem explTicketItem = GameplayElementsContainer.GlobalData.KeyItems["Exploration Ticket"];
-            if (_context.TrainerEntity.KeyItems.ContainsKey(explTicketItem)) // Fetch the expl ticket key item
+            if (UseExplorationTicket) // Remove ticket and also different message
             {
-                Console.WriteLine("Use ticket? y/N");
-                explTicket = Console.ReadLine().ToLower() == "y";
-            }
-            if (explTicket) // Remove ticket and also different message
-            {
+                KeyItem explTicketItem = GameplayElementsContainer.GlobalData.KeyItems["Exploration Ticket"];
                 GeneralUtilities.AddtemToCountDictionary(_context.TrainerEntity.KeyItems, explTicketItem, -1); // Remove a ticket
                 _context.ExplorationMessage.EventTitle = $"<@{_context.TrainerEntity.DiscordId}> Meanwhile, {_context.TrainerEntity.Name} used their Exploration Ticket for a free trip to {Dungeon}.";
             }
@@ -240,9 +249,7 @@ namespace IndymonBackendProgram
             // Check if trainer will use an exploration assistance favour
             if (_context.TrainerEntity.Favours.Count > 0)
             {
-                Console.WriteLine($"Use Favour? {string.Join(", ", _context.TrainerEntity.Favours.Keys.Select(t => t.Name))}");
-                string favourChosen = Console.ReadLine();
-                NpcTrainer favourTrainer = _context.TrainerEntity.Favours.Keys.Where(t => t.Name == favourChosen).FirstOrDefault();
+                NpcTrainer favourTrainer = _context.TrainerEntity.Favours.Keys.Where(t => t.Name == ExplFavour).FirstOrDefault();
                 if (favourTrainer != null)
                 {
                     Console.WriteLine($"{favourTrainer.Name} selected");
@@ -297,7 +304,7 @@ namespace IndymonBackendProgram
                                     {
                                         Type = EncounterEnemyType.CURRENT_FLOOR,
                                         EquipType = EncounterItemType.COMMON_ITEM_POOL,
-                                        EquipChance = GameplayElementsContainer.NPC_ITEM_CHANCE,
+                                        EquipChance = _context.DungeonData.GeneralItemDropChance,
                                         Number = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
                                         MaxSimultaneousMons = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
                                         Catchable = true
@@ -317,13 +324,14 @@ namespace IndymonBackendProgram
                     else
                     {
                         // Otherwise, random pick of encounters, given their absolute weights and then a bit of shenanigans to softmax weights with some rng, sorts the resulting list (bit of black magic ngl)
-                        possibleEncountersThisRoom = [.. _context.DungeonData.EncounterPool.OrderBy(e => -Math.Log(_context.Rng.NextDouble() / GetRoomEncounterWeight(e, room, pastEncounters)))];
+                        possibleEncountersThisRoom = [.. _context.DungeonData.EncounterPool.OrderBy(e => GeneralUtilities.GetSortableRandomWeight(GetRoomEncounterWeight(e, room, pastEncounters), _context.Rng))];
                         int numberOfRooms = GeneralUtilities.GetRandomDecayingNumber(1, GameplayElementsContainer.MAX_SIMULTANEOUS_ROOM_PICKS, 2, _context.Rng); // Choose between 1-5 rooms
                         possibleEncountersThisRoom = possibleEncountersThisRoom[..numberOfRooms]; // Splice only the first n
                     }
                     Encounter roomEncounter = GeneralUtilities.GetRandomPick(possibleEncountersThisRoom, _context.Rng); // Feels wasteful but now choose a random one of these encounters (all this was for animation sake)
                     // Now, attempt to do the room's encounter
                     ExecuteEncounter(roomEncounter);
+                    pastEncounters.Add(roomEncounter); // This encounter happened
                     // Checking for the case where trainer or their friend has no more usable Pokemon
                     if (!_context.TrainerInstance.PokemonInTeam.Any(p => p.Availability == BattleAvailability.READY)
                         && !_context.FollowerInstance.PokemonInTeam.Any(p => p.Availability == BattleAvailability.READY))
@@ -365,7 +373,7 @@ namespace IndymonBackendProgram
                     _ => 1
                 };
             }
-            else if (encounter.Category == EncounterCategory.DANGER && _context.DungeonData.Difficulty >= 3)
+            else if (_context.DungeonData.Difficulty >= 3)
             {
                 weight *= encounter.Category switch // Good things less likely, bad things more likely but also more prizes (less so)
                 {
@@ -565,27 +573,29 @@ namespace IndymonBackendProgram
                     if (_context.DungeonData.Difficulty >= 5) validRanks.Add(TrainerRank.CHAMPION);
                     // Pick a random one, keep name
                     string chosenNpc = GeneralUtilities.GetRandomPick([.. GameplayElementsContainer.GlobalData.AllNpcTrainers.Where(n => validRanks.Contains(n.Value.TrainerRank))], _context.Rng).Key;
+                    chosenNpc = "Brock"; // TODO: Remove this in production, just that for now brock is the only implemented trainer
                     Encounter npcBattleEncounter =
-                            new Encounter() // This encounter is simple because there's no scripted overrides just a Pokemon battle with some shit going on
+                            new Encounter()
                             {
                                 Type = EncounterType.BATTLE_AND_PRIZE,
                                 Category = EncounterCategory.NEUTRAL,
                                 PreEncounterString = encounter.PreEncounterString,
                                 EncounterSuccessString = encounter.EncounterSuccessString,
                                 EncounterFailureString = encounter.EncounterFailureString,
-                                Params = [chosenNpc],
-                                PrizeType = EncounterItemType.NONE,
+                                Params = [chosenNpc, chosenNpc, chosenNpc], // Will equip its own items but then reward the favour (item with name)
+                                PrizeType = EncounterItemType.SPECIFIC_ITEM,
                                 WeatherOverride = encounter.WeatherOverride,
                                 UseFollower = false,
                                 Enemies = [
-                                    new EnemyParams() // Standard enemy params besides these (3 pokemon but variabel length and catchable
+                                    new EnemyParams()
                                     {
                                         Type = EncounterEnemyType.SPECIFIC_TRAINER,
-                                        EquipType = EncounterItemType.COMMON_ITEM_POOL,
+                                        EquipType = EncounterItemType.TRAINER,
                                         EquipChance = GameplayElementsContainer.NPC_ITEM_CHANCE,
                                         Number = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
                                         MaxSimultaneousMons = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
-                                        Catchable = false
+                                        Catchable = false,
+                                        ApplyDifficultyMods = false
                                     }
                                 ]
                             };
@@ -604,6 +614,7 @@ namespace IndymonBackendProgram
                     for (int i = 0; i < GameplayElementsContainer.DEFAULT_BATTLE_NMONS; i++)
                     {
                         targetMons[i].HpPercent = 1; // Done!
+                        targetMons[i].NonVolatileStatusConditions.Clear();
                     }
                     // Now run it
                     ResolveBattleAndPrizeEncounter(npcBattleEncounter);
@@ -612,7 +623,7 @@ namespace IndymonBackendProgram
                 case EncounterType.UNOWN:
                     string unownWord = GeneralUtilities.GetRandomPick([.. GameplayElementsContainer.GlobalData.UnownLookup.Keys], _context.Rng); // Find a random unown word
                     Encounter unownBattleEncounter =
-                            new Encounter() // This encounter is simple because there's no scripted overrides just a Pokemon battle with some shit going on
+                            new Encounter()
                             {
                                 Type = EncounterType.BATTLE_AND_PRIZE,
                                 Category = EncounterCategory.NEUTRAL,
@@ -623,7 +634,7 @@ namespace IndymonBackendProgram
                                 PrizeType = EncounterItemType.UNOWN,
                                 WeatherOverride = encounter.WeatherOverride,
                                 Enemies = [
-                                    new EnemyParams() // Standard enemy params besides these (3 pokemon but variabel length and catchable
+                                    new EnemyParams()
                                     {
                                         Type = EncounterEnemyType.UNOWN,
                                         Number = int.MaxValue, // All unowns at the same time
@@ -633,6 +644,7 @@ namespace IndymonBackendProgram
                                     }
                                 ]
                             };
+                    ResolveBattleAndPrizeEncounter(unownBattleEncounter);
                     break;
                 default:
                     throw new Exception($"This encounter type {encounter.Type} is not known");
@@ -653,7 +665,10 @@ namespace IndymonBackendProgram
                 {
                     resultingSpecies.UnionWith(GetFamilyHash([alt]));
                 }
-                resultingSpecies.UnionWith(GetFamilyHash([species.Prevo]));
+                if (species.Prevo != null)
+                {
+                    resultingSpecies.UnionWith(GetFamilyHash([species.Prevo]));
+                }
             }
             return resultingSpecies;
         }
@@ -704,7 +719,8 @@ namespace IndymonBackendProgram
                     EncounterItemType.COMMON_ITEM_POOL => [.. _context.DungeonData.CommonDrops.Select(d => d.Name)],
                     EncounterItemType.RARE_ITEM_POOL => [.. _context.DungeonData.RareDrops.Select(d => d.Name)],
                     EncounterItemType.ALL_ITEM_POOLS => [.. _context.DungeonData.CommonDrops.Select(d => d.Name), .. _context.DungeonData.RareDrops.Select(d => d.Name)],
-                    EncounterItemType.DISKS or EncounterItemType.IMP or EncounterItemType.EVO_PLATE or EncounterItemType.SANDWICH or EncounterItemType.ENEMIES or EncounterItemType.EQUIPPED_ITEMS
+                    EncounterItemType.TRAINER => [.. GameplayElementsContainer.GlobalData.AllNpcTrainers[encounter.Params[paramsIndex++]].AvailableItems],
+                    EncounterItemType.UNOWN or EncounterItemType.DISKS or EncounterItemType.IMP or EncounterItemType.EVO_PLATE or EncounterItemType.SANDWICH or EncounterItemType.ENEMIES or EncounterItemType.EQUIPPED_ITEMS
                         => throw new Exception("These item types are not a valid descriptor of what items a mon can equip. These are only for prizes. Try again"),
                     _ => throw new Exception("Unknown scripted item type"),
                 };
@@ -736,33 +752,36 @@ namespace IndymonBackendProgram
                     }
                 }
                 // Next, the trainer entity, i.e. from NPC data into an actual entity
-                TrainerEntity wildTrainerEntity = GameplayElementsContainer.GlobalData.CreateNpcEntity(enemyTrainer, nMons, _context.Rng.Next(), enemy.EquipChance, _context.GetShinyChance(), itemsUsed); // For now the shiny chance is identical to all mons, scripted or not
+                TrainerEntity enemyTrainerEntity = GameplayElementsContainer.GlobalData.CreateNpcEntity(enemyTrainer, nMons, _context.Rng.Next(), enemy.EquipChance, _context.GetShinyChance(), itemsUsed); // For now the shiny chance is identical to all mons, scripted or not
                 // Finally, the actual instance for game sim, both the trainer AND the mons
                 // Create instance of all mons
-                TrainerInstance wildTrainerInstance = new TrainerInstance()
+                TrainerInstance enemyTrainerInstance = new TrainerInstance()
                 {
-                    Name = wildTrainerEntity.Name,
+                    Name = enemyTrainerEntity.Name,
                     Team = Side.TOP,
                     MaxMonsInField = enemy.MaxSimultaneousMons,
                     // No limit for max mon used, will start with 3-10 and then who knows
-                    ActiveJewelry = wildTrainerEntity.EquippedJewelry,
+                    ActiveJewelry = enemyTrainerEntity.EquippedJewelry,
                     // Will add mons one by one later due to potential customizations
                 };
-                foreach (PokemonEntity enemyMon in wildTrainerEntity.Pokemon) // Instance one by one
+                foreach (PokemonEntity enemyMon in enemyTrainerEntity.Pokemon) // Instance one by one
                 {
                     PokemonInstance nextMonInstance = SimulatorHandler.InstancePokemon(enemyMon, _context.Rng);
-                    nextMonInstance.BaseStatMult = [.. enemy.StatMult.Select(i => i * GetDifficultyStatMult())]; // Its stats do need to be multiplied depending on danger level and the event's mult
-                    wildTrainerInstance.PokemonInTeam.Add(nextMonInstance);
+                    if (enemy.ApplyDifficultyMods)
+                    {
+                        nextMonInstance.BaseStatMult = [.. enemy.StatMult.Select(i => i * GetDifficultyStatMult())]; // Its stats do need to be multiplied depending on danger level and the event's mult
+                    }
+                    enemyTrainerInstance.PokemonInTeam.Add(nextMonInstance);
                 }
                 // Now that the trainer has been assembled, if catchable, need to put into the lists
-                speciesUsed.UnionWith(wildTrainerEntity.Pokemon.Select(p => p.Species)); // Add to species used, useful for inter-enemy logic
+                speciesUsed.UnionWith(enemyTrainerEntity.Pokemon.Select(p => p.Species)); // Add to species used, useful for inter-enemy logic
                 if (enemy.Catchable)
                 {
                     potentialPrizes.AddRange(itemsUsed);
-                    catchableEnemyMons.AddRange(wildTrainerInstance.PokemonInTeam); // Add also the mons if catchable
+                    catchableEnemyMons.AddRange(enemyTrainerInstance.PokemonInTeam); // Add also the mons if catchable
                 }
-                proceduralStrings.Add(string.Join(", ", [.. wildTrainerInstance.PokemonInTeam.Select(p => p.AssociatedEntity.Species.Name).Distinct().Order()])); // Add this enemy to procedural strings
-                allEnemyInstances.Add(wildTrainerInstance); // Enemy is in now!
+                proceduralStrings.Add(string.Join(", ", [.. enemyTrainerInstance.PokemonInTeam.Select(p => p.AssociatedEntity.Species.Name).Distinct().Order()])); // Add this enemy to procedural strings
+                allEnemyInstances.Add(enemyTrainerInstance); // Enemy is in now!
             }
             // Assembling of procedural strings
             List<string> prizes = encounter.PrizeType switch // Define the prize pool first, since the prizes will be important for assembling procedural strings
@@ -784,20 +803,26 @@ namespace IndymonBackendProgram
                     GeneralUtilities.GetRandomDecayingNumber(1,5,2,_context.Rng),
                     GeneralUtilities.GetRandomNumber(1,5,_context.Rng)
                     ).Name], // Generate a random sandwich on the spot with a random effect, random duration and decaying power
+                EncounterItemType.UNOWN => [GameplayElementsContainer.GlobalData.UnownLookup[encounter.Params[paramsIndex++]]],
+                EncounterItemType.TRAINER => [.. GameplayElementsContainer.GlobalData.AllNpcTrainers[encounter.Params[paramsIndex++]].AvailableItems],
                 _ => throw new Exception("Unknown scripted item type for prizes"),
             };
             if (potentialPrizes.Count > 0)
             {
                 proceduralStrings.Add(string.Join(", ", [.. potentialPrizes.Distinct().Order()])); // And also all items
             }
+            else
+            {
+                proceduralStrings.Add("None");
+            }
             string encounterStartString = encounter.PreEncounterString;
             string encounterWinString = encounter.EncounterSuccessString;
             string encounterLoseString = encounter.EncounterFailureString;
-            for (int i = 1; i <= proceduralStrings.Count; i++) // Now assemble all possible strings
+            for (int i = 0; i < proceduralStrings.Count; i++) // Now assemble all possible strings
             {
-                encounterStartString = encounterStartString.Replace($"${i}", proceduralStrings[i]);
-                encounterWinString = encounterWinString.Replace($"${i}", proceduralStrings[i]);
-                encounterLoseString = encounterLoseString.Replace($"${i}", proceduralStrings[i]);
+                encounterStartString = encounterStartString.Replace($"${i + 1}", proceduralStrings[i]);
+                encounterWinString = encounterWinString.Replace($"${i + 1}", proceduralStrings[i]);
+                encounterLoseString = encounterLoseString.Replace($"${i + 1}", proceduralStrings[i]);
             }
             // Pre combat text
             Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(encounterStartString)); // TODO: Also animation later on ig
@@ -845,7 +870,7 @@ namespace IndymonBackendProgram
                     _context.UseSandwichEffect(SandwichEffectType.ITEM_DROP, s => { }); // Need to actually notify renderer about this later on
                 }
                 // Then, the mon tables. Check the CatchableSpecies, which should've been modified during battle
-                foreach (PokemonInstance mon in catchableEnemyMons.Where(m => m.Availability == BattleAvailability.FAINT)) // Can only capture fainted mons (idk how non fainted here would happen)
+                foreach (PokemonInstance mon in catchableEnemyMons.Where(m => m.Availability == BattleAvailability.FAINT)) // Can only capture fainted mons
                 {
                     AddMonToCatchTable(mon); // Add mon to catchtable
                 }
@@ -965,7 +990,7 @@ namespace IndymonBackendProgram
         /// <returns>The Game Outcome</returns>
         GameOutcome ResolveEncounter(List<TrainerInstance> enemies, GameParameters parameters, bool useFollower)
         {
-            Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Pre wild vs enemies"));
+            Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Pre vs enemies"));
             PreFightTrainerMods();
             List<TrainerInstance> allParticipants = [.. enemies];
             allParticipants.Add(_context.TrainerInstance);
@@ -974,7 +999,7 @@ namespace IndymonBackendProgram
                 allParticipants.Add(_context.FollowerInstance);
             }
             GameOutcome outcome = SimulatorHandler.SimulateGame(allParticipants, parameters, _context.Rng); // Simulates the game
-            Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Post wild vs enemies"));
+            Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Post vs enemies"));
             PostFightTrainerMods();
             return outcome;
         }

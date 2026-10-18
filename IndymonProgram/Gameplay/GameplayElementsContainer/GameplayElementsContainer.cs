@@ -48,7 +48,7 @@ namespace Gameplay.GameplayElementsContainer
             FillBoxedMonData(sheetId, boxMonArea);
             string playerArea = lines[9].Split(",")[0];
             FillPlayers(sheetId, playerArea);
-            // Dungeon data is weird because it's hybrid
+            // Dungeon data is weird because it's hybrid. Current weather/difficulty is in sheet for persistence, but all the mechanics are in the jsons
             string dungeonTab = lines[10].Split(",")[0];
             ParseDungeonData(masterDirectory, sheetId, dungeonTab);
         }

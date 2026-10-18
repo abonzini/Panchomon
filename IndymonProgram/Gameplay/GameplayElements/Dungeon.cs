@@ -34,7 +34,6 @@ namespace Gameplay.GameplayElements
     public class WeatherForecast
     {
         public string Name { get; set; }
-        public string Description { get; set; }
         public double Chance { get; set; }
         public override string ToString()
         {
@@ -74,6 +73,7 @@ namespace Gameplay.GameplayElements
         COMMON_ITEM_POOL, /// A random item from the common item pool
         RARE_ITEM_POOL, /// A random item from the rare item pool
         ALL_ITEM_POOLS, /// Random item from both item pools
+        TRAINER, /// Items belonging to a trainer
         EQUIPPED_ITEMS, /// The items that have been equipped (really makes sense for prizes only)
         ENEMIES, /// Enemies willing to join you for rank 0 (yes, all of them)
         DISKS, /// Prize is Move Disk + Some Blanks
@@ -97,6 +97,7 @@ namespace Gameplay.GameplayElements
         public int MaxSimultaneousMons { get; set; } = GameplayElementsContainer.GameplayElementsContainer.DEFAULT_BATTLE_NMONS; /// How many enemies will appear at the same time on one side of the battle
         public bool Catchable { get; set; } = true; /// Would these be catchable? (also involve items)
         public bool AutoDistribute { get; set; } = true; /// Whether to auto-arrange the mons of this group to be auto distibuted, otherwise all in a row (for unowns lol)
+        public bool ApplyDifficultyMods { get; set; } = true; /// Whether this enemy gets harder in higher difficulties (or rather, to set which ones don't)
     }
     /// <summary>
     /// Defines a specific scripted encounter, all the elements which are encounter-specific and not used for the dungeon at large
@@ -119,7 +120,7 @@ namespace Gameplay.GameplayElements
         public bool UseFollower { get; set; } = true; // If follower also plays here
         public override string ToString()
         {
-            return Type.ToString();
+            return $"{Type} -> {PreEncounterString}";
         }
     }
     public class Dungeon

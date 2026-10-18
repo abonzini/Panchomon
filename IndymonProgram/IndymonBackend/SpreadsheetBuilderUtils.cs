@@ -39,7 +39,8 @@ namespace IndymonBackendProgram
             // Put current dungeon weathers
             foreach (Dungeon dung in GameplayElementsContainer.GlobalData.Dungeons.Values)
             {
-                glossary[dung.CurrentWeather.Name] = dung.CurrentWeather.Description;
+                Weather dungWeather = GameplayElementsContainer.GlobalData.Weathers[dung.CurrentWeather.Name];
+                glossary[dungWeather.Name] = dungWeather.GetDescription();
             }
             // File complete, save
             List<string> glossarySorted = [.. glossary.Select(x => $"{x.Key},{x.Value}").Order()];

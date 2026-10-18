@@ -5,22 +5,18 @@
     "PossibleWeathers": [
         {
             "Name": "No Weather",
-            "Description": "No particular weather in this dungeon.",
             "Chance": 0.5
         },
         {
             "Name": "Flood",
-            "Description": "The Power Plant is partly flooded this week. Expect water all over the floor.",
             "Chance": 0.20
         },
         {
             "Name": "High Voltage Arcs",
-            "Description": "There's a constant discharge of electricty around the Plant that may hit Pokemon.",
             "Chance": 0.20
         },
         {
             "Name": "Ion Deluge",
-            "Description": "The air is Ionized and smells funny. All Normal-type attacks become Electric-type.",
             "Chance": 0.1
         }
     ],
@@ -311,7 +307,7 @@
             "Type": "BATTLE_AND_PRIZE",
             "Category": "DANGER",
             "Note": "Just a mon from next floor but has an item equipped which it'll use during the fight",
-            "PreEventString": "In the middle of a room, you find a $2, but it's being guarded by a $1.",
+            "PreEncounterString": "In the middle of a room, you find a $2, but it's being guarded by a $1.",
             "EncounterSuccessString": "$1 runs away, you have taken its $2.",
             "EncounterFailureString": "It seems the $2 will remain safe here for now...",
             "Enemies": [
@@ -328,21 +324,21 @@
         {
             "Type": "EVO",
             "Category": "NEUTRAL",
-            "PreEventString": "Inside of a glass panel, a purple evolution crystal is connected to a number of cables. It whispers: YE WHO SEEK AWAKENING, LET US BEGIN.",
+            "PreEncounterString": "Inside of a glass panel, a purple evolution crystal is connected to a number of cables. It whispers: YE WHO SEEK AWAKENING, LET US BEGIN.",
             "EncounterSuccessString": "The evolution crystal lost most of its power, will take a bit before it can recharge.",
             "EncounterFailureString": "There's nothing here for you. The evolution crystal doesn't react further."
         },
         {
             "Type": "HP_HEAL",
             "Category": "REFRESH",
-            "PreEventString": "You find an old first-aid kit.",
+            "PreEncounterString": "You find an old first-aid kit.",
             "EncounterSuccessString": "Your Pokemon have recovered some health.",
             "EncounterFailureString": "None of your Pokemon are injured, you leave it there just in case anyone else needs it."
         },
         {
             "Type": "FULL_RESTORE",
             "Category": "REFRESH",
-            "PreEventString": "You find an old first-aid kit, but it only has enough medicine for a single Pokemon.",
+            "PreEncounterString": "You find an old first-aid kit, but it only has enough medicine for a single Pokemon.",
             "EncounterSuccessString": "You decide to apply it to $1, which is now fully recovered.",
             "EncounterFailureString": "None of your Pokemon are injured, you leve it there just in case anyone else needs it.",
             "BaseWeight": 0.5
@@ -350,7 +346,7 @@
         {
             "Type": "REVIVE",
             "Category": "REFRESH",
-            "PreEventString": "You reach a room with a lot of electrified cables hanging.",
+            "PreEncounterString": "You reach a room with a lot of electrified cables hanging.",
             "EncounterSuccessString": "A pair of cables shocks $1, who suddenly springs back to life!",
             "EncounterFailureString": "Yikes! Better be careful.",
             "BaseWeight": 0.1
@@ -358,28 +354,28 @@
         {
             "Type": "STATUS_CURE",
             "Category": "REFRESH",
-            "PreEventString": "You find an old first-aid kit.",
+            "PreEncounterString": "You find an old first-aid kit.",
             "EncounterSuccessString": "Your Pokemon have recovered from their status conditions.",
             "EncounterFailureString": "None of your Pokemon are injured, you leave it there just in case anyone else needs it."
         },
         {
             "Type": "JOINER",
             "Category": "PRIZE",
-            "PreEventString": "A young $1 appears in front of you and starts flexing. It's showing off!",
+            "PreEncounterString": "A young $1 appears in front of you and starts flexing. It's showing off!",
             "EncounterSuccessString": "It decides to follow you, show you what it's made of.",
             "EncounterFailureString": "This should never happen"
         },
         {
             "Type": "DAMAGE_TRAP",
             "Category": "DANGER",
-            "PreEventString": "You walk on top of a decrepit catwalk.",
+            "PreEncounterString": "You walk on top of a decrepit catwalk.",
             "EncounterSuccessString": "It obviously was a terrible idea! You and your Pokemon have sustained a bit of damage.",
             "EncounterFailureString": "This should never happen"
         },
         {
             "Type": "STATUS_TRAP",
             "Category": "DANGER",
-            "PreEventString": "You arrive to an area that is partly flooded.",
+            "PreEncounterString": "You arrive to an area that is partly flooded.",
             "EncounterSuccessString": "Unfortunately, a live wire is touching the water! $1 is electrocuted and is now paralyzed!",
             "EncounterFailureString": "Yikes! Better be careful.",
             "Params": [
@@ -389,7 +385,7 @@
         {
             "Type": "KILL_TRAP",
             "Category": "DANGER",
-            "PreEventString": "You reach a room with a lot of electrified cables hanging.",
+            "PreEncounterString": "You reach a room with a lot of electrified cables hanging.",
             "EncounterSuccessString": "A pair of cables shocks $1, who gets immediately vaporized",
             "EncounterFailureString": "This should never happen",
             "BaseWeight": 0.1
@@ -397,14 +393,14 @@
         {
             "Type": "NPC_BATTLE",
             "Category": "NEUTRAL",
-            "PreEventString": "$1 is in the Abandoned Plant, as lost as you are. 'The only thing to do now is to battle!', they say",
+            "PreEncounterString": "$1 is in the Abandoned Plant, as lost as you are. 'The only thing to do now is to battle!', they say",
             "EncounterSuccessString": "$1 goes home defeated. You continue onwards.",
             "EncounterFailureString": "This victory leaves $1 energized. They start running onwards at maximum speed. You're unable to catch on."
         },
         {
             "Type": "BATTLE_AND_PRIZE",
             "Category": "PRIZE",
-            "PreEventString": "You find an old Automatic ATM machine on a wall.",
+            "PreEncounterString": "You find an old Automatic ATM machine on a wall.",
             "EncounterSuccessString": "Surprisingly, it still has $1 inside.",
             "EncounterFailureString": "This should never happen",
             "PrizeType": "IMP"
@@ -412,7 +408,7 @@
         {
             "Type": "BATTLE_AND_PRIZE",
             "Category": "NEUTRAL",
-            "PreEventString": "You find some Team Paradox members carrying a crate full of blank disks. You are extremely suspicious of them.",
+            "PreEncounterString": "You find some Team Paradox members carrying a crate full of blank disks. You are extremely suspicious of them.",
             "EncounterSuccessString": "They give you $1 as a bribe to look away.",
             "EncounterFailureString": "This should never happen",
             "PrizeType": "DISKS"
@@ -420,14 +416,14 @@
         {
             "Type": "CAMPING",
             "Category": "NEUTRAL",
-            "PreEventString": "You find an old lunch table. The perfect place for a picnic.",
+            "PreEncounterString": "You find an old lunch table. The perfect place for a picnic.",
             "EncounterSuccessString": "Your team ate the $1. Yum!",
             "EncounterFailureString": "If you had a sandwich, you could take a lunch break in here..."
         },
         {
             "Type": "BATTLE_AND_PRIZE",
             "Category": "NEUTRAL",
-            "PreEventString": "You find Arven next to a generator that is on fire. He's just making some sandwiches using the fire nearby.",
+            "PreEncounterString": "You find Arven next to a generator that is on fire. He's just making some sandwiches using the fire nearby.",
             "EncounterSuccessString": "He shares a $1 with you, so you can try it next time you have a chance.",
             "EncounterFailureString": "This should never happen",
             "PrizeType": "EVO_PLATE"
@@ -436,7 +432,7 @@
             "Type": "BATTLE_AND_PRIZE",
             "Category": "DANGER",
             "Note": "Homage to the magnemite vs grimer episode",
-            "PreEventString": "Suddenly. you're caught in the crossfire in a war for territory between two species of Pokemon that reside in the power plant.",
+            "PreEncounterString": "Suddenly. you're caught in the crossfire in a war for territory between two species of Pokemon that reside in the power plant.",
             "EncounterSuccessString": "After the dust settles, both sides retreat to their own territories.",
             "EncounterFailureString": "You should've been wiser than to get caught into a fight between wild Pokemon!",
             "Params": [
@@ -597,7 +593,7 @@
         {
             "Type": "BATTLE_AND_PRIZE",
             "Category": "SCRIPTED",
-            "PreEncounterString": "You have crossed eyes with an angry $1. Apparently it's the boss of this floor, and you're in their territory!.",
+            "PreEncounterString": "You have crossed eyes with an angry $1. Apparently it's the boss of this floor, and you're in their territory!",
             "EncounterSuccessString": "$1 runs away scared, it seems you're the Power Plant Boss now.",
             "EncounterFailureString": "Now you see why $1 is the boss around these parts. Better leave before you make it angrier...",
             "Note": "Monster house inspired, there's a big boss from next floor with buddies from first floor, and the buddies keep coming",
@@ -631,7 +627,7 @@
                         1,
                         1
                     ],
-                    "Type": "FAMILY",
+                    "Type": "CURRENT_FLOOR",
                     "EquipType": "COMMON_ITEM_POOL",
                     "Number": 20,
                     "MaxSimultaneousMons": 2,
