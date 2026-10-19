@@ -141,13 +141,13 @@ namespace Gameplay.GameplayElementsContainer
                 Mints.Add(newMint.Name, newMint);
             }
         }
-        void LoadWeathers()
+        void LoadFieldModifiers()
         {
-            Console.WriteLine("Loading Weathers");
-            Weathers.Clear();
-            foreach (Weather weather in Weather.GetAllWeathers())
+            Console.WriteLine("Loading Field Mods");
+            FieldModifiers.Clear();
+            foreach (FieldModifier fieldMod in FieldModifier.GetAllFieldMods())
             {
-                Weathers.Add(weather.Name, weather);
+                FieldModifiers.Add(fieldMod.Name, fieldMod);
             }
         }
         void LoadNonVolatileStatus()

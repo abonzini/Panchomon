@@ -3,7 +3,7 @@ using Gameplay.GameplayElementsContainer;
 using System.Text;
 using Utilities;
 
-namespace PanchomonBackendProgram
+namespace PanchomonBackend
 {
     public static class SpreadsheetBuilderUtils
     {
@@ -39,7 +39,7 @@ namespace PanchomonBackendProgram
             // Put current dungeon weathers
             foreach (Dungeon dung in GameplayElementsContainer.GlobalData.Dungeons.Values)
             {
-                Weather dungWeather = GameplayElementsContainer.GlobalData.Weathers[dung.CurrentWeather.Name];
+                FieldModifier dungWeather = GameplayElementsContainer.GlobalData.FieldModifiers[dung.CurrentWeather.Name];
                 glossary[dungWeather.Name] = dungWeather.GetDescription();
             }
             // File complete, save
@@ -110,8 +110,8 @@ namespace PanchomonBackendProgram
                 Dungeon nextDungeon = orderedDungeons[i];
                 nextDungeon.Difficulty = difficulties[i];
                 // Roll the weather by chance
-                int weatherIdx = GeneralUtilities.GetRandomWeightedIndex([.. nextDungeon.PossibleWeathers.Select(w => w.Chance)], GameplayElementsContainer.GlobalData.CommonRng);
-                nextDungeon.CurrentWeather = nextDungeon.PossibleWeathers[weatherIdx];
+                int weatherIdx = GeneralUtilities.GetRandomWeightedIndex([.. nextDungeon.WeatherForecasts.Select(w => w.Chance)], GameplayElementsContainer.GlobalData.CommonRng);
+                nextDungeon.CurrentWeather = nextDungeon.WeatherForecasts[weatherIdx];
                 // Now create + append the csv string
                 string dangerLevelString = new string('★', nextDungeon.Difficulty);
                 fileBuilder.AppendLine($"{nextDungeon.Name},,,,,Danger Level,{dangerLevelString},Weather Report,{nextDungeon.CurrentWeather.Name}");

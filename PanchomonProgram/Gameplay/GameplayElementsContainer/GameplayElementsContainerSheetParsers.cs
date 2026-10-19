@@ -533,7 +533,7 @@ namespace Gameplay.GameplayElementsContainer
                 Dungeon foundDungeon = Dungeons[fields[1]]; // Get dungeon by name
                 foundDungeon.Difficulty = fields[7].Length; // Number of stars (or any characters) is the diff
                 string weatherString = fields[9].Trim();
-                foundDungeon.CurrentWeather = foundDungeon.PossibleWeathers.Where(w => w.Name == weatherString).FirstOrDefault();
+                foundDungeon.CurrentWeather = foundDungeon.WeatherForecasts.Where(w => w.Name == weatherString).FirstOrDefault();
             }
         }
     }

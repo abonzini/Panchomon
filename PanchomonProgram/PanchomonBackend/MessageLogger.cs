@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace PanchomonBackendProgram
+namespace PanchomonBackend
 {
     public class MessageLogger
     {

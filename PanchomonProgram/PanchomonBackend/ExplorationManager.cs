@@ -4,7 +4,7 @@ using Gameplay.GameplayElementsContainer;
 using GameSimulator;
 using Utilities;
 
-namespace PanchomonBackendProgram
+namespace PanchomonBackend
 {
     class ExplorationPrizeList
     {
@@ -584,7 +584,7 @@ namespace PanchomonBackendProgram
                                 EncounterFailureString = encounter.EncounterFailureString,
                                 Params = [chosenNpc, chosenNpc, chosenNpc], // Will equip its own items but then reward the favour (item with name)
                                 PrizeType = EncounterItemType.SPECIFIC_ITEM,
-                                WeatherOverride = encounter.WeatherOverride,
+                                WeatherOverrides = encounter.WeatherOverrides,
                                 UseFollower = false,
                                 Enemies = [
                                     new EnemyParams()
@@ -632,7 +632,7 @@ namespace PanchomonBackendProgram
                                 EncounterFailureString = encounter.EncounterFailureString,
                                 Params = [unownWord, unownWord],
                                 PrizeType = EncounterItemType.UNOWN,
-                                WeatherOverride = encounter.WeatherOverride,
+                                WeatherOverrides = encounter.WeatherOverrides,
                                 Enemies = [
                                     new EnemyParams()
                                     {
@@ -1010,19 +1010,19 @@ namespace PanchomonBackendProgram
         /// <returns>The params to be used</returns>
         GameParameters GetGameParameters(Encounter encounter)
         {
-            Weather weather;
-            if (encounter.WeatherOverride.Count > 0)
+            FieldModifier fieldMod;
+            if (encounter.WeatherOverrides.Count > 0)
             {
-                int weatherOverrideIdx = GeneralUtilities.GetRandomWeightedIndex([.. encounter.WeatherOverride.Select(w => w.Chance)], _context.Rng);
-                weather = GameplayElementsContainer.GlobalData.Weathers[encounter.WeatherOverride[weatherOverrideIdx].Name];
+                int weatherOverrideIdx = GeneralUtilities.GetRandomWeightedIndex([.. encounter.WeatherOverrides.Select(w => w.Chance)], _context.Rng);
+                fieldMod = GameplayElementsContainer.GlobalData.FieldModifiers[encounter.WeatherOverrides[weatherOverrideIdx].Name];
             }
             else
             {
-                weather = GameplayElementsContainer.GlobalData.Weathers[_context.DungeonData.CurrentWeather.Name];
+                fieldMod = GameplayElementsContainer.GlobalData.FieldModifiers[_context.DungeonData.CurrentWeather.Name];
             }
             GameParameters parameters = new GameParameters()
             {
-                Weathers = [weather], // Fetch the weather
+                FieldModifier = fieldMod, // Fetch the weather
                 FocusedSide = Side.BOTTOM // Player is the star here
             };
             return parameters;

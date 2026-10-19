@@ -4,7 +4,7 @@ using Gameplay.GameplayElementsContainer;
 using GameSimulator;
 using Utilities;
 
-namespace PanchomonBackendProgram
+namespace PanchomonBackend
 {
     public class TournamentManager
     {

@@ -2,7 +2,7 @@
     "Name": "Abandoned Power Plant",
     "Description1": "An abandoned man-made power plant. The place is full of decrepit structures and high chances of electric shocks!",
     "Description2": "Explorers will find many Electric/Poison/Steel-type Pokemon here.",
-    "PossibleWeathers": [
+    "WeatherForecasts": [
         {
             "Name": "No Weather",
             "Chance": 0.5
@@ -492,7 +492,7 @@
             "Regieleki",
             "Titan Plate 1"
         ],
-        "WeatherOverride": [
+        "WeatherOverrides": [
             {
                 "Name": "High Voltage Arcs",
                 "Description": "There's a constant discharge of electricty around the Plant that may hit Pokemon.",
@@ -582,7 +582,7 @@
                 }
             ],
             "PrizeType": "ENEMIES",
-            "WeatherOverride": [
+            "WeatherOverrides": [
                 {
                     "Name": "High Voltage Arcs",
                     "Description": "There's a constant discharge of electricty around the Plant that may hit Pokemon.",

@@ -3,7 +3,7 @@ using Gameplay.GameplayElements;
 using Gameplay.GameplayElementsContainer;
 using Newtonsoft.Json;
 
-namespace PanchomonBackendProgram
+namespace PanchomonBackend
 {
     public static class Program
     {
@@ -122,7 +122,7 @@ namespace PanchomonBackendProgram
                         finalMessage.EventText.AppendLine("For those interested, this is the weather report for all the dungeons this week:");
                         foreach (Dungeon dung in GameplayElementsContainer.GlobalData.Dungeons.Values.OrderBy(d => d.Name))
                         {
-                            Weather dungWeather = GameplayElementsContainer.GlobalData.Weathers[dung.CurrentWeather.Name];
+                            FieldModifier dungWeather = GameplayElementsContainer.GlobalData.FieldModifiers[dung.CurrentWeather.Name];
                             finalMessage.EventText.AppendLine($"- The {dung.Name} is currently experiencing {dung.CurrentWeather.Name} ({dungWeather.GetDescription()}). Additionally, the danger level forecasted for next week is {new string('★', dung.Difficulty)}");
                         }
                         finalMessage.EventText.AppendLine("Do keep in mind that, the higher the Danger Level of a dungeon, the stronger and more dangerous the wild Pokemon are!");
