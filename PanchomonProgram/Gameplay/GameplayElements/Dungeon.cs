@@ -40,6 +40,15 @@ namespace Gameplay.GameplayElements
             return $"{Name} ({Chance * 100}%)";
         }
     }
+    /// <summary>
+    /// Defines a battlefiled for the potential floor
+    /// </summary>
+    public class Battlefield
+    {
+        public TerrainGenerator TerrainGenerator { get; set; } /// Which terrain generation will be used
+        public double Weight { get; set; } = 1;/// Weight will be relative to the other terrains, 1 would be normal chane
+        public HashSet<int> Floors { get; set; } = []; /// 0,1,2 determines if it's in its corresponding floor
+    }
     public class ItemDrop
     {
         public string Name { get; set; }
@@ -116,6 +125,7 @@ namespace Gameplay.GameplayElements
         // For battle events, there's Enemy1 and Enemy2, this allows for both Boss + Followers (1 and 2 respectively) or 2 separate group of enemies in some fights
         public bool UseEnemyCountSandwich { get; set; } = false;
         public List<FieldModForecast> WeatherOverrides { get; set; } = [];
+        public Battlefield BattlefieldOverride { get; set; } = null; /// Whether the battlefield will be custom
         public List<EnemyParams> Enemies { get; set; } = [];
         public bool UseFollower { get; set; } = true; // If follower also plays here
         public override string ToString()
@@ -130,6 +140,7 @@ namespace Gameplay.GameplayElements
         public string Description2 { get; set; }
         public int Difficulty { get; set; }
         public List<FieldModForecast> WeatherForecasts { get; set; }
+        public List<Battlefield> PossibleBattlefields { get; set; }
         public FieldModForecast CurrentWeather { get; set; }
         public double GeneralItemDropChance { get; set; }
         public List<ItemDrop> CommonDrops { get; set; }
@@ -138,7 +149,6 @@ namespace Gameplay.GameplayElements
         public List<Encounter> EncounterPool { get; set; }
         public List<Encounter> BossEncounters { get; set; }
         public Encounter FinalBossEncounter { get; set; }
-
         public override string ToString()
         {
             return $"{Name}";

@@ -1005,6 +1005,20 @@ namespace PanchomonBackend
         /// <returns>The params to be used</returns>
         GameParameters GetGameParameters(Encounter encounter)
         {
+            // Check the battlefield to be used
+            Battlefield battlefieldUsed;
+            if (encounter.BattlefieldOverride != null)
+            {
+                battlefieldUsed = encounter.BattlefieldOverride;
+            }
+            else
+            {
+                // Otherwise get the dungeon's, picked at random
+                List<Battlefield> potentialBattlefileds = [.. _context.DungeonData.PossibleBattlefields.Where(b => b.Floors.Contains(_context.CurrentFloor))]; // Obtain battlefields for this floor
+                int battlefieldIdx = GeneralUtilities.GetRandomWeightedIndex([.. potentialBattlefileds.Select(b => b.Weight)], _context.Rng);
+                battlefieldUsed = potentialBattlefileds[battlefieldIdx];
+            }
+            // Check the field mods for this time (or if overriden)
             FieldModifier fieldMod;
             if (encounter.WeatherOverrides.Count > 0)
             {
@@ -1015,6 +1029,7 @@ namespace PanchomonBackend
             {
                 fieldMod = GameplayElementsContainer.GlobalData.FieldModifiers[_context.DungeonData.CurrentWeather.Name];
             }
+            // Now instance it
             GameParameters parameters = new GameParameters()
             {
                 FieldModifier = fieldMod, // Fetch the weather

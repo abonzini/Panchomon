@@ -167,6 +167,7 @@ namespace PanchomonBackend
         public string FirstPrizeStr { get; set; } = "";
         public string SecondPrizeStr { get; set; } = "";
         public string ConsolationPrizeStr { get; set; } = "";
+        public TerrainGenerator TournamentTerrain { get; set; }
         // Privates
         protected Random _rng;
         readonly List<TrainerEntity> _participants = new List<TrainerEntity>();
@@ -377,8 +378,12 @@ namespace PanchomonBackend
                 };
                 // Execute battle now
                 Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Pre {player1.Name} vs {player2.Name}"));
-                GameSimulator.GameSimulator sim = new GameSimulator.GameSimulator([trainer1, trainer2], new GameParameters());
-                GameOutcome outcome = sim.Simulate(_rng); // Simulates a game with standard battle rules (default gameparams)
+                GameParameters gameParams = new GameParameters() // These will be the game params for this tournament
+                {
+                    TerrainGenerator = TournamentTerrain
+                };
+                GameSimulator.GameSimulator sim = new GameSimulator.GameSimulator([trainer1, trainer2], gameParams);
+                GameOutcome outcome = sim.Simulate(_rng); // Simulates the game
                 Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Post {player1.Name} vs {player2.Name}")); // TODO: Add a bit more info about scores and stuff once actually applied
                 // Determine winner
                 if (outcome.WinningTeam == Side.BOTTOM)
@@ -430,6 +435,23 @@ namespace PanchomonBackend
                 };
                 Constraints = [onlyConstraint];
             }
+        }
+        /// <summary>
+        /// Asks which location will be used for the tournament
+        /// </summary>
+        protected void AskLocation()
+        {
+            Console.WriteLine("Choose location for this tournament:" +
+                "\n\t- [DEFAULT] Arena: Standard dirt battleground for typical tournaments");
+            string response = Console.ReadLine();
+            // Default one is the typical one
+            TournamentTerrain = new TerrainGenerator()
+            {
+                BasicTileSurface = "Dirt",
+                CliffFace = CliffFace.STONE,
+                FillerTile = "None",
+                Propagators = [] // TODO: Add tournament propagators
+            };
         }
     }
     /// <summary>
@@ -536,6 +558,7 @@ namespace PanchomonBackend
         public override void RequestAdditionalInfo(int nPlayers)
         {
             AskSpecialRulesets();
+            AskLocation();
         }
         public override void ShuffleWithSeeds(List<(string, int, int)> Seeds)
         {
@@ -598,6 +621,7 @@ namespace PanchomonBackend
         public override void RequestAdditionalInfo(int nPlayers)
         {
             AskSpecialRulesets();
+            AskLocation();
         }
         public override void ShuffleWithSeeds(List<(string, int, int)> Seeds)
         {
@@ -687,6 +711,7 @@ namespace PanchomonBackend
         public override void RequestAdditionalInfo(int nPlayers)
         {
             AskSpecialRulesets();
+            AskLocation();
             // Then group specific
             Console.WriteLine("How many players each group?");
             PlayersPerGroup = int.Parse(Console.ReadLine());

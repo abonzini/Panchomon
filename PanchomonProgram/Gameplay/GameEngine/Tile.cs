@@ -1,14 +1,19 @@
-﻿namespace Gameplay.GameEngine
+﻿using Gameplay.GameplayElements;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
+namespace Gameplay.GameEngine
 {
     /// <summary>
     /// How the cliff face looks like
     /// </summary>
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum CliffFace
     {
         NONE, // Non-rendered
         STONE
     }
-    public class Tile
+    public class Tile : SimulationElement
     {
         public CliffFace CliffFace = CliffFace.NONE;
         public PhysicalElement Occupier = null;

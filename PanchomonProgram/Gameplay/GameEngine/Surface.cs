@@ -16,8 +16,13 @@ namespace Gameplay.GameEngine
             Console.WriteLine("Getting all Surfaces");
             yield return new Surface()
             {
-                Name = "None",
-                _description = "Placeholder for when a surface doesn't exist."
+                Name = "Dirt",
+                _description = "Dirt as commonly seen in reg Pokemon battles."
+            };
+            yield return new Surface()
+            {
+                Name = "White Paint",
+                _description = "White Paint markings, normally used to delimit regulatory boudnaries."
             };
         }
     }
