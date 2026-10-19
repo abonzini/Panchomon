@@ -7,6 +7,7 @@ namespace Gameplay.GameplayElements
         public PokemonType Type = PokemonType.NONE;
         public static IEnumerable<Essence> GetAllEssences()
         {
+            Console.WriteLine("Getting all Essences");
             foreach (PokemonType type in Enum.GetValues<PokemonType>())
             {
                 if (type == PokemonType.NONE) continue;

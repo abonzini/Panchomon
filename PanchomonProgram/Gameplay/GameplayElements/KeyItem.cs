@@ -7,6 +7,7 @@ namespace Gameplay.GameplayElements
         public PokemonType CramType = PokemonType.NONE;
         public static IEnumerable<KeyItem> GetAllKeyItems()
         {
+            Console.WriteLine("Getting all Key Items");
             // Shards are one per type so just automate it
             foreach (PokemonType type in Enum.GetValues<PokemonType>())
             {

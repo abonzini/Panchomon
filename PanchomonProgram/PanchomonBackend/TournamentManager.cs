@@ -350,7 +350,7 @@ namespace PanchomonBackend
                     MaxMonsInField = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
                     MaxMonsUsed = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
                     ActiveJewelry = player1.EquippedJewelry,
-                    PokemonInTeam = [.. player1.Pokemon.Select(p => SimulatorHandler.InstancePokemon(p, new Random(pokemonRng.Next())))]
+                    PokemonInTeam = [.. player1.Pokemon.Select(p => new PokemonInstance(p, new Random(pokemonRng.Next())))]
                 };
                 TrainerEntity player2 = _participants[match.Player2Index];
                 monSeed = ParticipantSeedAndMonSeed[match.Player2Index].Item3;
@@ -362,7 +362,7 @@ namespace PanchomonBackend
                     MaxMonsInField = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
                     MaxMonsUsed = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
                     ActiveJewelry = player2.EquippedJewelry,
-                    PokemonInTeam = [.. player2.Pokemon.Select(p => SimulatorHandler.InstancePokemon(p, new Random(pokemonRng.Next())))]
+                    PokemonInTeam = [.. player2.Pokemon.Select(p => new PokemonInstance(p, new Random(pokemonRng.Next())))]
                 };
                 // Execute battle now
                 Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Pre {player1.Name} vs {player2.Name}"));

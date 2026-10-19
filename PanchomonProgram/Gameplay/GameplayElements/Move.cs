@@ -7,6 +7,7 @@
         // Massive list of all of them and their effects (less friendly than storing in Json but allow for complex behaviours)
         public static IEnumerable<Move> GetAllMoves()
         {
+            Console.WriteLine("Getting all Moves");
             yield return new Move()
             {
                 Name = "Idling",

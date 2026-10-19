@@ -1,5 +1,4 @@
 ﻿using Gameplay.GameEngine;
-using Gameplay.GameplayElements;
 using Utilities;
 
 namespace GameSimulator
@@ -23,19 +22,6 @@ namespace GameSimulator
             return new GameOutcome()
             {
                 WinningTeam = winningTeam,
-            };
-        }
-        /// <summary>
-        /// Used to create a pokemon gameplay instance from a base Pokemon. Deals with defining the remaining sets (move disks) as well as set up Hp and etc. Can then be made permanent for the rest of the event
-        /// </summary>
-        /// <param name="pokemon">Pokemon to instance</param>
-        /// <param name="rng">The Rng to define the rest of this mon's things</param>
-        /// <returns>The generated Pokemon instance ready for game</returns>
-        public static PokemonInstance InstancePokemon(PokemonEntity pokemon, Random rng)
-        {
-            return new PokemonInstance()
-            {
-                AssociatedEntity = pokemon,
             };
         }
     }

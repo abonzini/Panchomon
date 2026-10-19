@@ -11,6 +11,7 @@ namespace Gameplay.GameplayElements
         }
         public static IEnumerable<Gummy> GetAllGummies()
         {
+            Console.WriteLine("Getting all Gummies");
             foreach (PokemonType type in Enum.GetValues<PokemonType>())
             {
                 if (type == PokemonType.NONE) continue;

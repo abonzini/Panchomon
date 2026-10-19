@@ -6,6 +6,20 @@ namespace Gameplay.GameplayElementsContainer
     public partial class GameplayElementsContainer
     {
         public static GameplayElementsContainer GlobalData { get; set; } = new GameplayElementsContainer();
+        ///// <summary>
+        ///// Loads all types of a specific item T
+        ///// </summary>
+        ///// <typeparam name="T"></typeparam>
+        ///// <param name="dict"></param>
+        ///// <param name="getter"></param>
+        void LoadAllElements<T>(Dictionary<string, T> dict, IEnumerable<T> getter) where T : GameplayElement
+        {
+            dict.Clear();
+            foreach (T t in getter)
+            {
+                dict.Add(t.Name, t);
+            }
+        }
         /// <summary>
         /// Initializes data
         /// </summary>
@@ -16,19 +30,20 @@ namespace Gameplay.GameplayElementsContainer
             string[] lines = File.ReadAllLines(Path.Combine(masterDirectory, mechanicsFilePath));
             string sheetId = lines[0].Split(",")[0]; // Obtained google sheets
             // Find all code-defined objects
-            LoadMoves();
-            LoadAbilities();
-            LoadJewelry();
-            LoadHeldItems();
-            LoadNatures();
-            LoadPokeBalls();
-            LoadEvoPlates();
-            LoadGummies();
-            LoadKeyItems();
-            LoadEssences();
-            LoadMints();
-            LoadFieldModifiers();
-            LoadNonVolatileStatus();
+            LoadAllElements(Moves, Move.GetAllMoves());
+            LoadAllElements(Abilities, Ability.GetAllAbilities());
+            LoadAllElements(Jewelries, Jewelry.GetAllJewelry());
+            LoadAllElements(HeldItems, HeldItem.GetAllHeldItems());
+            LoadAllElements(Natures, Nature.GetAllNatures());
+            LoadAllElements(PokeBalls, PokeBall.GetAllPokeballs());
+            LoadAllElements(EvoPlates, EvoPlate.GetAllEvoPlates());
+            LoadAllElements(Gummies, Gummy.GetAllGummies());
+            LoadAllElements(KeyItems, KeyItem.GetAllKeyItems());
+            LoadAllElements(Essences, Essence.GetAllEssences());
+            LoadAllElements(Mints, Nature.GetAllMints());
+            LoadAllElements(FieldModifiers, FieldModifier.GetAllFieldMods());
+            LoadAllElements(NvStatuses, NonVolatileStatus.GetAllNonVolatileStatus());
+            LoadAllElements(Surfaces, Surface.GetAllSurfaces());
             // Then, load the data from the google sheets
             string typechartTab = lines[1].Split(",")[0];
             ParseTypeChart(sheetId, typechartTab);
@@ -76,5 +91,6 @@ namespace Gameplay.GameplayElementsContainer
         public Dictionary<string, Dungeon> Dungeons = new Dictionary<string, Dungeon>();
         public Dictionary<string, FieldModifier> FieldModifiers = new Dictionary<string, FieldModifier>();
         public Dictionary<string, NonVolatileStatus> NvStatuses = new Dictionary<string, NonVolatileStatus>();
+        public Dictionary<string, Surface> Surfaces = new Dictionary<string, Surface>();
     }
 }

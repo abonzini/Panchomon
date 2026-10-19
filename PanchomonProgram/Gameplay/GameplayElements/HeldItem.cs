@@ -10,6 +10,7 @@ namespace Gameplay.GameplayElements
         // Massive list of all of them and their effects (less friendly than storing in Json but allow for complex behaviours)
         public static IEnumerable<HeldItem> GetAllHeldItems()
         {
+            Console.WriteLine("Getting all Held Items");
             // Type-repeated items
             foreach (PokemonType type in Enum.GetValues<PokemonType>())
             {

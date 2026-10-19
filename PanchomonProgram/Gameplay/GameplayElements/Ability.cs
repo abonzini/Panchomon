@@ -5,6 +5,7 @@
         // Massive list of all of them and their effects (less friendly than storing in Json but allow for complex behaviours)
         public static IEnumerable<Ability> GetAllAbilities()
         {
+            Console.WriteLine("Getting all Abilities");
             yield return new Ability()
             {
                 Name = "Beast Boost",

@@ -1,10 +1,11 @@
 ﻿namespace Gameplay.GameplayElements
 {
-    public class FieldModifier : SimulationElement
+    public class FieldModifier : GameplayElement
     {
         // Massive list of all of them and their effects (less friendly than storing in Json but allow for complex behaviours)
         public static IEnumerable<FieldModifier> GetAllFieldMods()
         {
+            Console.WriteLine("Getting all Field Mods");
             yield return new FieldModifier()
             {
                 Name = "No Weather",

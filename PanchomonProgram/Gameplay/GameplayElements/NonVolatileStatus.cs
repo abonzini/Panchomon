@@ -5,6 +5,7 @@
         // Massive list of all of them and their effects (less friendly than storing in Json but allow for complex behaviours)
         public static IEnumerable<NonVolatileStatus> GetAllNonVolatileStatus()
         {
+            Console.WriteLine("Getting all NV Status");
             yield return new NonVolatileStatus()
             {
                 Name = "None",

@@ -25,12 +25,9 @@ White Monastery         - DarkFigFly    - Regice    (titan plate 5)
 Rub-a-Dub pond          - FaiNorWat     - Regigigas (titan plate 6)
 
 TODO:
-    - With this in mind, redo dungeon (APP) and trainer(s) Brock + NPCs, shops
-        - Shards consumes 5 items
-        - or 3 for the others Ig
-    - Finally, huge dungeon rework, leave space for anim and use new battle thing
-    - Expl: Some big changes in item handling and expl mechanics
-- Cleanup: Ensure mechanics data with that name is not there anymore
+- Dungeon/Tourn now using tile generators
+- Tile generators implemented and debugged. Add remaining tile properties
+- Test generation with Debug visualization, add all combos of potential things and propagators until Tourn + power plant atleast are reasonably cool. Add also the elements
 - For game proper: tile proj:
 1-1-2
 With top end in 2-1-1-2 with top at 2

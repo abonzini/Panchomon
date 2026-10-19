@@ -233,7 +233,7 @@ namespace PanchomonBackend
                 MaxMonsInField = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
                 // No limit for max mon used, will start with 3-10 and then who knows
                 ActiveJewelry = _context.TrainerEntity.EquippedJewelry,
-                PokemonInTeam = [.. _context.TrainerEntity.Pokemon.Select(p => SimulatorHandler.InstancePokemon(p, new Random(pokemonRng.Next())))]
+                PokemonInTeam = [.. _context.TrainerEntity.Pokemon.Select(p => new PokemonInstance(p, new Random(pokemonRng.Next())))]
             };
             // Check expl ticket
             if (UseExplorationTicket) // Remove ticket and also different message
@@ -262,7 +262,7 @@ namespace PanchomonBackend
                         MaxMonsInField = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
                         // No limit for max mon used, will start with 3-10 and then who knows
                         ActiveJewelry = followerEntity.EquippedJewelry,
-                        PokemonInTeam = [.. followerEntity.Pokemon.Select(p => SimulatorHandler.InstancePokemon(p, new Random(_context.Rng.Next())))] // Instance the mons too
+                        PokemonInTeam = [.. followerEntity.Pokemon.Select(p => new PokemonInstance(p, new Random(_context.Rng.Next())))] // Instance the mons too
                     };
                 }
             }
@@ -474,7 +474,7 @@ namespace PanchomonBackend
                                 PokemonSpecies chosenEvo = GeneralUtilities.GetRandomPick(validEvos, _context.Rng); // Get a random one
                                 EvoPlate usedPlate = GeneralUtilities.GetRandomPick([.. _context.TrainerEntity.EvoPlates.Keys.Where(p => p.Type == chosenEvo.Types.Item1 || p.Type == chosenEvo.Types.Item2)], _context.Rng); // Get a random plate needed
                                 _context.TrainerEntity.EvolveProcess(mon.AssociatedEntity, usedPlate, _context.Rng); // Atp this mon should have evolved
-                                Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine($"{preName} has evolved into {mon.AssociatedEntity.Name} using the {usedPlate.Name}!")); // TODO: Also animation later on ig
+                                Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine($"{preName} has evolved into {mon.Name} using the {usedPlate.Name}!")); // TODO: Also animation later on ig
                             }
                         }
                         Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(encounter.EncounterSuccessString)); // TODO: Also animation later on ig
@@ -557,7 +557,7 @@ namespace PanchomonBackend
                             IsShiny = _context.Rng.Next(0, _context.GetShinyChance()) == 0 // Depending on shiny chance ofc
                         };
                         GameplayElementsContainer.GlobalData.RandomizePokemon(newMon, _context.Rng); // Randomize the rest for this mon
-                        PokemonInstance joinerInstance = SimulatorHandler.InstancePokemon(newMon, _context.Rng); // Creates rest of instance
+                        PokemonInstance joinerInstance = new PokemonInstance(newMon, _context.Rng); // Creates rest of instance
                         // Finally, add the joiner to the team AND the catchtable
                         _context.TrainerInstance.PokemonInTeam.Add(joinerInstance);
                         AddMonToCatchTable(joinerInstance, 0);
@@ -766,7 +766,7 @@ namespace PanchomonBackend
                 };
                 foreach (PokemonEntity enemyMon in enemyTrainerEntity.Pokemon) // Instance one by one
                 {
-                    PokemonInstance nextMonInstance = SimulatorHandler.InstancePokemon(enemyMon, _context.Rng);
+                    PokemonInstance nextMonInstance = new PokemonInstance(enemyMon, _context.Rng);
                     if (enemy.ApplyDifficultyMods)
                     {
                         nextMonInstance.BaseStatMult = [.. enemy.StatMult.Select(i => i * GetDifficultyStatMult())]; // Its stats do need to be multiplied depending on danger level and the event's mult
@@ -1055,7 +1055,7 @@ namespace PanchomonBackend
             Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(encounter.PreEncounterString)); // TODO: Also animation later on ig
             if (mons.Count > 0)
             {
-                string successString = encounter.EncounterSuccessString.Replace("$1", string.Join(", ", mons.Select(m => m.AssociatedEntity.Name)));
+                string successString = encounter.EncounterSuccessString.Replace("$1", string.Join(", ", mons.Select(m => m.Name)));
                 foreach (PokemonInstance mon in mons)
                 {
                     action(mon);
