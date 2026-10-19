@@ -1,7 +1,6 @@
 ﻿using Gameplay.GameEngine;
 using Gameplay.GameplayElements;
 using Gameplay.GameplayElementsContainer;
-using GameSimulator;
 using Utilities;
 
 namespace PanchomonBackend
@@ -892,13 +891,8 @@ namespace PanchomonBackend
         {
             string explFile = $"{_context.TrainerEntity.Name.ToUpper()}_EXPLORATION.expl";
             _context.ExplorationMessage.EventText.Clear();
-            Console.Write("Fate flavour text: ");
-            string fateFlavourText = Console.ReadLine();
-            if (fateFlavourText != "")
-            {
-                _context.ExplorationMessage.EventText.AppendLine($"Fate: ||{fateFlavourText}||");
-                _context.ExplorationMessage.EventText.AppendLine();
-            }
+            _context.ExplorationMessage.EventText.AppendLine($"Fate: ||FATE HERE||");
+            _context.ExplorationMessage.EventText.AppendLine();
             _context.ExplorationMessage.EventText.AppendLine($"__{_context.TrainerEntity.Name} has obtained the following items:__");
             _context.ExplorationMessage.EventText.AppendLine();
             // List of items ordered
@@ -998,7 +992,8 @@ namespace PanchomonBackend
             {
                 allParticipants.Add(_context.FollowerInstance);
             }
-            GameOutcome outcome = SimulatorHandler.SimulateGame(allParticipants, parameters, _context.Rng); // Simulates the game
+            GameSimulator.GameSimulator sim = new GameSimulator.GameSimulator(allParticipants, parameters);
+            GameOutcome outcome = sim.Simulate(_context.Rng); // Simulates the game
             Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Post vs enemies"));
             PostFightTrainerMods();
             return outcome;

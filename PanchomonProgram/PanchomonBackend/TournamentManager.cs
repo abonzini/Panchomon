@@ -1,7 +1,6 @@
 ﻿using Gameplay.GameEngine;
 using Gameplay.GameplayElements;
 using Gameplay.GameplayElementsContainer;
-using GameSimulator;
 using Utilities;
 
 namespace PanchomonBackend
@@ -103,6 +102,38 @@ namespace PanchomonBackend
                     OngoingTournament.ParticipantSeedAndMonSeed.Add((trainerString, rng.Next(), rng.Next())); // Add the trainer and its future rng seed
                 }
             }
+            // Input seeds
+            Console.WriteLine("Want to add specific seeding? y/N");
+            string seedInput = Console.ReadLine();
+            if (seedInput.Trim().ToLower() == "y") // One last seeding step
+            {
+                List<(string, int, int)> seedOptions = [.. OngoingTournament.ParticipantSeedAndMonSeed];
+                bool seedingFinished = false;
+                while (!seedingFinished && OngoingTournament.SeedSlots.Count < OngoingTournament.ParticipantSeedAndMonSeed.Count) // Continue seeding until finished or all players seeded
+                {
+                    Console.WriteLine("Choose next seed, or anything if finished seeding:");
+                    for (int i = 0; i < seedOptions.Count; i++)
+                    {
+                        Console.Write($"{i + 1}: " + seedOptions[i].Item1 + ",");
+                    }
+                    if (int.TryParse(Console.ReadLine(), out int seedChoice)) // If user chose one...
+                    {
+                        OngoingTournament.SeedSlots.Add(seedOptions[seedChoice - 1]);
+                        seedOptions.RemoveAt(seedChoice - 1);
+                    }
+                    else // Finish here
+                    {
+                        seedingFinished = true;
+                    }
+                }
+            }
+            // Prizes
+            Console.WriteLine("What's the first prize here? (Use NAME xN if multiple rewards)");
+            OngoingTournament.FirstPrizeStr = Console.ReadLine();
+            Console.WriteLine("What's the second prize here? (Use NAME xN if multiple rewards)");
+            OngoingTournament.SecondPrizeStr = Console.ReadLine();
+            Console.WriteLine("What's the consolation prize here? (Use NAME xN if multiple rewards)");
+            OngoingTournament.ConsolationPrizeStr = Console.ReadLine();
         }
         /// <summary>
         /// Starts the tourn proper, will ask for input of scores
@@ -130,9 +161,14 @@ namespace PanchomonBackend
     public abstract class Tournament
     {
         public int RngSeed { get; set; } = 0;
-        protected Random _rng;
         public List<Constraint> Constraints { get; set; } = new List<Constraint>();
         public List<(string, int, int)> ParticipantSeedAndMonSeed { get; set; } = new List<(string, int, int)>(); // Participants, team seed, and pokemon seed base
+        public List<(string, int, int)> SeedSlots { get; set; } = new List<(string, int, int)>();
+        public string FirstPrizeStr { get; set; } = "";
+        public string SecondPrizeStr { get; set; } = "";
+        public string ConsolationPrizeStr { get; set; } = "";
+        // Privates
+        protected Random _rng;
         readonly List<TrainerEntity> _participants = new List<TrainerEntity>();
         readonly MessageLogger _tournamentMessage = new MessageLogger();
         /// <summary>
@@ -141,33 +177,8 @@ namespace PanchomonBackend
         public void UpdateTeams()
         {
             _tournamentMessage.Clear(); // This is a new event, so I will clear whatever thet was there before
-            // First, shuffle the participants (use seed if needed)
-            List<(string, int, int)> seedSlots = new List<(string, int, int)>();
-            Console.WriteLine("Want to add specific seeding? y/N");
-            string seedInput = Console.ReadLine();
-            if (seedInput.Trim().ToLower() == "y") // One last seeding step
-            {
-                List<(string, int, int)> seedOptions = [.. ParticipantSeedAndMonSeed];
-                bool seedingFinished = false;
-                while (!seedingFinished && seedSlots.Count < ParticipantSeedAndMonSeed.Count) // Continue seeding until finished or all players seeded
-                {
-                    Console.WriteLine("Choose next seed, or anything if finished seeding:");
-                    for (int i = 0; i < seedOptions.Count; i++)
-                    {
-                        Console.Write($"{i + 1}: " + seedOptions[i].Item1 + ",");
-                    }
-                    if (int.TryParse(Console.ReadLine(), out int seedChoice)) // If user chose one...
-                    {
-                        seedSlots.Add(seedOptions[seedChoice - 1]);
-                        seedOptions.RemoveAt(seedChoice - 1);
-                    }
-                    else // Finish here
-                    {
-                        seedingFinished = true;
-                    }
-                }
-            }
-            ShuffleWithSeeds(seedSlots); // Tournament-specific seed shuffling so that highest seed is at an advantage
+            // First, shuffle the participants (use seed
+            ShuffleWithSeeds(SeedSlots); // Tournament-specific seed shuffling so that highest seed is at an advantage
             // Next step is to obtain the actual trainer data, generate NPCs and shuffle team if this is needed
             foreach ((string, int, int) participantData in ParticipantSeedAndMonSeed) // First, choose all trainers, obtain their corresponding entity
             {
@@ -253,20 +264,20 @@ namespace PanchomonBackend
         public void FinaliseTournament(string directoryBase)
         {
             // Ask for prizes
-            static (string, int) GetSplitStrCount()
+            static (string, int) GetSplitStrCount(string str)
             {
-                string[] split = Console.ReadLine().Split("x");
+                string[] split = str.Split("x");
                 if (split.Length == 1 || !int.TryParse(split[1], out int count)) count = 1;
                 return (split[0].Trim(), count);
             }
             Console.WriteLine("What's the first prize here?");
-            (string, int) firstPrize = GetSplitStrCount();
+            (string, int) firstPrize = GetSplitStrCount(FirstPrizeStr);
             string winner = "";
             Console.WriteLine("What's the second prize here?");
-            (string, int) secondPrize = GetSplitStrCount();
+            (string, int) secondPrize = GetSplitStrCount(SecondPrizeStr);
             string runner = "";
             Console.WriteLine("What's the consolation prize here?");
-            (string, int) consolationPrize = GetSplitStrCount();
+            (string, int) consolationPrize = GetSplitStrCount(ConsolationPrizeStr);
             // Need to update the items and sheets for participants
             // First, salary
             for (int i = 0; i < _participants.Count; i++)
@@ -366,7 +377,8 @@ namespace PanchomonBackend
                 };
                 // Execute battle now
                 Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Pre {player1.Name} vs {player2.Name}"));
-                GameOutcome outcome = SimulatorHandler.SimulateGame([trainer1, trainer2], new GameParameters(), _rng); // Simulates a game with standard battle rules (default gameparams)
+                GameSimulator.GameSimulator sim = new GameSimulator.GameSimulator([trainer1, trainer2], new GameParameters());
+                GameOutcome outcome = sim.Simulate(_rng); // Simulates a game with standard battle rules (default gameparams)
                 Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Post {player1.Name} vs {player2.Name}")); // TODO: Add a bit more info about scores and stuff once actually applied
                 // Determine winner
                 if (outcome.WinningTeam == Side.BOTTOM)
