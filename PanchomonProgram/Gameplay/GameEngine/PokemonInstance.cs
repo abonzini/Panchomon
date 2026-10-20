@@ -22,7 +22,7 @@ namespace Gameplay.GameEngine
     /// <summary>
     /// An instance of a pokemon in the simulator
     /// </summary>
-    public class PokemonInstance : PhysicalElement
+    public class PokemonInstance : PhysicalInstance
     {
         public PokemonEntity AssociatedEntity = null;
         public double HpPercent = 1;

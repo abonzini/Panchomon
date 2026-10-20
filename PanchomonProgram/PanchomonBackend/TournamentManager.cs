@@ -449,8 +449,7 @@ namespace PanchomonBackend
             {
                 BasicTileSurface = "Dirt",
                 CliffFace = CliffFace.STONE,
-                FillerTile = "None",
-                Propagators = [] // TODO: Add tournament propagators
+                PropagatorActions = [] // TODO: Add tournament propagators
             };
         }
     }

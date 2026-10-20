@@ -6,8 +6,7 @@
     public class TerrainGenerator
     {
         public string BasicTileSurface { get; set; } = "";
-        public string FillerTile { get; set; } = ""; /// To be used for "filler" e.g. for tiles that are technically outside of the main board but are still playable
-        public CliffFace CliffFace { get; set; } = CliffFace.NONE;
-        public List<TilePropagator> Propagators { get; set; } = []; /// Propagators (in order of appearance) to generate terrain procedurally 
+        public CliffFace CliffFace { get; set; } = CliffFace.NONE; /// How the cliff face will look
+        public List<TilePropagatorAction> PropagatorActions { get; set; } = []; /// Propagators (in order of appearance) to generate terrain procedurally 
     }
 }
