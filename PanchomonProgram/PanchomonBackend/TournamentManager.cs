@@ -40,6 +40,7 @@ namespace PanchomonBackend
                         break;
                 }
             } while (!validSelection);
+            OngoingTournament.DirectoryPath = DirectoryPath;
             OngoingTournament.RngSeed = rng.Next();
             Console.WriteLine("How many players will participate?");
             int nPlayers = int.Parse(Console.ReadLine());
@@ -160,6 +161,7 @@ namespace PanchomonBackend
     }
     public abstract class Tournament
     {
+        public string DirectoryPath { get; set; } = "";
         public int RngSeed { get; set; } = 0;
         public List<Constraint> Constraints { get; set; } = new List<Constraint>();
         public List<(string, int, int)> ParticipantSeedAndMonSeed { get; set; } = new List<(string, int, int)>(); // Participants, team seed, and pokemon seed base
@@ -167,7 +169,7 @@ namespace PanchomonBackend
         public string FirstPrizeStr { get; set; } = "";
         public string SecondPrizeStr { get; set; } = "";
         public string ConsolationPrizeStr { get; set; } = "";
-        public TerrainGenerator TournamentTerrain { get; set; }
+        public string BattlefieldId { get; set; } = "";
         // Privates
         protected Random _rng;
         readonly List<TrainerEntity> _participants = new List<TrainerEntity>();
@@ -378,12 +380,14 @@ namespace PanchomonBackend
                 };
                 // Execute battle now
                 Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Pre {player1.Name} vs {player2.Name}"));
+                Battlefield fightBattlefield = BattlefieldGetter.GetBattlefield(BattlefieldId, DirectoryPath);
                 GameParameters gameParams = new GameParameters() // These will be the game params for this tournament
                 {
-                    TerrainGenerator = TournamentTerrain
+                    TerrainGenerator = fightBattlefield.TerrainGenerator,
+                    FieldModifier = null
                 };
-                GameSimulator.GameSimulator sim = new GameSimulator.GameSimulator([trainer1, trainer2], gameParams);
-                GameOutcome outcome = sim.Simulate(_rng); // Simulates the game
+                GameSimulator.GameSimulator sim = new GameSimulator.GameSimulator();
+                GameOutcome outcome = sim.Simulate([trainer1, trainer2], gameParams, _rng); // Simulates the game
                 Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Post {player1.Name} vs {player2.Name}")); // TODO: Add a bit more info about scores and stuff once actually applied
                 // Determine winner
                 if (outcome.WinningTeam == Side.BOTTOM)
@@ -441,16 +445,7 @@ namespace PanchomonBackend
         /// </summary>
         protected void AskLocation()
         {
-            Console.WriteLine("Choose location for this tournament:" +
-                "\n\t- [DEFAULT] Arena: Standard dirt battleground for typical tournaments");
-            string response = Console.ReadLine();
-            // Default one is the typical one
-            TournamentTerrain = new TerrainGenerator()
-            {
-                BasicTileSurface = "Dirt",
-                CliffFace = CliffFace.STONE,
-                PropagatorActions = [] // TODO: Add tournament propagators
-            };
+            BattlefieldId = BattlefieldGetter.GetBattlefieldIdString(DirectoryPath);
         }
     }
     /// <summary>

@@ -992,8 +992,8 @@ namespace PanchomonBackend
             {
                 allParticipants.Add(_context.FollowerInstance);
             }
-            GameSimulator.GameSimulator sim = new GameSimulator.GameSimulator(allParticipants, parameters);
-            GameOutcome outcome = sim.Simulate(_context.Rng); // Simulates the game
+            GameSimulator.GameSimulator sim = new GameSimulator.GameSimulator();
+            GameOutcome outcome = sim.Simulate(allParticipants, parameters, _context.Rng); // Simulates the game
             Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Post vs enemies"));
             PostFightTrainerMods();
             return outcome;

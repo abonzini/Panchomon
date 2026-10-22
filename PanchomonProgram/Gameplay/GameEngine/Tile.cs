@@ -15,8 +15,8 @@ namespace Gameplay.GameEngine
     }
     public class Tile : SimulationElement
     {
-        public PhysicalInstance Occupier = null;
         public Surface Surface = null;
         public GroundEffect GroundEffect = null;
+        public PhysicalInstance Occupier = null;
     }
 }

@@ -45,9 +45,10 @@ namespace Gameplay.GameplayElements
     /// </summary>
     public class Battlefield
     {
-        public TerrainGenerator TerrainGenerator { get; set; } /// Which terrain generation will be used
-        public double Weight { get; set; } = 1;/// Weight will be relative to the other terrains, 1 would be normal chane
-        public HashSet<int> Floors { get; set; } = []; /// 0,1,2 determines if it's in its corresponding floor
+        public string Name { get; set; } = ""; // Name of battlefield for easy ID
+        public TerrainGenerator TerrainGenerator { get; set; } // Which terrain generation will be used
+        public double Weight { get; set; } = 1; // Weight will be relative to the other terrains, 1 would be normal chance
+        public HashSet<int> Floors { get; set; } = []; // 0,1,2 determines if it's in its corresponding floor
     }
     public class ItemDrop
     {

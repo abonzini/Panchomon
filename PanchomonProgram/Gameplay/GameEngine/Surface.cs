@@ -7,11 +7,12 @@ namespace Gameplay.GameEngine
     /// </summary>
     public class Surface : SimulationElement
     {
-        public int Elevation = 0; /// Elevation of this tile in pixels (to add some fluidity to the pixel art)
-                                  /// <summary>
-                                  /// Get all so they can be fetched by name
-                                  /// </summary>
-                                  /// <returns>Surfaces, one by one</returns>
+        public int Elevation = 0; // Elevation of this tile in pixels (to add some fluidity to the pixel art)
+        /// <summary>
+        /// Get all so they can be fetched by name
+        /// </summary>
+        /// <returns>Surfaces, one by one</returns>
+
         public static IEnumerable<Surface> GetAllSurfaces()
         {
             Console.WriteLine("Getting all Surfaces");
@@ -23,7 +24,7 @@ namespace Gameplay.GameEngine
             yield return new Surface()
             {
                 Name = "White Paint",
-                _description = "White Paint markings, normally used to delimit regulatory boudnaries."
+                _description = "White Paint markings, normally used to delimit regulatory boundaries."
             };
             yield return new Surface()
             {

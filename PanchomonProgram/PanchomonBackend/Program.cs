@@ -12,7 +12,6 @@ namespace PanchomonBackend
             // Things (restore later)
             TournamentManager tournamentManager = new TournamentManager();
             ExplorationManager explorationManager = new ExplorationManager();
-            //ExplorationManager explorationManager = new ExplorationManager();
             // Parsing
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             Console.ForegroundColor = ConsoleColor.White;
@@ -36,9 +35,6 @@ namespace PanchomonBackend
             Console.WriteLine($"Path found at {filePath}\n");
             GameplayElementsContainer.GlobalData.InitializeData(directoryPath, MECHANICS_DATA_FILE);
 
-            // Then the trainer data back end
-            //string DUNGEON_DATA_DIR = "dungeons";
-            //GameDataContainers.GlobalGameData.InitializeDungeonData(Path.Combine(directoryPath, DUNGEON_DATA_DIR));
             // Finally, proper data of possible ongoing sims
             string TOURNAMENT_JSON_FILE = "current_tournament.json";
             string EXPLORATION_JSON_FILE = "current_expl.json";
@@ -158,7 +154,14 @@ namespace PanchomonBackend
                         explorationManager.ExecuteExploration();
                         break;
                     case "7":
-                        // Free real estate
+                        // Try fetch a battlefield and draw it for debug
+                        Battlefield battlefield = BattlefieldGetter.GetBattlefield(BattlefieldGetter.GetBattlefieldIdString(directoryPath), directoryPath);
+                        GameParameters gParams = new GameParameters()
+                        {
+                            TerrainGenerator = battlefield.TerrainGenerator
+                        };
+                        GameSimulator.GameSimulator testSim = new GameSimulator.GameSimulator();
+                        testSim.AssembleBattlefield(battlefield.TerrainGenerator, null); // No field mod ig
                         break;
                     case "8":
                         //{
@@ -346,8 +349,8 @@ namespace PanchomonBackend
                 "3 - Generate a new tournament\n" +
                 "4 - Execute initialized tournament\n" +
                 "5 - Generate exploration, choose place, player, etc\n" +
-                "6 - Execute current exploration\n"
-            //"7 - Nothing\n" +
+                "6 - Execute current exploration\n" +
+                "7 - Test Run Battlefield & Debug\n"
             //"8 - Draw from Favour Gacha\n" +
             //"9 - Random 'Baby' Pokemon from trainer (Favor resolution)\n" +
             //"10 - Random exploration rewards (tiered favor resolutions)\n" +

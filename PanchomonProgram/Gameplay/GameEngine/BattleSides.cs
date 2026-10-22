@@ -9,11 +9,11 @@ namespace Gameplay.GameEngine
     [JsonConverter(typeof(StringEnumConverter))]
     public enum Side
     {
-        ALL = 0, /// Any field, any side
-        FIELD = 1, /// Field units are free for all
-        BOTTOM = 2,
-        TOP = 3,
-        LEFT = 4,
-        RIGHT = 5,
+        FIELD = 0, // Field units are free for all
+        BOTTOM = 1,
+        TOP = 2,
+        LEFT = 3,
+        RIGHT = 4,
+        ALL // Used as param only
     }
 }
