@@ -1,0 +1,137 @@
+[
+    {
+        "Name": "Standard Dirt Stadium",
+        "TerrainGenerator": {
+            "BasicBrush": {
+                "CliffFace": "STONE",
+                "TileSurface": "Dirt"
+            },
+            "PropagatorActions": [
+                {
+                    "ChildTarget": 0,
+                    "Brush": {
+                        "CliffFace": "STONE",
+                        "TileSurface": "White Paint"
+                    },
+                    "Action": "DRAW_LINE",
+                    "LineOrientation": "HORIZONTAL",
+                    "MainOffset": {
+                        "Min": 0,
+                        "Max": 0
+                    }
+                },
+                {
+                    "ChildTarget": 0,
+                    "Brush": {
+                        "CliffFace": "STONE",
+                        "TileSurface": "White Paint"
+                    },
+                    "Action": "DRAW_LINE",
+                    "LineOrientation": "HORIZONTAL",
+                    "MainOffset": {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    }
+                },
+                {
+                    "ChildTarget": 0,
+                    "Brush": {
+                        "CliffFace": "STONE",
+                        "TileSurface": "White Paint"
+                    },
+                    "Action": "DRAW_LINE",
+                    "LineOrientation": "HORIZONTAL",
+                    "MainOffset": {
+                        "Min": 0.5,
+                        "Max": 0.5
+                    }
+                },
+                {
+                    "ChildTarget": 1,
+                    "Brush": {
+                        "CliffFace": "STONE",
+                        "TileSurface": "White Paint"
+                    },
+                    "Action": "DRAW_LINE",
+                    "LineOrientation": "HORIZONTAL",
+                    "MainOffset": {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    }
+                },
+                {
+                    "ChildTarget": 2,
+                    "Brush": {
+                        "CliffFace": "STONE",
+                        "TileSurface": "White Paint"
+                    },
+                    "Action": "DRAW_LINE",
+                    "LineOrientation": "HORIZONTAL",
+                    "MainOffset": {
+                        "Min": 0,
+                        "Max": 0
+                    }
+                },
+                {
+                    "Brush": {
+                        "CliffFace": "STONE",
+                        "TileSurface": "White Paint"
+                    },
+                    "Action": "DRAW_LINE",
+                    "LineOrientation": "VERTICAL",
+                    "MainOffset": {
+                        "Min": 0,
+                        "Max": 0
+                    }
+                },
+                {
+                    "Brush": {
+                        "CliffFace": "STONE",
+                        "TileSurface": "White Paint"
+                    },
+                    "Action": "DRAW_LINE",
+                    "LineOrientation": "VERTICAL",
+                    "MainOffset": {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    }
+                },
+                {
+                    "ChildTarget": 0,
+                    "Brush": {
+                        "CliffFace": "STONE",
+                        "TileSurface": "White Paint"
+                    },
+                    "Action": "DRAW_RECTANGLE",
+                    "LineOrientation": "ANY",
+                    "MainDimension": {
+                        "Min": 3,
+                        "Max": 3
+                    },
+                    "SecondaryDimension": {
+                        "Min": 3,
+                        "Max": 3
+                    },
+                    "MainOffset": {
+                        "Min": 6,
+                        "Max": 6
+                    },
+                    "SecondaryOffset": {
+                        "Min": 6,
+                        "Max": 6
+                    },
+                    "PartitionActions": [
+                        {
+                            "ChildTarget": 0,
+                            "Brush": {
+                                "CliffFace": "STONE",
+                                "TileSurface": "Dirt"
+                            },
+                            "Action": "FILL"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+]

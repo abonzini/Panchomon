@@ -67,7 +67,7 @@ namespace Gameplay.GameplayElementsContainer
             string dungeonTab = lines[10].Split(",")[0];
             ParseDungeonData(masterDirectory, sheetId, dungeonTab);
         }
-        public DebugLevel CurrentDebugLevel = DebugLevel.EVENT_ORGANIZER;
+        public DebugLevel CurrentDebugLevel = DebugLevel.STEP_BY_STEP_SIM;
         public Random CommonRng = new Random(Guid.NewGuid().GetHashCode());
         public Dictionary<PokemonType, Dictionary<PokemonType, double>> DefensiveTypeChart = new Dictionary<PokemonType, Dictionary<PokemonType, double>>();
         public Dictionary<string, Move> Moves = new Dictionary<string, Move>();

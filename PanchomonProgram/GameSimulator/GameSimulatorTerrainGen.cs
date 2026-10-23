@@ -1,4 +1,6 @@
 ﻿using Gameplay.GameEngine;
+using Gameplay.GameplayElementsContainer;
+using Utilities;
 
 namespace GameSimulator
 {
@@ -7,10 +9,12 @@ namespace GameSimulator
     /// </summary>
     internal class Partition
     {
+        public int id; // Id of partition
         public int BegX;
         public int BegY;
         public int EndX;
         public int EndY;
+        public bool Alive = true; // A partition that is dead is not attempted to be connected by join ops
         public Partition(int begX, int begY, int endX, int endY)
         {
             BegX = begX;
@@ -18,6 +22,8 @@ namespace GameSimulator
             EndX = endX;
             EndY = endY;
         }
+        public int Width { get { return EndX - BegX + 1; } }
+        public int Height { get { return EndY - BegY + 1; } }
         /// <summary>
         /// To check if touching or adjacent (or degenerate cases like engulfing)
         /// </summary>
@@ -44,6 +50,60 @@ namespace GameSimulator
                 }
             }
         }
+        /// <summary>
+        /// Gets the absolute dimension in integer tiles for the desired orientation (horiz or vertical)
+        /// </summary>
+        /// <param name="dim">Dimension to check</param>
+        /// <param name="orientation">Orientation to check</param>
+        /// <returns>The dimension in tiles</returns>
+        public int GetAbsoluteDimension(double dim, LineOrientation orientation)
+        {
+            int ret;
+            if (dim < 1)
+            {
+                int max = orientation switch
+                {
+                    LineOrientation.HORIZONTAL => Width,
+                    LineOrientation.VERTICAL => Height,
+                    _ => throw new Exception("Horizontal or Vertical are the only valid options here"),
+                };
+                ret = (int)(dim * max);
+            }
+            else
+            {
+                ret = (int)Math.Round(dim);
+            }
+            return ret;
+        }
+        /// <summary>
+        /// Gets the absolute index for x or y for this rectangle. Transforms <1 (proportionals) into the actual tile
+        /// </summary>
+        /// <param name="index">Value to use</param>
+        /// <param name="orientation">Which orientation (only supports horizontal, vertical)</param>
+        /// <returns></returns>
+        public int GetAbsoluteIndex(double index, LineOrientation orientation)
+        {
+            int ret;
+            (int dim, int offset) = orientation switch
+            {
+                LineOrientation.HORIZONTAL => (Height, BegY),
+                LineOrientation.VERTICAL => (Width, BegX),
+                _ => throw new Exception("Horizontal or Vertical are the only valid options here"),
+            };
+            if (index < 1)
+            {
+                ret = (int)(dim * index) + offset;
+            }
+            else
+            {
+                ret = (int)Math.Round(index) + offset;
+            }
+            return ret;
+        }
+        public override string ToString()
+        {
+            return $"{BegX},{BegY} ({Width}x{Height})";
+        }
     }
     internal class PartitionSpace
     {
@@ -54,11 +114,27 @@ namespace GameSimulator
         /// Adds a new partition to the scheme
         /// </summary>
         /// <param name="partition">Which partition to add</param>
-        public void AddNewPartition(Partition partition)
+        /// <param name="id">Manual ID if needs to be specific</param>
+        public void AddNewPartition(Partition partition, int id = -1)
         {
-            int nextId = _nextId++;
+            int nextId = id == -1 ? _nextId : id;
+            if (nextId < _nextId)
+            {
+                throw new Exception("Partition ID is lower than the internal counter and may be already occupied");
+            }
+            _nextId = nextId + 1; // The next one becomes the min possible
+            partition.id = nextId;
             _partitions.Add(nextId, partition);
             _setParenting.Add(nextId, nextId); // Each party begins as it's own disjoint set to be bridged later if needed
+        }
+        /// <summary>
+        /// Removes a partition from this, mostly for when it's broken further
+        /// </summary>
+        /// <param name="partition"></param>
+        public void RemovePartition(Partition partition)
+        {
+            _partitions.Remove(partition.id);
+            _setParenting.Remove(partition.id);
         }
         /// <summary>
         /// Merges the partition space with the current one as the main one, shift the ids so they don't overlap
@@ -72,41 +148,327 @@ namespace GameSimulator
             {
                 int newId = idBase + kvp.Key;
                 if (newId > maxId) maxId = newId;
+                kvp.Value.id = newId;
                 _partitions.Add(newId, kvp.Value);
             }
             foreach (KeyValuePair<int, int> set in other._setParenting) // Unify disjoint sets
             {
                 _setParenting.Add(set.Key + idBase, set.Value + idBase);
             }
-            _nextId = maxId + 1; // Ok if need to add more (?!?!?) prepare the id
+            _nextId = maxId + 1; // Ok if need to add more, prepare the id
+        }
+        /// <summary>
+        /// Gets a specific partition given its id
+        /// </summary>
+        /// <param name="id">Id of part</param>
+        /// <returns>The partition that we look for</returns>
+        public Partition GetPartition(int id)
+        {
+            return _partitions[id];
+        }
+        /// <summary>
+        /// Gets all the partitions
+        /// </summary>
+        /// <returns>All the partitions</returns>
+        public IEnumerable<Partition> GetPartitions()
+        {
+            return _partitions.Values;
         }
     }
     public partial class GameSimulator
     {
         /// <summary>
+        /// Applies a brush to tile, overrides if "" does nothign if null
+        /// </summary>
+        /// <param name="brush"></param>
+        /// <param name="x">coord</param>
+        /// <param name="y">coord</param>
+        void ApplyBrushToTile(TileBrush brush, int x, int y)
+        {
+            Tile tile = _grid[x, y];
+            if (brush.Occupier != null) tile.Occupier = brush.Occupier == "" ? null : null; // TODO: Global containers to have all the "objects" in there and then search here, once loaded
+            if (brush.GroundEffect != null) tile.GroundEffect = brush.GroundEffect == "" ? null : null; // TODO: Global containers to have all the "ground effects" in there and then search here, once loaded
+            if (brush.TileSurface != null) tile.Surface = GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface]; // This should never be "no surface""
+            if (brush.CliffFace != null) tile.CliffFace = brush.CliffFace == "" ? CliffFace.NONE : Enum.Parse<CliffFace>(brush.CliffFace);
+        }
+        /// <summary>
         /// Initializes and draws battlefield, ready to start sim after
         /// </summary>
-        void InitBattlefield()
+        /// <param name="sides">Which side(s) will be added</param>
+        void InitBattlefield(List<Side> sides)
         {
             PartitionSpace CurrentPartitionSpace = new PartitionSpace(); // Generate the macro level of child partitions
             List<Side> sidesToAdd = [Side.FIELD, Side.BOTTOM, Side.TOP, Side.LEFT, Side.RIGHT];
             foreach (Side side in sidesToAdd)
             {
-                if (side == Side.FIELD || _trainers.Any(t => t.Team == side)) // Only initialize field and launchpads for valid players
+                if (side == Side.FIELD || sides.Contains(side)) // Only initialize field and launchpads for valid players
                 {
-                    // Create the corresponding side partition and add
+                    // Create the corresponding side partition and add. Has -1 because beg-end is inclusive
                     Partition nextParty = side switch
                     {
-                        Side.FIELD => new Partition(LAUNCHPAD_DEPTH, LAUNCHPAD_DEPTH, BOARD_DIM + LAUNCHPAD_DEPTH, BOARD_DIM + LAUNCHPAD_DEPTH),
-                        Side.BOTTOM => new Partition(LAUNCHPAD_DEPTH, BOARD_DIM + LAUNCHPAD_DEPTH, BOARD_DIM + LAUNCHPAD_DEPTH, BOARD_DIM + 2 * LAUNCHPAD_DEPTH),
-                        Side.TOP => new Partition(LAUNCHPAD_DEPTH, 0, BOARD_DIM + LAUNCHPAD_DEPTH, LAUNCHPAD_DEPTH),
-                        Side.LEFT => new Partition(0, LAUNCHPAD_DEPTH, LAUNCHPAD_DEPTH, BOARD_DIM + LAUNCHPAD_DEPTH),
-                        Side.RIGHT => new Partition(BOARD_DIM + LAUNCHPAD_DEPTH, LAUNCHPAD_DEPTH, BOARD_DIM + 2 * LAUNCHPAD_DEPTH, BOARD_DIM + LAUNCHPAD_DEPTH),
+                        Side.FIELD => new Partition(LAUNCHPAD_DEPTH, LAUNCHPAD_DEPTH, BOARD_DIM + LAUNCHPAD_DEPTH - 1, BOARD_DIM + LAUNCHPAD_DEPTH - 1),
+                        Side.BOTTOM => new Partition(LAUNCHPAD_DEPTH, BOARD_DIM + LAUNCHPAD_DEPTH, BOARD_DIM + LAUNCHPAD_DEPTH - 1, BOARD_DIM + 2 * LAUNCHPAD_DEPTH - 1),
+                        Side.TOP => new Partition(LAUNCHPAD_DEPTH, 0, BOARD_DIM + LAUNCHPAD_DEPTH - 1, LAUNCHPAD_DEPTH - 1),
+                        Side.LEFT => new Partition(0, LAUNCHPAD_DEPTH, LAUNCHPAD_DEPTH - 1, BOARD_DIM + LAUNCHPAD_DEPTH - 1),
+                        Side.RIGHT => new Partition(BOARD_DIM + LAUNCHPAD_DEPTH, LAUNCHPAD_DEPTH, BOARD_DIM + 2 * LAUNCHPAD_DEPTH - 1, BOARD_DIM + LAUNCHPAD_DEPTH - 1),
                         _ => throw new Exception($"The side {side} is not a valid trainer side, something happened"),
                     };
                     CurrentPartitionSpace.AddNewPartition(nextParty);
+                    foreach ((int x, int y) in nextParty.GetAllTiles()) // Paint this square with the basic brush
+                    {
+                        _grid[x, y] = new Tile(); // Instance tile
+                        ApplyBrushToTile(_parameters.TerrainGenerator.BasicBrush, x, y); // Apply the basic brush to this tile with all the things
+                    }
+                    Debug.DebugAction(DebugLevel.STEP_BY_STEP_SIM, () => DrawGrid($"Generated Partition {side}"));
                 }
             }
+            PropagateActions(_parameters.TerrainGenerator.PropagatorActions, CurrentPartitionSpace); // Now begin the iterative process of drawing the map
+        }
+        /// <summary>
+        /// Propagates a series of tile propagation actions on the current partition list. This is the big one.
+        /// If more parties are created, this function nests recursively, with the references 1,2, etc.
+        /// </summary>
+        /// <param name="actions">Which actions to perform on the parties</param>
+        /// <param name="currentPartitions">Which partitions to apply the actions to. This may be edited while actions execute</param>
+        void PropagateActions(List<TilePropagatorAction> actions, PartitionSpace currentPartitions)
+        {
+            if (actions == null) return; // Nothing to do here...
+            Debug.DebugAction(DebugLevel.BATTLE_STATE, () => DrawGrid($"About to start next level of propagation"));
+            foreach (TilePropagatorAction action in actions)
+            {
+                double chance = action.Chance;
+                while (GeneralUtilities.RandomBool(chance, _rng)) // Roll to check if action applied
+                {
+                    // Execute action
+                    List<Partition> targets = (action.ChildTarget == -1) ? [.. currentPartitions.GetPartitions()] : [currentPartitions.GetPartition(action.ChildTarget)]; // Get all the partitions I'm going to work with
+                    // Party space can now be modified freely from this point onwards since targets was isolated. However user will need to be careful with op order as further tasks will also operate on generated partitions
+                    foreach (Partition target in targets) // About to perform the action on each part
+                    {
+                        PartitionSpace newSpace = new PartitionSpace();
+                        bool partitionStillExists = action.Action switch
+                        {
+                            PropagationAction.DRAW_LINE => LineDivide(target, action, newSpace),
+                            PropagationAction.DRAW_RECTANGLE => RectangularDivide(target, action, newSpace),
+                            PropagationAction.FILL => FillPartition(target, action), // A fill never generates more things so
+                            _ => throw new Exception($"Unsupported partition action {action.Action}")
+                        };
+                        PropagateActions(action.PartitionActions, newSpace); // Apply further actions to the new spaces that were created
+                        if (!partitionStillExists) // If this action caused this partition to be split or removed
+                        {
+                            currentPartitions.RemovePartition(target); // Then, removes parent since it was subdivided
+                            currentPartitions.MergeSpace(newSpace); // Apply the new space to the merge space
+                        }
+                        Debug.DebugAction(DebugLevel.BATTLE_STATE, () => DrawGrid($"After {action.Action} on partition {target.id}"));
+                    }
+                    chance--; // If >1, has a chance of going again. This is risky if the action involves sub-partitioning as this will sub partition everything
+                }
+            }
+        }
+        /// <summary>
+        /// Returns whether a brush will generate a partition or not
+        /// </summary>
+        /// <param name="brush">Brush to check</param>
+        /// <returns>Whether it's a "solid" separator brush</returns>
+        static bool GeneratesPartition(TileBrush brush)
+        {
+            return (brush.Occupier != null && brush.Occupier != "") || (brush.TileSurface != null && GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface].ImpedesMovement);
+        }
+        /// <summary>
+        /// Applies a specific brush to a line in the map
+        /// </summary>
+        /// <param name="brush">Which brush to apply</param>
+        /// <param name="minX">Min X</param>
+        /// <param name="minY">Min Y</param>
+        /// <param name="maxX">Max X</param>
+        /// <param name="maxY">Max Y</param>
+        void ApplyBrushToRectangularRegion(TileBrush brush, int minX, int minY, int maxX, int maxY)
+        {
+            for (int i = minX; i <= maxX; i++)
+            {
+                for (int j = minY; j <= maxY; j++)
+                {
+                    ApplyBrushToTile(brush, i, j);
+                }
+            }
+        }
+        /// <summary>
+        /// Applies a brush only on rectangular borders, so that remaining drawing is a O
+        /// </summary>
+        /// <param name="brush">Brush to apply</param>
+        /// <param name="startX">Offset to begin</param>
+        /// <param name="startY">Offset to begin</param>
+        /// <param name="width">Size inclusive</param>
+        /// <param name="height">Size inclusive</param>
+        void ApplyBrushToRectangularBorders(TileBrush brush, int startX, int startY, int width, int height)
+        {
+            // Do it in 2 parts, first = and then || on the rest lol
+            for (int i = startX; i < startX + width; i++)
+            {
+                ApplyBrushToTile(brush, i, startY);
+                ApplyBrushToTile(brush, i, startY + height - 1);
+            }
+            for (int i = startY + 1; i < startX + width - 1; i++) // Remaining ones are smaller
+            {
+                ApplyBrushToTile(brush, startX, i);
+                ApplyBrushToTile(brush, startX + width - 1, i);
+            }
+        }
+        LineOrientation GetAbsolutePartitionOrientation(Partition partition, LineOrientation orientation)
+        {
+            return orientation switch
+            {
+                LineOrientation.ANY => GeneralUtilities.GetRandomPick([LineOrientation.HORIZONTAL, LineOrientation.VERTICAL], _rng), // Random 50-50 chance
+                LineOrientation.HORIZONTAL => LineOrientation.HORIZONTAL,
+                LineOrientation.VERTICAL => LineOrientation.VERTICAL,
+                LineOrientation.LARGEST => (partition.Width > partition.Height) ? LineOrientation.VERTICAL : LineOrientation.HORIZONTAL, // Partition the largest one
+                LineOrientation.ANY_WEIGHTED => (GeneralUtilities.GetRandomWeightedIndex([partition.Width, partition.Height], _rng) == 0) ? LineOrientation.VERTICAL : LineOrientation.HORIZONTAL, // If width has more weight ot vice versa
+                _ => throw new Exception($"{orientation} is not a valid known orientation")
+            }; // The orientation i'll use depends on the desired parameter
+        }
+        /// <summary>
+        /// Bit of a lazy calc, just returns horiz vs vertical
+        /// </summary>
+        /// <param name="orient">Orientation to invert</param>
+        /// <returns>Inverted orientation</returns>
+        LineOrientation GetOtherOrientation(LineOrientation orient)
+        {
+            return orient == LineOrientation.HORIZONTAL ? LineOrientation.VERTICAL : LineOrientation.HORIZONTAL;
+        }
+        /// <summary>
+        /// Adds a partition to a space if the dimensions make sense
+        /// </summary>
+        /// <param name="minX">Dimension</param>
+        /// <param name="maxX">Dimension</param>
+        /// <param name="minY">Dimension</param>
+        /// <param name="maxY">Dimension</param>
+        /// <param name="spaceToAddTo">Where to add</param>
+        /// <param name="desiredIndex">Index to use (or default one)</param>
+        void AddPartitionIfValid(int minX, int maxX, int minY, int maxY, PartitionSpace spaceToAddTo, int desiredIndex = -1)
+        {
+            if (minX <= maxX && minY <= maxY) // If square exists, i.e. the partition line is such that there's still a part square, then generate it
+            {
+                spaceToAddTo.AddNewPartition(new Partition(minX, minY, maxX, maxY), desiredIndex);
+            }
+        }
+        /// <summary>
+        /// Divides a partition over a line
+        /// </summary>
+        /// <param name="partition">Which partition to divide</param>
+        /// <param name="parameters">The parameter for this split, measured in actions</param>
+        /// <param name="newPartitions">The Place where all new sub partitions is added, for extra stuff</param>
+        /// <returns>Whether the element operated on still exists</returns>
+        bool LineDivide(Partition partition, TilePropagatorAction parameters, PartitionSpace newPartitions)
+        {
+            // Begin with the line examination, which tile does it begin?
+            LineOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.LineOrientation);
+            int dimension = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteIndex(parameters.MainOffset.Min, orientation),
+                partition.GetAbsoluteIndex(parameters.MainOffset.Max, orientation),
+                parameters.MainOffset.Decay, _rng);
+            // Apply the draw
+            (int minX, int maxX) = (orientation == LineOrientation.HORIZONTAL) ? (partition.BegX, partition.EndX) : (dimension, dimension); // Determine how x and y move
+            (int minY, int maxY) = (orientation == LineOrientation.VERTICAL) ? (partition.BegY, partition.EndY) : (dimension, dimension);
+            TileBrush brush = parameters.Brush;
+            ApplyBrushToRectangularRegion(brush, minX, minY, maxX, maxY);
+            // Partition 0, from square until line (left/up)
+            (minX, maxX) = (orientation == LineOrientation.HORIZONTAL) ? (partition.BegX, partition.EndX) : (partition.BegX, dimension - 1);
+            (minY, maxY) = (orientation == LineOrientation.VERTICAL) ? (partition.BegY, partition.EndY) : (partition.BegY, dimension - 1);
+            AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 0);
+            // Partition 1, from line until end (right/down)
+            (minX, maxX) = (orientation == LineOrientation.HORIZONTAL) ? (partition.BegX, partition.EndX) : (dimension + 1, partition.EndX);
+            (minY, maxY) = (orientation == LineOrientation.VERTICAL) ? (partition.BegY, partition.EndY) : (dimension + 1, partition.EndY);
+            AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 1);
+            // Finally, returns whether this part should be removed
+            return !GeneratesPartition(brush);
+        }
+        /// <summary>
+        /// Divides a partition by placing a square with a wall in the middle, results in 9 partitions somehow, since the division is the square itself plus its potential 8 neighbors.
+        /// Partition order is 0 for the generated one, plus 1-8 from topleft
+        /// </summary>
+        /// <param name="partition">Which partition to divide</param>
+        /// <param name="parameters">The parameter for this split, measured in actions</param>
+        /// <param name="newPartitions">The Place where all new sub partitions is added, for extra stuff</param>
+        /// <returns>Whether the element operated on still exists</returns>
+        bool RectangularDivide(Partition partition, TilePropagatorAction parameters, PartitionSpace newPartitions)
+        {
+            // Begin with the square examination, whats the dimension, and the offset? Get all, for X, Y
+            LineOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.LineOrientation);
+            PropagationDimension nextDim = (orientation == LineOrientation.HORIZONTAL) ? parameters.MainDimension : parameters.SecondaryDimension;
+            int xDim = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(nextDim.Min, orientation),
+                partition.GetAbsoluteDimension(nextDim.Max, orientation),
+                nextDim.Decay, _rng);
+            nextDim = (orientation == LineOrientation.VERTICAL) ? parameters.MainDimension : parameters.SecondaryDimension;
+            int yDim = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(nextDim.Min, orientation),
+                partition.GetAbsoluteDimension(nextDim.Max, orientation),
+                nextDim.Decay, _rng);
+            nextDim = (orientation == LineOrientation.HORIZONTAL) ? parameters.MainOffset : parameters.SecondaryOffset;
+            int xBase = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteIndex(nextDim.Min, GetOtherOrientation(orientation)),
+                partition.GetAbsoluteIndex(nextDim.Max, GetOtherOrientation(orientation)),
+                nextDim.Decay, _rng);
+            nextDim = (orientation == LineOrientation.VERTICAL) ? parameters.MainOffset : parameters.SecondaryOffset;
+            int yBase = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteIndex(nextDim.Min, GetOtherOrientation(orientation)),
+                partition.GetAbsoluteIndex(nextDim.Max, GetOtherOrientation(orientation)),
+                nextDim.Decay, _rng);
+            // Finally, crop the square dimensionso it never ever exceeds parent partition
+            xDim = Math.Min(xDim, partition.Width - (xBase - partition.BegX));
+            yDim = Math.Min(yDim, partition.Height - (yBase - partition.BegY));
+            // Apply the draw
+            TileBrush brush = parameters.Brush;
+            ApplyBrushToRectangularBorders(brush, xBase, yBase, xDim, yDim);
+            // Partition 0 is the inside of the box
+            (int minX, int maxX) = (xBase + 1, xBase + xDim - 2); // An inset of the walls
+            (int minY, int maxY) = (yBase + 1, yBase + yDim - 2);
+            AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 0);
+            // Then the funny 8 ones all around
+            // 1 = tl
+            (minX, maxX) = (partition.BegX, xBase - 1);
+            (minY, maxY) = (partition.BegY, yBase - 1);
+            AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 1);
+            // 2 = t
+            (minX, maxX) = (xBase, xBase + xDim - 1);
+            (minY, maxY) = (partition.BegY, yBase - 1);
+            AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 2);
+            // 3 = tr
+            (minX, maxX) = (xBase + xDim, partition.EndX);
+            (minY, maxY) = (partition.BegY, yBase - 1);
+            AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 3);
+            // 4 = l
+            (minX, maxX) = (partition.BegX, xBase - 1);
+            (minY, maxY) = (yBase, yBase + yDim - 1);
+            AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 4);
+            // 5 = r
+            (minX, maxX) = (xBase + xDim, partition.EndX);
+            (minY, maxY) = (yBase, yBase + yDim - 1);
+            AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 5);
+            // 6 = bl
+            (minX, maxX) = (partition.BegX, xBase - 1);
+            (minY, maxY) = (yBase + yDim, partition.EndY);
+            AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 6);
+            // 7 = tl
+            (minX, maxX) = (xBase, xBase + xDim - 1);
+            (minY, maxY) = (yBase + yDim, partition.EndY);
+            AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 7);
+            // 8 = tl
+            (minX, maxX) = (xBase + xDim, partition.EndX);
+            (minY, maxY) = (yBase + yDim, partition.EndY);
+            AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 8);
+            // Finally, returns whether this part should be removed
+            return !GeneratesPartition(brush);
+        }
+        /// <summary>
+        /// Fills a partition with a brush, invalidates it if the brush is non-movement
+        /// </summary>
+        /// <param name="partition">Which partition to fill</param>
+        /// <param name="parameters">Params</param>
+        /// <returns></returns>
+        bool FillPartition(Partition partition, TilePropagatorAction parameters)
+        {
+            bool partitionKill = GeneratesPartition(parameters.Brush); // A brush that serves as a wall would kill the partition if it fills it
+            ApplyBrushToRectangularRegion(parameters.Brush, partition.BegX, partition.BegY, partition.EndX, partition.EndY);
+            if (partitionKill)
+            {
+                partition.Alive = false; // Affects the path connections
+            }
+            return !partitionKill;
         }
     }
 }

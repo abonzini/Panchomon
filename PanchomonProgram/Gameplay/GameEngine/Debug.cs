@@ -7,15 +7,17 @@
     {
         NONE = 0,
         EVENT_ORGANIZER = 1,
+        BATTLE_STATE = 2,
+        STEP_BY_STEP_SIM = 3,
     }
     public static class Debug
     {
-        public static void DebugAction(DebugLevel lvl, Action action)
+        public static void DebugAction(DebugLevel lvl, Action action, bool blocking = false)
         {
             if (lvl <= GameplayElementsContainer.GameplayElementsContainer.GlobalData.CurrentDebugLevel)
             {
                 action();
-                Console.ReadLine();
+                if (blocking) Console.ReadLine();
             }
         }
     }

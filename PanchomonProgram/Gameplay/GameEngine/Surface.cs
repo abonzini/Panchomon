@@ -8,6 +8,8 @@ namespace Gameplay.GameEngine
     public class Surface : SimulationElement
     {
         public int Elevation = 0; // Elevation of this tile in pixels (to add some fluidity to the pixel art)
+        public bool ImpedesMovement = false; // Defines whether this surface impedes or is harmful to _some_ mons, in order to be treated as a wall
+        public ConsoleColor DebugColor = ConsoleColor.White;
         /// <summary>
         /// Get all so they can be fetched by name
         /// </summary>
@@ -19,22 +21,30 @@ namespace Gameplay.GameEngine
             yield return new Surface()
             {
                 Name = "Dirt",
-                _description = "Dirt as commonly seen in reg Pokemon battles."
+                _description = "Dirt as commonly seen in reg Pokemon battles.",
+                ImpedesMovement = false,
+                DebugColor = ConsoleColor.Yellow
             };
             yield return new Surface()
             {
                 Name = "White Paint",
-                _description = "White Paint markings, normally used to delimit regulatory boundaries."
+                _description = "White Paint markings, normally used to delimit regulatory boundaries.",
+                ImpedesMovement = false,
+                DebugColor = ConsoleColor.White
             };
             yield return new Surface()
             {
                 Name = "Water",
-                _description = "Standard water tile."
+                _description = "Standard water tile.",
+                ImpedesMovement = true,
+                DebugColor = ConsoleColor.Cyan
             };
             yield return new Surface()
             {
                 Name = "Conductive Cables",
-                _description = "Grid-like cables on the floor."
+                _description = "Grid-like cables on the floor.",
+                ImpedesMovement = false,
+                DebugColor = ConsoleColor.Gray
             };
         }
     }

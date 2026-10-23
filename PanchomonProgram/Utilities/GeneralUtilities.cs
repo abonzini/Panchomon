@@ -90,6 +90,15 @@ namespace Utilities
             return min + (int)Math.Round(Math.Pow(rng.NextDouble(), decay) * amplitude);
         }
         /// <summary>
+        /// Simulates a coinflip
+        /// </summary>
+        /// <param name="rng">Rng to use</param>
+        /// <returns>True or false</returns>
+        public static bool RandomBool(double trueChance, Random rng)
+        {
+            return rng.NextDouble() < trueChance;
+        }
+        /// <summary>
         /// Creates a random number thta is sortable, by transforming a weight into a softmax index
         /// </summary>
         /// <param name="weight">Weight input (needs to be in relative similarity to others, with higher being more likely)</param>

@@ -15,8 +15,17 @@ namespace Gameplay.GameEngine
     }
     public class Tile : SimulationElement
     {
+        public CliffFace CliffFace { get; set; } = CliffFace.NONE;
         public Surface Surface = null;
         public GroundEffect GroundEffect = null;
         public PhysicalInstance Occupier = null;
+        public bool IsWalkable()
+        {
+            return !(Surface.ImpedesMovement || Occupier != null); // Tile not walkable depending on the surface or if it has an occupier
+        }
+        public override string ToString()
+        {
+            return $"{Surface?.Name}";
+        }
     }
 }

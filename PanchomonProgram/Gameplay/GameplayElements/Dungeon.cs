@@ -49,6 +49,10 @@ namespace Gameplay.GameplayElements
         public TerrainGenerator TerrainGenerator { get; set; } // Which terrain generation will be used
         public double Weight { get; set; } = 1; // Weight will be relative to the other terrains, 1 would be normal chance
         public HashSet<int> Floors { get; set; } = []; // 0,1,2 determines if it's in its corresponding floor
+        public override string ToString()
+        {
+            return Name;
+        }
     }
     public class ItemDrop
     {

@@ -380,10 +380,10 @@ namespace PanchomonBackend
                 };
                 // Execute battle now
                 Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Pre {player1.Name} vs {player2.Name}"));
-                Battlefield fightBattlefield = BattlefieldGetter.GetBattlefield(BattlefieldId, DirectoryPath);
+                TerrainGenerator fightTerrainGen = BattlefieldGetter.GetTerrainGenerator(BattlefieldId, DirectoryPath);
                 GameParameters gameParams = new GameParameters() // These will be the game params for this tournament
                 {
-                    TerrainGenerator = fightBattlefield.TerrainGenerator,
+                    TerrainGenerator = fightTerrainGen,
                     FieldModifier = null
                 };
                 GameSimulator.GameSimulator sim = new GameSimulator.GameSimulator();

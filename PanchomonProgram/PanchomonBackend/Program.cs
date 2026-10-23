@@ -15,6 +15,7 @@ namespace PanchomonBackend
             // Parsing
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             Console.ForegroundColor = ConsoleColor.White;
+            Console.BackgroundColor = ConsoleColor.Black;
             Console.WriteLine("Panchomon manager program ☺");
             Console.CursorVisible = false;
             // Will explore backwards until mechanics data is found (useful). Save spreadsheet url only in mechanics back end, will parse from there. Single origin this time, will do all operations
@@ -155,13 +156,11 @@ namespace PanchomonBackend
                         break;
                     case "7":
                         // Try fetch a battlefield and draw it for debug
-                        Battlefield battlefield = BattlefieldGetter.GetBattlefield(BattlefieldGetter.GetBattlefieldIdString(directoryPath), directoryPath);
-                        GameParameters gParams = new GameParameters()
-                        {
-                            TerrainGenerator = battlefield.TerrainGenerator
-                        };
+                        TerrainGenerator terrainGen = BattlefieldGetter.GetTerrainGenerator(BattlefieldGetter.GetBattlefieldIdString(directoryPath), directoryPath);
+                        Console.WriteLine($"Which sides to include? {string.Join(", ", Enum.GetNames<Side>())}");
+                        List<Side> sides = [.. Console.ReadLine().Split(',').Select(s => Enum.Parse<Side>(s.Trim())).Distinct()]; // Get CSV sides
                         GameSimulator.GameSimulator testSim = new GameSimulator.GameSimulator();
-                        testSim.AssembleBattlefield(battlefield.TerrainGenerator, null); // No field mod ig
+                        testSim.AssembleBattlefield(sides, terrainGen, null, GameplayElementsContainer.GlobalData.CommonRng); // No field mod ig
                         break;
                     case "8":
                         //{
