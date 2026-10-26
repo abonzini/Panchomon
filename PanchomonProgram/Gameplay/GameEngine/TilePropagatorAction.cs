@@ -32,22 +32,35 @@ namespace Gameplay.GameEngine
     {
         NONE, /// Unused ig
         SPLIT_LINE, /// Paints a line in the desired area. LineOrientation defines which direction. MainDimension specifies where the line will hit, either absolute offset (?) or percentage of part. Partitions 0,1 generated are left/right respectively.
-        SPLIT_ROOM, /// Paints a rectangle in the desired X,Y area. LineOrientation defines which one will be the MainDimension and vice versa. Offset will be starting from top left, better if using relative values. Secondary dimension applies to the remaining axis. Partition 0 is inside the square, while 0-8 are in order from up-left
+        SPLIT_ROOM, /// Paints a rectangle in the desired X,Y area. LineOrientation defines which one will be the MainDimension and vice versa. Offset will be starting from top left, better if using relative values. Secondary dimension applies to the remaining axis. Partition 0 is inside the square, while 0-8 are in order from up-left. Using empty brush allows for insetting while workign on partitions 1-9
         SPLIT_LINES, /// Like draw line, but is based on splitting the space in the desired direction into N pieces (MainDimension). Offset allows to move the walls a bit proportional to the original part's dimension but do be careful as they may flip.
         FILL, /// Fills a partition, marked as invalid too depending on fill
-        INSET, /// Shrinks a partition to a new space. The brush is the "new wall"
         JOIN_PARTITIONS, /// Joins all partitions with a hallway brush. If multiple partitions, there's a modified Kruskal algo what does it, use strength to number of connections and stuff
         PAINT_RANDOMLY, /// Paints randomly
         PAINT_AT_CENTER, /// Paints brush in center area
         PAINT_AT_CORNER, /// Paints brush in corner area
         PAINT_AT_EDGE /// Paints brush in edge area
     }
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum PropagationTarget
+    {
+        INSETS = -2, /// Operation applies to inset squares, 1-9
+        ALL = -1, /// Operation will apply to all subdivisions
+        CENTER = 0, /// Operation applies to center square OR the field
+        FIELD = CENTER,
+        BOTTOM = 1, /// Operation applies to bottom launchpad OR the first partition
+        FIRST = BOTTOM,
+        TOP = 2, /// Operation applies to top launchpad OR second partition
+        SECOND = TOP,
+        LEFT = 3, /// Op applies to left launchpad
+        RIGHT = 4, /// Op applies to right launchpad
+    }
     /// <summary>
     /// A machine that allows to override tiles with a pattern, to create procedural elements
     /// </summary>
     public class TilePropagatorAction
     {
-        public int ChildTarget { get; set; } = -1; // Children of partition are numbered, in base one they equal TOP/BOTTOM/ETC. -1 indicates the action to be done in all child partitions
+        public PropagationTarget ChildTarget { get; set; } = PropagationTarget.ALL; // Children of partition are numbered, in base one they equal TOP/BOTTOM/ETC. -1 indicates the action to be done in all child partitions
         public double Chance { get; set; } = 1; // Chance for this step to be executed or skipped. If more than one, chance to do it again
         public TileBrush Brush { get; set; }
         public List<TilePropagatorAction> PartitionActions { get; set; } = null; // Further actions, e.g. if after a partition is made, what to do inside (can allow for other sub-partitions, etc)

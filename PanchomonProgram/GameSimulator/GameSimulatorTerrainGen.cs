@@ -188,6 +188,7 @@ namespace GameSimulator
         void ApplyBrushToTile(TileBrush brush, int x, int y)
         {
             int brushSize = brush.Size;
+            if (brushSize == 0) return;
             bool overrideOcupier = brush.Occupier != null;
             PhysicalInstance newOccupierInstance = null;
             if (!string.IsNullOrEmpty(brush.Occupier))
@@ -267,7 +268,12 @@ namespace GameSimulator
                 while (GeneralUtilities.GetRandomBool(chance, _rng)) // Roll to check if action applied
                 {
                     // Execute action
-                    List<Partition> targets = (action.ChildTarget == -1) ? [.. currentPartitions.GetPartitions()] : [currentPartitions.GetPartition(action.ChildTarget)]; // Get all the partitions I'm going to work with
+                    List<Partition> targets = action.ChildTarget switch// (action.ChildTarget == -1) ? [.. currentPartitions.GetPartitions()] : [currentPartitions.GetPartition(action.ChildTarget)]; // Get all the partitions I'm going to work with
+                    {
+                        PropagationTarget.INSETS => [.. currentPartitions.GetPartitions().Where(p => p.id >= 1 && p.id <= 9)], // The inset pair
+                        PropagationTarget.ALL => [.. currentPartitions.GetPartitions()], // All
+                        _ => [currentPartitions.GetPartition((int)action.ChildTarget)], // Otherwise try to cast and fuck it
+                    };
                     // Party space can now be modified freely from this point onwards since targets was isolated. However user will need to be careful with op order as further tasks will also operate on generated partitions
                     foreach (Partition target in targets) // About to perform the action on each part
                     {
@@ -311,9 +317,11 @@ namespace GameSimulator
         /// <param name="maxY">Max Y</param>
         void ApplyBrushToRectangularRegion(TileBrush brush, int minX, int minY, int maxX, int maxY)
         {
-            for (int i = minX; i <= maxX; i++)
+            int brushSize = brush.Size;
+            if (brushSize == 0) return;
+            for (int i = minX; i <= maxX; i += brushSize)
             {
-                for (int j = minY; j <= maxY; j++)
+                for (int j = minY; j <= maxY; j += brushSize)
                 {
                     ApplyBrushToTile(brush, i, j);
                 }
@@ -330,12 +338,14 @@ namespace GameSimulator
         void ApplyBrushToRectangularBorders(TileBrush brush, int startX, int startY, int width, int height)
         {
             // Do it in 2 parts, first = and then || on the rest lol
-            for (int i = startX; i < startX + width; i++)
+            int brushSize = brush.Size;
+            if (brushSize == 0) return;
+            for (int i = startX; i < startX + width; i += brushSize)
             {
                 ApplyBrushToTile(brush, i, startY);
                 ApplyBrushToTile(brush, i, startY + height - 1);
             }
-            for (int i = startY + 1; i < startX + width - 1; i++) // Remaining ones are smaller
+            for (int i = startY + brushSize; i < startX + width - 1; i += brushSize) // Remaining ones are smaller
             {
                 ApplyBrushToTile(brush, startX, i);
                 ApplyBrushToTile(brush, startX + width - 1, i);
@@ -390,12 +400,12 @@ namespace GameSimulator
             (int minY, int maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (dimension, dimension);
             ApplyBrushToRectangularRegion(brush, minX, minY, maxX, maxY);
             // Partition 0, from square until line (left/up)
-            (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (partition.BegX, dimension - 1);
-            (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (partition.BegY, dimension - 1);
+            (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (partition.BegX, dimension - brushSize);
+            (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (partition.BegY, dimension - brushSize);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 0);
             // Partition 1, from line until end (right/down)
-            (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (dimension + 1, partition.EndX);
-            (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (dimension + 1, partition.EndY);
+            (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (dimension + brushSize, partition.EndX);
+            (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (dimension + brushSize, partition.EndY);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 1);
             // Finally, returns whether this part should be removed
             return !GeneratesPartition(brush);
@@ -429,15 +439,17 @@ namespace GameSimulator
             int yBase = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteOffset(nextDim.Min, SplitOrientation.VERTICAL, yDim),
                 partition.GetAbsoluteOffset(nextDim.Max, SplitOrientation.VERTICAL, yDim),
                 nextDim.Decay, _rng);
-            // Finally, crop the square dimensionso it never ever exceeds parent partition
+            // Finally, crop the square dimension so it never ever exceeds parent partition
             xDim = Math.Min(xDim, partition.Width - (xBase - partition.BegX));
             yDim = Math.Min(yDim, partition.Height - (yBase - partition.BegY));
-            // Apply the draw
+            // Apply the draw of the wall
             TileBrush brush = parameters.Brush;
             ApplyBrushToRectangularBorders(brush, xBase, yBase, xDim, yDim);
+            // Then partition the 9 spaces with the center one being 0. Mind the brush size as this sets the wall size, there may not be a wall
+            int brushSize = brush.Size;
             // Partition 0 is the inside of the box
-            (int minX, int maxX) = (xBase + 1, xBase + xDim - 2); // An inset of the walls
-            (int minY, int maxY) = (yBase + 1, yBase + yDim - 2);
+            (int minX, int maxX) = (xBase + brushSize, xBase + xDim - brushSize - 1); // An inset of the walls
+            (int minY, int maxY) = (yBase + brushSize, yBase + yDim - brushSize - 1);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 0);
             // Then the funny 8 ones all around
             // 1 = tl
@@ -526,7 +538,7 @@ namespace GameSimulator
                 (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (remainingChunkIndex, wallIndex - 1);
                 (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (remainingChunkIndex, wallIndex - 1);
                 AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions);
-                remainingChunkIndex = wallIndex + 1; // Continue after the wall with the next one
+                remainingChunkIndex = wallIndex + brushSize; // Continue after the wall with the next one
             }
             // After last wall, a final partition may remain
             (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (remainingChunkIndex, partition.EndX);

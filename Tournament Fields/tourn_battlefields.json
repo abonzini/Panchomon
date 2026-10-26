@@ -8,7 +8,7 @@
             },
             "PropagatorActions": [
                 {
-                    "ChildTarget": 0,
+                    "ChildTarget": "FIELD",
                     "Brush": {
                         "CliffFace": "STONE",
                         "TileSurface": "White Paint"
@@ -21,7 +21,7 @@
                     }
                 },
                 {
-                    "ChildTarget": 0,
+                    "ChildTarget": "FIELD",
                     "Brush": {
                         "CliffFace": "STONE",
                         "TileSurface": "White Paint"
@@ -34,7 +34,7 @@
                     }
                 },
                 {
-                    "ChildTarget": 0,
+                    "ChildTarget": "FIELD",
                     "Brush": {
                         "CliffFace": "STONE",
                         "TileSurface": "White Paint"
@@ -47,7 +47,7 @@
                     }
                 },
                 {
-                    "ChildTarget": 1,
+                    "ChildTarget": "BOTTOM",
                     "Brush": {
                         "CliffFace": "STONE",
                         "TileSurface": "White Paint"
@@ -60,7 +60,7 @@
                     }
                 },
                 {
-                    "ChildTarget": 2,
+                    "ChildTarget": "TOP",
                     "Brush": {
                         "CliffFace": "STONE",
                         "TileSurface": "White Paint"
@@ -73,6 +73,7 @@
                     }
                 },
                 {
+                    "ChildTarget": "ALL",
                     "Brush": {
                         "CliffFace": "STONE",
                         "TileSurface": "White Paint"
@@ -85,6 +86,7 @@
                     }
                 },
                 {
+                    "ChildTarget": "ALL",
                     "Brush": {
                         "CliffFace": "STONE",
                         "TileSurface": "White Paint"
@@ -97,7 +99,7 @@
                     }
                 },
                 {
-                    "ChildTarget": 0,
+                    "ChildTarget": "FIELD",
                     "Brush": {
                         "CliffFace": "STONE",
                         "TileSurface": "White Paint"
@@ -122,7 +124,7 @@
                     },
                     "PartitionActions": [
                         {
-                            "ChildTarget": 0,
+                            "ChildTarget": "CENTER",
                             "Brush": {
                                 "CliffFace": "STONE",
                                 "TileSurface": "Dirt"
