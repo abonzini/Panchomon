@@ -56,15 +56,15 @@ namespace GameSimulator
         /// <param name="dim">Dimension to check</param>
         /// <param name="orientation">Orientation to check</param>
         /// <returns>The dimension in tiles</returns>
-        public int GetAbsoluteDimension(double dim, LineOrientation orientation)
+        public int GetAbsoluteDimension(double dim, SplitOrientation orientation)
         {
             int ret;
             if (dim < 1)
             {
                 int max = orientation switch
                 {
-                    LineOrientation.HORIZONTAL => Width,
-                    LineOrientation.VERTICAL => Height,
+                    SplitOrientation.HORIZONTAL => Width,
+                    SplitOrientation.VERTICAL => Height,
                     _ => throw new Exception("Horizontal or Vertical are the only valid options here"),
                 };
                 ret = (int)(dim * max);
@@ -82,13 +82,13 @@ namespace GameSimulator
         /// <param name="orientation">Which orientation (only supports horizontal, vertical)</param>
         /// <param name="brushSize">The brush size to adjust the offset amount (max/min) relative to this orientation</param>
         /// <returns></returns>
-        public int GetAbsoluteOffset(double relOffset, LineOrientation orientation, int brushSize)
+        public int GetAbsoluteOffset(double relOffset, SplitOrientation orientation, int brushSize)
         {
             int ret;
             (int dim, int offset) = orientation switch
             {
-                LineOrientation.HORIZONTAL => (Width, BegX),
-                LineOrientation.VERTICAL => (Height, BegY),
+                SplitOrientation.HORIZONTAL => (Width, BegX),
+                SplitOrientation.VERTICAL => (Height, BegY),
                 _ => throw new Exception("Horizontal or Vertical are the only valid options here"),
             };
             if (relOffset < 1)
@@ -264,7 +264,7 @@ namespace GameSimulator
             foreach (TilePropagatorAction action in actions)
             {
                 double chance = action.Chance;
-                while (GeneralUtilities.RandomBool(chance, _rng)) // Roll to check if action applied
+                while (GeneralUtilities.GetRandomBool(chance, _rng)) // Roll to check if action applied
                 {
                     // Execute action
                     List<Partition> targets = (action.ChildTarget == -1) ? [.. currentPartitions.GetPartitions()] : [currentPartitions.GetPartition(action.ChildTarget)]; // Get all the partitions I'm going to work with
@@ -274,8 +274,9 @@ namespace GameSimulator
                         PartitionSpace newSpace = new PartitionSpace();
                         bool partitionStillExists = action.Action switch
                         {
-                            PropagationAction.DRAW_LINE => LineDivide(target, action, newSpace),
-                            PropagationAction.DRAW_RECTANGLE => RectangularDivide(target, action, newSpace),
+                            PropagationAction.SPLIT_LINE => LineDivide(target, action, newSpace),
+                            PropagationAction.SPLIT_ROOM => RectangularDivide(target, action, newSpace),
+                            PropagationAction.SPLIT_LINES => MultiLineDivide(target, action, newSpace),
                             PropagationAction.FILL => FillPartition(target, action), // A fill never generates more things so
                             _ => throw new Exception($"Unsupported partition action {action.Action}")
                         };
@@ -340,26 +341,17 @@ namespace GameSimulator
                 ApplyBrushToTile(brush, startX + width - 1, i);
             }
         }
-        LineOrientation GetAbsolutePartitionOrientation(Partition partition, LineOrientation orientation)
+        SplitOrientation GetAbsolutePartitionOrientation(Partition partition, SplitOrientation orientation)
         {
             return orientation switch
             {
-                LineOrientation.ANY => GeneralUtilities.GetRandomPick([LineOrientation.HORIZONTAL, LineOrientation.VERTICAL], _rng), // Random 50-50 chance
-                LineOrientation.HORIZONTAL => LineOrientation.HORIZONTAL,
-                LineOrientation.VERTICAL => LineOrientation.VERTICAL,
-                LineOrientation.LARGEST => (partition.Width > partition.Height) ? LineOrientation.VERTICAL : LineOrientation.HORIZONTAL, // Partition the largest one
-                LineOrientation.ANY_WEIGHTED => (GeneralUtilities.GetRandomWeightedIndex([partition.Width, partition.Height], _rng) == 0) ? LineOrientation.VERTICAL : LineOrientation.HORIZONTAL, // If width has more weight ot vice versa
+                SplitOrientation.ANY => GeneralUtilities.GetRandomPick([SplitOrientation.HORIZONTAL, SplitOrientation.VERTICAL], _rng), // Random 50-50 chance
+                SplitOrientation.HORIZONTAL => SplitOrientation.HORIZONTAL,
+                SplitOrientation.VERTICAL => SplitOrientation.VERTICAL,
+                SplitOrientation.LARGEST => (partition.Width > partition.Height) ? SplitOrientation.HORIZONTAL : SplitOrientation.VERTICAL, // Partition the largest one
+                SplitOrientation.ANY_WEIGHTED => (GeneralUtilities.GetRandomWeightedIndex([partition.Width, partition.Height], _rng) == 0) ? SplitOrientation.HORIZONTAL : SplitOrientation.VERTICAL, // If width has more weight ot vice versa
                 _ => throw new Exception($"{orientation} is not a valid known orientation")
             }; // The orientation i'll use depends on the desired parameter
-        }
-        /// <summary>
-        /// Bit of a lazy calc, just returns horiz vs vertical
-        /// </summary>
-        /// <param name="orient">Orientation to invert</param>
-        /// <returns>Inverted orientation</returns>
-        LineOrientation GetOtherOrientation(LineOrientation orient)
-        {
-            return orient == LineOrientation.HORIZONTAL ? LineOrientation.VERTICAL : LineOrientation.HORIZONTAL;
         }
         /// <summary>
         /// Adds a partition to a space if the dimensions make sense
@@ -387,23 +379,23 @@ namespace GameSimulator
         bool LineDivide(Partition partition, TilePropagatorAction parameters, PartitionSpace newPartitions)
         {
             // Begin with the line examination, which tile does it begin? Horizontal-Vertical is flipped since it refers to the "line" orientation not the length of the rectangle
-            LineOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.LineOrientation);
+            SplitOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.SplitOrientation);
             TileBrush brush = parameters.Brush;
             int brushSize = brush.Size;
-            int dimension = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteOffset(parameters.MainOffset.Min, GetOtherOrientation(orientation), brushSize),
-                partition.GetAbsoluteOffset(parameters.MainOffset.Max, GetOtherOrientation(orientation), brushSize),
+            int dimension = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteOffset(parameters.MainOffset.Min, orientation, brushSize),
+                partition.GetAbsoluteOffset(parameters.MainOffset.Max, orientation, brushSize),
                 parameters.MainOffset.Decay, _rng);
             // Apply the draw
-            (int minX, int maxX) = (orientation == LineOrientation.HORIZONTAL) ? (partition.BegX, partition.EndX) : (dimension, dimension); // Determine how x and y move
-            (int minY, int maxY) = (orientation == LineOrientation.VERTICAL) ? (partition.BegY, partition.EndY) : (dimension, dimension);
+            (int minX, int maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (dimension, dimension); // Determine how x and y move
+            (int minY, int maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (dimension, dimension);
             ApplyBrushToRectangularRegion(brush, minX, minY, maxX, maxY);
             // Partition 0, from square until line (left/up)
-            (minX, maxX) = (orientation == LineOrientation.HORIZONTAL) ? (partition.BegX, partition.EndX) : (partition.BegX, dimension - 1);
-            (minY, maxY) = (orientation == LineOrientation.VERTICAL) ? (partition.BegY, partition.EndY) : (partition.BegY, dimension - 1);
+            (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (partition.BegX, dimension - 1);
+            (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (partition.BegY, dimension - 1);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 0);
             // Partition 1, from line until end (right/down)
-            (minX, maxX) = (orientation == LineOrientation.HORIZONTAL) ? (partition.BegX, partition.EndX) : (dimension + 1, partition.EndX);
-            (minY, maxY) = (orientation == LineOrientation.VERTICAL) ? (partition.BegY, partition.EndY) : (dimension + 1, partition.EndY);
+            (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (dimension + 1, partition.EndX);
+            (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (dimension + 1, partition.EndY);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 1);
             // Finally, returns whether this part should be removed
             return !GeneratesPartition(brush);
@@ -419,23 +411,23 @@ namespace GameSimulator
         bool RectangularDivide(Partition partition, TilePropagatorAction parameters, PartitionSpace newPartitions)
         {
             // Begin with the square examination, whats the dimension, and the offset? Get all, for X, Y
-            LineOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.LineOrientation);
+            SplitOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.SplitOrientation);
             // Converting potential relative dims into absolute X,Y ones (retainign which one's the main)
-            PropagationDimension nextDim = (orientation == LineOrientation.HORIZONTAL) ? parameters.MainDimension : parameters.SecondaryDimension;
-            int xDim = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(nextDim.Min, LineOrientation.HORIZONTAL),
-                partition.GetAbsoluteDimension(nextDim.Max, LineOrientation.HORIZONTAL),
+            PropagationDimension nextDim = (orientation == SplitOrientation.HORIZONTAL) ? parameters.MainDimension : parameters.SecondaryDimension;
+            int xDim = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(nextDim.Min, SplitOrientation.HORIZONTAL),
+                partition.GetAbsoluteDimension(nextDim.Max, SplitOrientation.HORIZONTAL),
                 nextDim.Decay, _rng);
-            nextDim = (orientation == LineOrientation.VERTICAL) ? parameters.MainDimension : parameters.SecondaryDimension;
-            int yDim = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(nextDim.Min, LineOrientation.VERTICAL),
-                partition.GetAbsoluteDimension(nextDim.Max, LineOrientation.VERTICAL),
+            nextDim = (orientation == SplitOrientation.VERTICAL) ? parameters.MainDimension : parameters.SecondaryDimension;
+            int yDim = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(nextDim.Min, SplitOrientation.VERTICAL),
+                partition.GetAbsoluteDimension(nextDim.Max, SplitOrientation.VERTICAL),
                 nextDim.Decay, _rng);
-            nextDim = (orientation == LineOrientation.HORIZONTAL) ? parameters.MainOffset : parameters.SecondaryOffset;
-            int xBase = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteOffset(nextDim.Min, LineOrientation.HORIZONTAL, xDim),
-                partition.GetAbsoluteOffset(nextDim.Max, LineOrientation.HORIZONTAL, xDim),
+            nextDim = (orientation == SplitOrientation.HORIZONTAL) ? parameters.MainOffset : parameters.SecondaryOffset;
+            int xBase = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteOffset(nextDim.Min, SplitOrientation.HORIZONTAL, xDim),
+                partition.GetAbsoluteOffset(nextDim.Max, SplitOrientation.HORIZONTAL, xDim),
                 nextDim.Decay, _rng);
-            nextDim = (orientation == LineOrientation.VERTICAL) ? parameters.MainOffset : parameters.SecondaryOffset;
-            int yBase = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteOffset(nextDim.Min, LineOrientation.VERTICAL, yDim),
-                partition.GetAbsoluteOffset(nextDim.Max, LineOrientation.VERTICAL, yDim),
+            nextDim = (orientation == SplitOrientation.VERTICAL) ? parameters.MainOffset : parameters.SecondaryOffset;
+            int yBase = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteOffset(nextDim.Min, SplitOrientation.VERTICAL, yDim),
+                partition.GetAbsoluteOffset(nextDim.Max, SplitOrientation.VERTICAL, yDim),
                 nextDim.Decay, _rng);
             // Finally, crop the square dimensionso it never ever exceeds parent partition
             xDim = Math.Min(xDim, partition.Width - (xBase - partition.BegX));
@@ -480,6 +472,66 @@ namespace GameSimulator
             (minX, maxX) = (xBase + xDim, partition.EndX);
             (minY, maxY) = (yBase + yDim, partition.EndY);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 8);
+            // Finally, returns whether this part should be removed
+            return !GeneratesPartition(brush);
+        }
+        /// <summary>
+        /// Divides the current partition into multiple N divisions which may then be offset slightly
+        /// </summary>
+        /// <param name="partition">Partition to divide</param>
+        /// <param name="parameters">Params</param>
+        /// <param name="newPartitions">Place where all new paritions will be put</param>
+        /// <returns></returns>
+        bool MultiLineDivide(Partition partition, TilePropagatorAction parameters, PartitionSpace newPartitions)
+        {
+            // Begin with the line examination, which tile does it begin? Horizontal-Vertical is flipped since it refers to the "line" orientation not the length of the rectangle
+            SplitOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.SplitOrientation);
+            TileBrush brush = parameters.Brush;
+            if ((parameters.MainDimension.Min >= 1) ^ (parameters.MainDimension.Max >= 1)) // XOR to verify that both elements are in the same side of 1
+            {
+                throw new Exception("For a split the param min/max need to both be an integer or both be a fraction!");
+            }
+            int n = (parameters.MainDimension.Min >= 1) ?
+                GeneralUtilities.GetRandomDecayingNumber(
+                    (int)Math.Round(parameters.MainDimension.Min),
+                    (int)Math.Round(parameters.MainDimension.Max),
+                    parameters.MainDimension.Decay, _rng) :
+                GeneralUtilities.GetRandomDecayingNumber( // Would be kinda stupid to do it this way. This split is better with integers
+                    (int)Math.Round(1 / parameters.MainDimension.Max),
+                    (int)Math.Round(1 / parameters.MainDimension.Min),
+                    parameters.MainDimension.Decay, _rng);
+            // Begin split
+            int minX;
+            int maxX;
+            int minY;
+            int maxY;
+            double step = 1.0 / n; // How much the step'll be
+            int brushSize = brush.Size;
+            int remainingChunkIndex = partition.GetAbsoluteOffset(0, orientation, brushSize); // Get the index to start parititoning
+            for (int i = 0; i < n - 1; i++) // Need to partition using n-1 walls
+            {
+                // Where would the wall be located in absolute terms?
+                double nextWallLocation = step * (i + 1);
+                int wallIndex = partition.GetAbsoluteOffset(nextWallLocation, orientation, brushSize);
+                // Add some noise offset
+                int offsetNoise = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(parameters.MainOffset.Min, orientation),
+                partition.GetAbsoluteDimension(parameters.MainOffset.Max, orientation),
+                parameters.MainOffset.Decay, _rng);
+                wallIndex += GeneralUtilities.GetRandomBool(0.5, _rng) ? offsetNoise : -offsetNoise; // Add or remove this offset. This can work terribly bad if user is not extremely careful with offsets
+                // Apply the next draw
+                (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (wallIndex, wallIndex); // Determine how x and y move
+                (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (wallIndex, wallIndex);
+                ApplyBrushToRectangularRegion(brush, minX, minY, maxX, maxY);
+                // Draw the next partition
+                (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (remainingChunkIndex, wallIndex - 1);
+                (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (remainingChunkIndex, wallIndex - 1);
+                AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions);
+                remainingChunkIndex = wallIndex + 1; // Continue after the wall with the next one
+            }
+            // After last wall, a final partition may remain
+            (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (remainingChunkIndex, partition.EndX);
+            (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (remainingChunkIndex, partition.EndY);
+            AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions);
             // Finally, returns whether this part should be removed
             return !GeneratesPartition(brush);
         }

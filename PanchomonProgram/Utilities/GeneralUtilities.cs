@@ -94,7 +94,7 @@ namespace Utilities
         /// </summary>
         /// <param name="rng">Rng to use</param>
         /// <returns>True or false</returns>
-        public static bool RandomBool(double trueChance, Random rng)
+        public static bool GetRandomBool(double trueChance, Random rng)
         {
             return rng.NextDouble() < trueChance;
         }

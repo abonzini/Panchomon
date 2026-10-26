@@ -16,7 +16,7 @@ namespace Gameplay.GameEngine
     /// Line orientation for walls, decorations
     /// </summary>
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum LineOrientation
+    public enum SplitOrientation
     {
         ANY, /// Any, chosen at random
         HORIZONTAL, /// Always Horizontal
@@ -31,9 +31,9 @@ namespace Gameplay.GameEngine
     public enum PropagationAction
     {
         NONE, /// Unused ig
-        DRAW_LINE, /// Paints a line in the desired area. LineOrientation defines which direction. MainDimension specifies where the line will hit, either absolute offset (?) or percentage of part. Brush defines wall brush and whether it partitions, and invarancy defines whether it can (random) roll to flip the partition
-        DRAW_RECTANGLE, /// Paints a rectangle in the desired X,Y area
-        DRAW_GRID, /// Like draw line, but in a patterned grid with 2 directions
+        SPLIT_LINE, /// Paints a line in the desired area. LineOrientation defines which direction. MainDimension specifies where the line will hit, either absolute offset (?) or percentage of part. Partitions 0,1 generated are left/right respectively.
+        SPLIT_ROOM, /// Paints a rectangle in the desired X,Y area. LineOrientation defines which one will be the MainDimension and vice versa. Offset will be starting from top left, better if using relative values. Secondary dimension applies to the remaining axis. Partition 0 is inside the square, while 0-8 are in order from up-left
+        SPLIT_LINES, /// Like draw line, but is based on splitting the space in the desired direction into N pieces (MainDimension). Offset allows to move the walls a bit proportional to the original part's dimension but do be careful as they may flip.
         FILL, /// Fills a partition, marked as invalid too depending on fill
         INSET, /// Shrinks a partition to a new space. The brush is the "new wall"
         JOIN_PARTITIONS, /// Joins all partitions with a hallway brush. If multiple partitions, there's a modified Kruskal algo what does it, use strength to number of connections and stuff
@@ -53,7 +53,7 @@ namespace Gameplay.GameEngine
         public List<TilePropagatorAction> PartitionActions { get; set; } = null; // Further actions, e.g. if after a partition is made, what to do inside (can allow for other sub-partitions, etc)
         // What action to actually perform
         public PropagationAction Action { get; set; } = PropagationAction.NONE;
-        public LineOrientation LineOrientation { get; set; } = LineOrientation.ANY; // If the action requires an orientation
+        public SplitOrientation SplitOrientation { get; set; } = SplitOrientation.ANY; // If the action requires an orientation
         // Controls the "size" of the action, sometimes doesn't apply
         public PropagationDimension MainDimension { get; set; }
         public PropagationDimension SecondaryDimension { get; set; }
