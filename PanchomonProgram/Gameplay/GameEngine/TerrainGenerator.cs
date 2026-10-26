@@ -8,8 +8,9 @@
     {
         public string CliffFace { get; set; } = null;
         public string TileSurface { get; set; } = null;
-        public string GroundEffect { get; set; } = null;
+        public string TileEffect { get; set; } = null;
         public string Occupier { get; set; } = null;
+        public int Size { get { return string.IsNullOrEmpty(Occupier) ? 1 : GameplayElementsContainer.GameplayElementsContainer.GlobalData.PhysicalObjects[Occupier].Size; } }
     }
     /// <summary>
     /// Contains all the elements for terrain generation, this includes all the elements that will result in a completed map (although later on the weather mods will alter these)

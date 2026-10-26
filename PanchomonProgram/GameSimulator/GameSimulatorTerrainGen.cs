@@ -78,25 +78,27 @@ namespace GameSimulator
         /// <summary>
         /// Gets the absolute index for x or y for this rectangle. Transforms <1 (proportionals) into the actual tile
         /// </summary>
-        /// <param name="index">Value to use</param>
+        /// <param name="relOffset">Value to use</param>
         /// <param name="orientation">Which orientation (only supports horizontal, vertical)</param>
+        /// <param name="brushSize">The brush size to adjust the offset amount (max/min) relative to this orientation</param>
         /// <returns></returns>
-        public int GetAbsoluteIndex(double index, LineOrientation orientation)
+        public int GetAbsoluteOffset(double relOffset, LineOrientation orientation, int brushSize)
         {
             int ret;
             (int dim, int offset) = orientation switch
             {
-                LineOrientation.HORIZONTAL => (Height, BegY),
-                LineOrientation.VERTICAL => (Width, BegX),
+                LineOrientation.HORIZONTAL => (Width, BegX),
+                LineOrientation.VERTICAL => (Height, BegY),
                 _ => throw new Exception("Horizontal or Vertical are the only valid options here"),
             };
-            if (index < 1)
+            if (relOffset < 1)
             {
-                ret = (int)(dim * index) + offset;
+                dim -= brushSize - 1; // If brush bigger, it's relative dimension shrinks (less of them fit)
+                ret = (int)(dim * relOffset) + offset;
             }
             else
             {
-                ret = (int)Math.Round(index) + offset;
+                ret = (int)Math.Round(relOffset) + offset;
             }
             return ret;
         }
@@ -178,18 +180,43 @@ namespace GameSimulator
     public partial class GameSimulator
     {
         /// <summary>
-        /// Applies a brush to tile, overrides if "" does nothign if null
+        /// Applies a brush to tile, overrides if "" does nothing if null. Applies ocuppier size tiling
         /// </summary>
         /// <param name="brush"></param>
         /// <param name="x">coord</param>
         /// <param name="y">coord</param>
         void ApplyBrushToTile(TileBrush brush, int x, int y)
         {
-            Tile tile = _grid[x, y];
-            if (brush.Occupier != null) tile.Occupier = brush.Occupier == "" ? null : null; // TODO: Global containers to have all the "objects" in there and then search here, once loaded
-            if (brush.GroundEffect != null) tile.GroundEffect = brush.GroundEffect == "" ? null : null; // TODO: Global containers to have all the "ground effects" in there and then search here, once loaded
-            if (brush.TileSurface != null) tile.Surface = GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface]; // This should never be "no surface""
-            if (brush.CliffFace != null) tile.CliffFace = brush.CliffFace == "" ? CliffFace.NONE : Enum.Parse<CliffFace>(brush.CliffFace);
+            int brushSize = brush.Size;
+            bool overrideOcupier = brush.Occupier != null;
+            PhysicalInstance newOccupierInstance = null;
+            if (!string.IsNullOrEmpty(brush.Occupier))
+            {
+                newOccupierInstance = GameplayElementsContainer.GlobalData.PhysicalObjects[brush.Occupier].Clone();
+                newOccupierInstance.X = x; // Object is in the first element of the tile, useful for when the object needs to remove itself or something
+                newOccupierInstance.Y = y;
+            }
+            bool overrideTileEffect = brush.TileEffect != null;
+            TileEffect newTileEffectInstance = null;
+            if (!string.IsNullOrEmpty(brush.TileEffect))
+            {
+                newTileEffectInstance = GameplayElementsContainer.GlobalData.TileEffects[brush.TileEffect].Clone();
+            }
+            for (int i = x; i < x + brushSize; i += brushSize)
+            {
+                for (int j = y; j < y + brushSize; j += brushSize)
+                {
+                    Tile tile = _grid[i, j];
+                    if (overrideOcupier) tile.Occupier = newOccupierInstance;
+                    if (overrideTileEffect)
+                    {
+                        tile.Effect = newTileEffectInstance;
+                        newTileEffectInstance.AssociatedTile = tile;
+                    }
+                    if (brush.TileSurface != null) tile.Surface = GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface]; // This should never be "no surface""
+                    if (brush.CliffFace != null) tile.CliffFace = brush.CliffFace == "" ? CliffFace.NONE : Enum.Parse<CliffFace>(brush.CliffFace);
+                }
+            }
         }
         /// <summary>
         /// Initializes and draws battlefield, ready to start sim after
@@ -271,7 +298,7 @@ namespace GameSimulator
         /// <returns>Whether it's a "solid" separator brush</returns>
         static bool GeneratesPartition(TileBrush brush)
         {
-            return (brush.Occupier != null && brush.Occupier != "") || (brush.TileSurface != null && GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface].ImpedesMovement);
+            return (brush.Occupier != null && brush.Occupier != "") || (brush.TileSurface != null && GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface].AltersMovement);
         }
         /// <summary>
         /// Applies a specific brush to a line in the map
@@ -359,15 +386,16 @@ namespace GameSimulator
         /// <returns>Whether the element operated on still exists</returns>
         bool LineDivide(Partition partition, TilePropagatorAction parameters, PartitionSpace newPartitions)
         {
-            // Begin with the line examination, which tile does it begin?
+            // Begin with the line examination, which tile does it begin? Horizontal-Vertical is flipped since it refers to the "line" orientation not the length of the rectangle
             LineOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.LineOrientation);
-            int dimension = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteIndex(parameters.MainOffset.Min, orientation),
-                partition.GetAbsoluteIndex(parameters.MainOffset.Max, orientation),
+            TileBrush brush = parameters.Brush;
+            int brushSize = brush.Size;
+            int dimension = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteOffset(parameters.MainOffset.Min, GetOtherOrientation(orientation), brushSize),
+                partition.GetAbsoluteOffset(parameters.MainOffset.Max, GetOtherOrientation(orientation), brushSize),
                 parameters.MainOffset.Decay, _rng);
             // Apply the draw
             (int minX, int maxX) = (orientation == LineOrientation.HORIZONTAL) ? (partition.BegX, partition.EndX) : (dimension, dimension); // Determine how x and y move
             (int minY, int maxY) = (orientation == LineOrientation.VERTICAL) ? (partition.BegY, partition.EndY) : (dimension, dimension);
-            TileBrush brush = parameters.Brush;
             ApplyBrushToRectangularRegion(brush, minX, minY, maxX, maxY);
             // Partition 0, from square until line (left/up)
             (minX, maxX) = (orientation == LineOrientation.HORIZONTAL) ? (partition.BegX, partition.EndX) : (partition.BegX, dimension - 1);
@@ -392,21 +420,22 @@ namespace GameSimulator
         {
             // Begin with the square examination, whats the dimension, and the offset? Get all, for X, Y
             LineOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.LineOrientation);
+            // Converting potential relative dims into absolute X,Y ones (retainign which one's the main)
             PropagationDimension nextDim = (orientation == LineOrientation.HORIZONTAL) ? parameters.MainDimension : parameters.SecondaryDimension;
-            int xDim = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(nextDim.Min, orientation),
-                partition.GetAbsoluteDimension(nextDim.Max, orientation),
+            int xDim = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(nextDim.Min, LineOrientation.HORIZONTAL),
+                partition.GetAbsoluteDimension(nextDim.Max, LineOrientation.HORIZONTAL),
                 nextDim.Decay, _rng);
             nextDim = (orientation == LineOrientation.VERTICAL) ? parameters.MainDimension : parameters.SecondaryDimension;
-            int yDim = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(nextDim.Min, orientation),
-                partition.GetAbsoluteDimension(nextDim.Max, orientation),
+            int yDim = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(nextDim.Min, LineOrientation.VERTICAL),
+                partition.GetAbsoluteDimension(nextDim.Max, LineOrientation.VERTICAL),
                 nextDim.Decay, _rng);
             nextDim = (orientation == LineOrientation.HORIZONTAL) ? parameters.MainOffset : parameters.SecondaryOffset;
-            int xBase = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteIndex(nextDim.Min, GetOtherOrientation(orientation)),
-                partition.GetAbsoluteIndex(nextDim.Max, GetOtherOrientation(orientation)),
+            int xBase = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteOffset(nextDim.Min, LineOrientation.HORIZONTAL, xDim),
+                partition.GetAbsoluteOffset(nextDim.Max, LineOrientation.HORIZONTAL, xDim),
                 nextDim.Decay, _rng);
             nextDim = (orientation == LineOrientation.VERTICAL) ? parameters.MainOffset : parameters.SecondaryOffset;
-            int yBase = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteIndex(nextDim.Min, GetOtherOrientation(orientation)),
-                partition.GetAbsoluteIndex(nextDim.Max, GetOtherOrientation(orientation)),
+            int yBase = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteOffset(nextDim.Min, LineOrientation.VERTICAL, yDim),
+                partition.GetAbsoluteOffset(nextDim.Max, LineOrientation.VERTICAL, yDim),
                 nextDim.Decay, _rng);
             // Finally, crop the square dimensionso it never ever exceeds parent partition
             xDim = Math.Min(xDim, partition.Width - (xBase - partition.BegX));

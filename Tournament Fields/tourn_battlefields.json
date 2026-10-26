@@ -105,20 +105,20 @@
                     "Action": "DRAW_RECTANGLE",
                     "LineOrientation": "ANY",
                     "MainDimension": {
-                        "Min": 3,
-                        "Max": 3
+                        "Min": 0.34,
+                        "Max": 0.34
                     },
                     "SecondaryDimension": {
-                        "Min": 3,
-                        "Max": 3
+                        "Min": 0.34,
+                        "Max": 0.34
                     },
                     "MainOffset": {
-                        "Min": 6,
-                        "Max": 6
+                        "Min": 0.5,
+                        "Max": 0.5
                     },
                     "SecondaryOffset": {
-                        "Min": 6,
-                        "Max": 6
+                        "Min": 0.5,
+                        "Max": 0.5
                     },
                     "PartitionActions": [
                         {

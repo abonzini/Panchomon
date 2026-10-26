@@ -44,6 +44,8 @@ namespace Gameplay.GameplayElementsContainer
             LoadAllElements(FieldModifiers, FieldModifier.GetAllFieldMods());
             LoadAllElements(NvStatuses, NonVolatileStatus.GetAllNonVolatileStatus());
             LoadAllElements(Surfaces, Surface.GetAllSurfaces());
+            LoadAllElements(PhysicalObjects, PhysicalInstance.GetAllOccupierObjects());
+            LoadAllElements(TileEffects, TileEffect.GetAllTileEffects());
             // Then, load the data from the google sheets
             string typechartTab = lines[1].Split(",")[0];
             ParseTypeChart(sheetId, typechartTab);
@@ -92,5 +94,7 @@ namespace Gameplay.GameplayElementsContainer
         public Dictionary<string, FieldModifier> FieldModifiers = new Dictionary<string, FieldModifier>();
         public Dictionary<string, NonVolatileStatus> NvStatuses = new Dictionary<string, NonVolatileStatus>();
         public Dictionary<string, Surface> Surfaces = new Dictionary<string, Surface>();
+        public Dictionary<string, PhysicalInstance> PhysicalObjects = new Dictionary<string, PhysicalInstance>();
+        public Dictionary<string, TileEffect> TileEffects = new Dictionary<string, TileEffect>();
     }
 }
