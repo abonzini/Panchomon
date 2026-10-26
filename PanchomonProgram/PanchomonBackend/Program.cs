@@ -159,8 +159,15 @@ namespace PanchomonBackend
                         TerrainGenerator terrainGen = BattlefieldGetter.GetTerrainGenerator(BattlefieldGetter.GetBattlefieldIdString(directoryPath), directoryPath);
                         Console.WriteLine($"Which sides to include? {string.Join(", ", Enum.GetNames<Side>())}");
                         List<Side> sides = [.. Console.ReadLine().Split(',').Select(s => Enum.Parse<Side>(s.Trim())).Distinct()]; // Get CSV sides
+                        Console.WriteLine("Which key? Leave empty if random");
+                        if (!int.TryParse(Console.ReadLine(), out int seed))
+                        {
+                            seed = GameplayElementsContainer.GlobalData.CommonRng.Next();
+                        }
+                        Random rng = new Random(seed);
                         GameSimulator.GameSimulator testSim = new GameSimulator.GameSimulator();
-                        testSim.AssembleBattlefield(sides, terrainGen, null, GameplayElementsContainer.GlobalData.CommonRng); // No field mod ig
+                        testSim.AssembleBattlefield(sides, terrainGen, null, rng); // No field mod ig
+                        Console.WriteLine($"Seed was {seed}");
                         break;
                     case "8":
                         //{
