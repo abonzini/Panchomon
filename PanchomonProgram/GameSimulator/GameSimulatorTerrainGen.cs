@@ -9,7 +9,7 @@ namespace GameSimulator
     /// </summary>
     internal class Partition
     {
-        public int id; // Id of partition
+        public int Id; // Id of partition
         public int BegX;
         public int BegY;
         public int EndX;
@@ -25,22 +25,52 @@ namespace GameSimulator
         public int Width { get { return EndX - BegX + 1; } }
         public int Height { get { return EndY - BegY + 1; } }
         /// <summary>
-        /// To check if touching or adjacent (or degenerate cases like engulfing)
+        /// Bit of a weird one to explain. Tells you if a rect can be connected to another via a straight bridge with a specific direction. Since squares come many sizes, system also returns which tile the overlap begins and which one it ends. Assumes rectangles are not engulfed
         /// </summary>
-        /// <param name="other">Other rect to check</param>
-        /// <returns>True if they are touching</returns>
-        public bool IsTouching(Partition other)
+        /// <param name="other">Other rect to head to</param>
+        /// <returns>A triple, Direciton plus the overlap begin/end (dpending if NS or EW direction, direction may be none</returns>
+        public (Direction, int overlapBegin, int overlapEnd) GetRaycastableTowards(Partition other)
         {
-            return BegX <= other.EndX &&
-                EndX >= other.BegX &&
-                BegY <= other.EndY &&
-                EndY >= other.BegY;
+            Direction resultingDirection = Direction.NONE;
+            // Check X overlap
+            int overlapStart = Math.Max(BegX, other.BegX);
+            int overlapEnd = Math.Min(EndX, other.EndX);
+            if (overlapStart <= overlapEnd) // One rectangle can then be projected via another in X
+            {
+                if (other.EndY < BegY) // other is at N!
+                {
+                    resultingDirection = Direction.N;
+                }
+                else // Assume there's no degenerate case where rectangles are overlapping
+                {
+                    resultingDirection = Direction.S;
+                }
+            }
+            else // No X overlap
+            {
+                // Check EW for overlap
+                overlapStart = Math.Max(BegY, other.BegY);
+                overlapEnd = Math.Min(EndY, other.EndY);
+                if (overlapStart <= overlapEnd) // Projectable via Y
+                {
+                    if (other.EndX < BegX)
+                    {
+                        resultingDirection = Direction.W; // Square is at west
+                    }
+                    else // Assume there's no degenerate case where rectangles are overlapping
+                    {
+                        resultingDirection = Direction.E;
+                    }
+                }
+            }
+            // Not connectable via NESW, connection is NONE, garbage out
+            return (resultingDirection, overlapStart, overlapEnd);
         }
         /// <summary>
         /// Returns all coords included in this square
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<(int, int)> GetAllTiles()
+        public IEnumerable<(int, int)> GetAllTileCoords()
         {
             for (int i = BegX; i <= EndX; i++)
             {
@@ -104,7 +134,7 @@ namespace GameSimulator
         }
         public override string ToString()
         {
-            return $"{BegX},{BegY} ({Width}x{Height})";
+            return $"{Id} ({BegX}, {BegY})->({Width}x{Height})";
         }
     }
     internal class PartitionSpace
@@ -125,7 +155,7 @@ namespace GameSimulator
                 throw new Exception("Partition ID is lower than the internal counter and may be already occupied");
             }
             _nextId = nextId + 1; // The next one becomes the min possible
-            partition.id = nextId;
+            partition.Id = nextId;
             _partitions.Add(nextId, partition);
             _setParenting.Add(nextId, nextId); // Each party begins as it's own disjoint set to be bridged later if needed
         }
@@ -135,8 +165,8 @@ namespace GameSimulator
         /// <param name="partition"></param>
         public void RemovePartition(Partition partition)
         {
-            _partitions.Remove(partition.id);
-            _setParenting.Remove(partition.id);
+            _partitions.Remove(partition.Id);
+            _setParenting.Remove(partition.Id);
         }
         /// <summary>
         /// Merges the partition space with the current one as the main one, shift the ids so they don't overlap
@@ -150,7 +180,7 @@ namespace GameSimulator
             {
                 int newId = idBase + kvp.Key;
                 if (newId > maxId) maxId = newId;
-                kvp.Value.id = newId;
+                kvp.Value.Id = newId;
                 _partitions.Add(newId, kvp.Value);
             }
             foreach (KeyValuePair<int, int> set in other._setParenting) // Unify disjoint sets
@@ -158,6 +188,14 @@ namespace GameSimulator
                 _setParenting.Add(set.Key + idBase, set.Value + idBase);
             }
             _nextId = maxId + 1; // Ok if need to add more, prepare the id
+        }
+        /// <summary>
+        /// Gets how many child partitions are here
+        /// </summary>
+        /// <returns>How many</returns>
+        public int GetPartitionCount()
+        {
+            return _partitions.Count;
         }
         /// <summary>
         /// Gets a specific partition given its id
@@ -175,6 +213,36 @@ namespace GameSimulator
         public IEnumerable<Partition> GetPartitions()
         {
             return _partitions.Values;
+        }
+        /// <summary>
+        /// Gets (and also updates) the parenting of a node. The disjoint set's parent will be a single partition
+        /// </summary>
+        /// <param name="id">Id of partition to check</param>
+        /// <returns>The partition that "owns" this disjoint set</returns>
+        public int GetSetParent(int id)
+        {
+            if (_setParenting[id] != id)
+            {
+                _setParenting[id] = GetSetParent(_setParenting[id]); // Go deep until we get the original node, parent of this whole disjoint set
+            }
+            return _setParenting[id];
+        }
+        /// <summary>
+        /// Joins id1 and id2 partitions
+        /// </summary>
+        /// <param name="id1">Partition 1</param>
+        /// <param name="id2">Parition 2</param>
+        /// <returns>The id</returns>
+        public int Join(int id1, int id2)
+        {
+            int firstId = _setParenting[id1];
+            int secondId = _setParenting[id2];
+            int minId = Math.Min(_setParenting[id1], _setParenting[id2]);
+            foreach (KeyValuePair<int, int> kvp in _setParenting.Where(p => p.Value == firstId || p.Value == secondId || p.Value == minId)) // Collapse recursively, I dont care if it's not efficient im tired boss
+            {
+                _setParenting[kvp.Key] = minId;
+            }
+            return minId;
         }
     }
     public partial class GameSimulator
@@ -242,9 +310,9 @@ namespace GameSimulator
                         _ => throw new Exception($"The side {side} is not a valid trainer side, something happened"),
                     };
                     CurrentPartitionSpace.AddNewPartition(nextParty);
-                    foreach ((int x, int y) in nextParty.GetAllTiles()) // Paint this square with the basic brush
+                    foreach ((int x, int y) in nextParty.GetAllTileCoords()) // Paint this square with the basic brush
                     {
-                        _grid[x, y] = new Tile(); // Instance tile
+                        _grid[x, y] = new Tile(x, y); // Instance tile
                         ApplyBrushToTile(_parameters.TerrainGenerator.BasicBrush, x, y); // Apply the basic brush to this tile with all the things
                     }
                     Debug.DebugAction(DebugLevel.STEP_BY_STEP_SIM, () => DrawGrid($"Generated Partition {side}"));
@@ -270,7 +338,7 @@ namespace GameSimulator
                     // Execute action
                     List<Partition> targets = action.ChildTarget switch// (action.ChildTarget == -1) ? [.. currentPartitions.GetPartitions()] : [currentPartitions.GetPartition(action.ChildTarget)]; // Get all the partitions I'm going to work with
                     {
-                        PropagationTarget.INSETS => [.. currentPartitions.GetPartitions().Where(p => p.id >= 1 && p.id <= 9)], // The inset pair
+                        PropagationTarget.INSETS => [.. currentPartitions.GetPartitions().Where(p => p.Id >= 1 && p.Id <= 9)], // The inset pair
                         PropagationTarget.ALL => [.. currentPartitions.GetPartitions()], // All
                         _ => [currentPartitions.GetPartition((int)action.ChildTarget)], // Otherwise try to cast and fuck it
                     };
@@ -284,15 +352,23 @@ namespace GameSimulator
                             PropagationAction.SPLIT_ROOM => RectangularDivide(target, action, newSpace),
                             PropagationAction.SPLIT_LINES => MultiLineDivide(target, action, newSpace),
                             PropagationAction.FILL => FillPartition(target, action), // A fill never generates more things so
+                            PropagationAction.JOIN_PARTITIONS => JoinPartitionsInSpace(currentPartitions, action), // Works to merge all current partitions
                             _ => throw new Exception($"Unsupported partition action {action.Action}")
                         };
-                        PropagateActions(action.PartitionActions, newSpace); // Apply further actions to the new spaces that were created
-                        if (!partitionStillExists) // If this action caused this partition to be split or removed
+                        if (newSpace.GetPartitionCount() > 0) // If the op caused more sub-partitions (childs) need to apply axtra actions and decide who remains
                         {
-                            currentPartitions.RemovePartition(target); // Then, removes parent since it was subdivided
-                            currentPartitions.MergeSpace(newSpace); // Apply the new space to the merge space
+                            PropagateActions(action.PartitionActions, newSpace); // Apply further actions to the new spaces that were created
+                            if (!partitionStillExists) // If this action caused this partition to be split or removed
+                            {
+                                currentPartitions.RemovePartition(target); // Then, removes parent since it was subdivided
+                                currentPartitions.MergeSpace(newSpace); // Apply the new space to the merge space
+                            }
                         }
-                        Debug.DebugAction(DebugLevel.BATTLE_STATE, () => DrawGrid($"After {action.Action} on partition {target.id}"));
+                        Debug.DebugAction(DebugLevel.BATTLE_STATE, () => DrawGrid($"After {action.Action} on partition {target.Id}"));
+                        if (action.Action == PropagationAction.JOIN_PARTITIONS) // This is an action that occurs in all partitions at once and doesn't subdivide, so it can skip once it passes once
+                        {
+                            break;
+                        }
                     }
                     chance--; // If >1, has a chance of going again. This is risky if the action involves sub-partitioning as this will sub partition everything
                 }
@@ -305,7 +381,7 @@ namespace GameSimulator
         /// <returns>Whether it's a "solid" separator brush</returns>
         static bool GeneratesPartition(TileBrush brush)
         {
-            return (brush.Occupier != null && brush.Occupier != "") || (brush.TileSurface != null && GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface].AltersMovement);
+            return (brush.Occupier != null && brush.Occupier != "") || (brush.TileSurface != null && GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface].HindersMovement);
         }
         /// <summary>
         /// Applies a specific brush to a line in the map
@@ -392,9 +468,9 @@ namespace GameSimulator
             SplitOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.SplitOrientation);
             TileBrush brush = parameters.Brush;
             int brushSize = brush.Size;
-            int dimension = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteOffset(parameters.MainOffset.Min, orientation, brushSize),
-                partition.GetAbsoluteOffset(parameters.MainOffset.Max, orientation, brushSize),
-                parameters.MainOffset.Decay, _rng);
+            int dimension = GeneralUtilities.GetRandomDecayingInt(partition.GetAbsoluteOffset(parameters.DimensionalParameters[0].Min, orientation, brushSize),
+                partition.GetAbsoluteOffset(parameters.DimensionalParameters[0].Max, orientation, brushSize),
+                parameters.DimensionalParameters[0].Decay, _rng);
             // Apply the draw
             (int minX, int maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (dimension, dimension); // Determine how x and y move
             (int minY, int maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (dimension, dimension);
@@ -423,20 +499,20 @@ namespace GameSimulator
             // Begin with the square examination, whats the dimension, and the offset? Get all, for X, Y
             SplitOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.SplitOrientation);
             // Converting potential relative dims into absolute X,Y ones (retainign which one's the main)
-            PropagationDimension nextDim = (orientation == SplitOrientation.HORIZONTAL) ? parameters.MainDimension : parameters.SecondaryDimension;
-            int xDim = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(nextDim.Min, SplitOrientation.HORIZONTAL),
+            PropagationDimension nextDim = (orientation == SplitOrientation.HORIZONTAL) ? parameters.DimensionalParameters[0] : parameters.DimensionalParameters[1];
+            int xDim = GeneralUtilities.GetRandomDecayingInt(partition.GetAbsoluteDimension(nextDim.Min, SplitOrientation.HORIZONTAL),
                 partition.GetAbsoluteDimension(nextDim.Max, SplitOrientation.HORIZONTAL),
                 nextDim.Decay, _rng);
-            nextDim = (orientation == SplitOrientation.VERTICAL) ? parameters.MainDimension : parameters.SecondaryDimension;
-            int yDim = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(nextDim.Min, SplitOrientation.VERTICAL),
+            nextDim = (orientation == SplitOrientation.VERTICAL) ? parameters.DimensionalParameters[0] : parameters.DimensionalParameters[1];
+            int yDim = GeneralUtilities.GetRandomDecayingInt(partition.GetAbsoluteDimension(nextDim.Min, SplitOrientation.VERTICAL),
                 partition.GetAbsoluteDimension(nextDim.Max, SplitOrientation.VERTICAL),
                 nextDim.Decay, _rng);
-            nextDim = (orientation == SplitOrientation.HORIZONTAL) ? parameters.MainOffset : parameters.SecondaryOffset;
-            int xBase = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteOffset(nextDim.Min, SplitOrientation.HORIZONTAL, xDim),
+            nextDim = (orientation == SplitOrientation.HORIZONTAL) ? parameters.DimensionalParameters[2] : parameters.DimensionalParameters[3];
+            int xBase = GeneralUtilities.GetRandomDecayingInt(partition.GetAbsoluteOffset(nextDim.Min, SplitOrientation.HORIZONTAL, xDim),
                 partition.GetAbsoluteOffset(nextDim.Max, SplitOrientation.HORIZONTAL, xDim),
                 nextDim.Decay, _rng);
-            nextDim = (orientation == SplitOrientation.VERTICAL) ? parameters.MainOffset : parameters.SecondaryOffset;
-            int yBase = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteOffset(nextDim.Min, SplitOrientation.VERTICAL, yDim),
+            nextDim = (orientation == SplitOrientation.VERTICAL) ? parameters.DimensionalParameters[2] : parameters.DimensionalParameters[3];
+            int yBase = GeneralUtilities.GetRandomDecayingInt(partition.GetAbsoluteOffset(nextDim.Min, SplitOrientation.VERTICAL, yDim),
                 partition.GetAbsoluteOffset(nextDim.Max, SplitOrientation.VERTICAL, yDim),
                 nextDim.Decay, _rng);
             // Finally, crop the square dimension so it never ever exceeds parent partition
@@ -493,25 +569,25 @@ namespace GameSimulator
         /// <param name="partition">Partition to divide</param>
         /// <param name="parameters">Params</param>
         /// <param name="newPartitions">Place where all new paritions will be put</param>
-        /// <returns></returns>
+        /// <returns>Whether the element operated on still exists</returns>
         bool MultiLineDivide(Partition partition, TilePropagatorAction parameters, PartitionSpace newPartitions)
         {
             // Begin with the line examination, which tile does it begin? Horizontal-Vertical is flipped since it refers to the "line" orientation not the length of the rectangle
             SplitOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.SplitOrientation);
             TileBrush brush = parameters.Brush;
-            if ((parameters.MainDimension.Min >= 1) ^ (parameters.MainDimension.Max >= 1)) // XOR to verify that both elements are in the same side of 1
+            if ((parameters.DimensionalParameters[0].Min >= 1) ^ (parameters.DimensionalParameters[0].Max >= 1)) // XOR to verify that both elements are in the same side of 1
             {
                 throw new Exception("For a split the param min/max need to both be an integer or both be a fraction!");
             }
-            int n = (parameters.MainDimension.Min >= 1) ?
-                GeneralUtilities.GetRandomDecayingNumber(
-                    (int)Math.Round(parameters.MainDimension.Min),
-                    (int)Math.Round(parameters.MainDimension.Max),
-                    parameters.MainDimension.Decay, _rng) :
-                GeneralUtilities.GetRandomDecayingNumber( // Would be kinda stupid to do it this way. This split is better with integers
-                    (int)Math.Round(1 / parameters.MainDimension.Max),
-                    (int)Math.Round(1 / parameters.MainDimension.Min),
-                    parameters.MainDimension.Decay, _rng);
+            int n = (parameters.DimensionalParameters[0].Min >= 1) ?
+                GeneralUtilities.GetRandomDecayingInt(
+                    (int)Math.Round(parameters.DimensionalParameters[0].Min),
+                    (int)Math.Round(parameters.DimensionalParameters[0].Max),
+                    parameters.DimensionalParameters[0].Decay, _rng) :
+                GeneralUtilities.GetRandomDecayingInt( // Would be kinda stupid to do it this way. This split is better with integers
+                    (int)Math.Round(1 / parameters.DimensionalParameters[0].Max),
+                    (int)Math.Round(1 / parameters.DimensionalParameters[0].Min),
+                    parameters.DimensionalParameters[0].Decay, _rng);
             // Begin split
             int minX;
             int maxX;
@@ -526,9 +602,9 @@ namespace GameSimulator
                 double nextWallLocation = step * (i + 1);
                 int wallIndex = partition.GetAbsoluteOffset(nextWallLocation, orientation, brushSize);
                 // Add some noise offset
-                int offsetNoise = GeneralUtilities.GetRandomDecayingNumber(partition.GetAbsoluteDimension(parameters.MainOffset.Min, orientation),
-                partition.GetAbsoluteDimension(parameters.MainOffset.Max, orientation),
-                parameters.MainOffset.Decay, _rng);
+                int offsetNoise = GeneralUtilities.GetRandomDecayingInt(partition.GetAbsoluteDimension(parameters.DimensionalParameters[1].Min, orientation),
+                partition.GetAbsoluteDimension(parameters.DimensionalParameters[1].Max, orientation),
+                parameters.DimensionalParameters[1].Decay, _rng);
                 wallIndex += GeneralUtilities.GetRandomBool(0.5, _rng) ? offsetNoise : -offsetNoise; // Add or remove this offset. This can work terribly bad if user is not extremely careful with offsets
                 // Apply the next draw
                 (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (wallIndex, wallIndex); // Determine how x and y move
@@ -552,7 +628,7 @@ namespace GameSimulator
         /// </summary>
         /// <param name="partition">Which partition to fill</param>
         /// <param name="parameters">Params</param>
-        /// <returns></returns>
+        /// <returns>Whether the element operated on still exists</returns>
         bool FillPartition(Partition partition, TilePropagatorAction parameters)
         {
             bool partitionKill = GeneratesPartition(parameters.Brush); // A brush that serves as a wall would kill the partition if it fills it
@@ -562,6 +638,204 @@ namespace GameSimulator
                 partition.Alive = false; // Affects the path connections
             }
             return !partitionKill;
+        }
+        /// <summary>
+        /// Joins all the partitions inside the desired space to join
+        /// </summary>
+        /// <param name="spaceToJoin">Which space to join</param>
+        /// <param name="parameters">Parameters that define how the partitions are joined</param>
+        /// <returns>Always true, this operation never removes partitions</returns>
+        bool JoinPartitionsInSpace(PartitionSpace spaceToJoin, TilePropagatorAction parameters)
+        {
+            // Get partitions to join and a map of tiles and which partition it belongs to
+            List<Partition> partitions = [.. spaceToJoin.GetPartitions()]; // Get all partitions, raw, need to check what joins to what
+            Dictionary<(int, int), int> tilePartDict = new Dictionary<(int, int), int>();
+            Dictionary<int, int> connectionsPerNode = new Dictionary<int, int>();
+            foreach (Partition partition in partitions)
+            {
+                foreach ((int, int) coords in partition.GetAllTileCoords())
+                {
+                    tilePartDict.Add(coords, partition.Id);
+                }
+                connectionsPerNode[partition.Id] = 0; // All parts begin unjoined
+            }
+            // Now the data structs needed for the tree
+            HashSet<(int, int, int, Direction)> potentialConnections = new HashSet<(int, int, int, Direction)>(); // Contains all the potential valid connections that could be attempted. Id1->Id2, Distance, which direction from Id1
+            Dictionary<(int, int), List<(int, int)>> potentialConectionValidStarts = new Dictionary<(int, int), List<(int, int)>>(); // Valid starts for joining 2 rectangles
+            HashSet<(int, int, int, Direction)> knownPartitionStarts = new HashSet<(int, int, int, Direction)>();
+            double sortingExponent = parameters.DimensionalParameters[0].Decay;
+            for (int i = 0; i < partitions.Count; i++) // Check each part with each part
+            {
+                Partition partSource = partitions[i];
+                if (!partSource.Alive) continue; // No joining dead partitions
+                for (int j = i + 1; j < partitions.Count; j++)
+                {
+                    Partition partDest = partitions[j];
+                    if (!partDest.Alive) continue; // No joining dead partitions
+                    // Check if there's chance of overlap, and which tiles will do that, cause a raycast in each
+                    (Direction connectionDirection, int overlapMin, int overlapMax) = partSource.GetRaycastableTowards(partDest);
+                    if (connectionDirection != Direction.NONE)
+                    {
+                        // Ok they may join
+                        (int minX, int maxX) = connectionDirection switch
+                        {
+                            Direction.N or Direction.S => (overlapMin, overlapMax),
+                            Direction.E => (partSource.EndX, partSource.EndX),
+                            Direction.W => (partSource.BegX, partSource.BegX),
+                            _ => throw new Exception("Invalid straight direction")
+                        };
+                        (int minY, int maxY) = connectionDirection switch
+                        {
+                            Direction.E or Direction.W => (overlapMin, overlapMax),
+                            Direction.N => (partSource.BegY, partSource.BegY),
+                            Direction.S => (partSource.EndY, partSource.EndY),
+                            _ => throw new Exception("Invalid straight direction")
+                        };
+                        // Some extra stuff to make sure we don't do degenerate tunnelling
+                        (int, int) latDelta = GetLatDelta(connectionDirection);
+                        // Check all tiles until I find at least 1 that touches, get the distance
+                        for (int x = minX; x <= maxX; x++)
+                        {
+                            for (int y = minY; y <= maxY; y++)
+                            {
+                                int distance = 0;
+                                (int, int, int, Direction) pathToCheck = (partSource.Id, x, y, connectionDirection);
+                                if (knownPartitionStarts.Contains(pathToCheck)) continue; // Skip if path outcome known
+                                foreach (Tile nextTile in RaycastSimple(x, y, connectionDirection, 1))
+                                {
+                                    (int, int) coord = (nextTile.X, nextTile.Y);
+                                    if (!tilePartDict.TryGetValue(coord, out int tileOwnerPart)) // Check if no valid partition reached yet...
+                                    {
+                                        // Small trick to avoid tunneling longitudinally through a wall, accidentally connecting up to 4 rooms. Ideally can only tunnel if tunnel ONLY connects two
+                                        bool canTunnel = !tilePartDict.ContainsKey((coord.Item1 + latDelta.Item1, coord.Item2 + latDelta.Item2)); // Basically, if tile dict marks adj tiles as non-owned, then its safe to tunnel as we won't accidentally join rooms
+                                        canTunnel &= !tilePartDict.ContainsKey((coord.Item1 - latDelta.Item1, coord.Item2 - latDelta.Item2));
+                                        if (canTunnel)
+                                        {
+                                            distance++;
+                                        }
+                                        else
+                                        {
+                                            knownPartitionStarts.Add(pathToCheck);
+                                            break; // Else, need to abort this tunneling proposal, check the next path, whatever. Mark this path as known too
+                                        }
+                                    }
+                                    else // Check if tile arrived to destination. Even if not, it will have arrived somewhere so may aswell register this path to avoid overtesting
+                                    {
+                                        // Found a potential one! Add if they're not already joined ofc
+                                        if (distance > 0) // If they "could" be joined at some distance by a brush tunnel
+                                        {
+                                            potentialConnections.Add((partSource.Id, tileOwnerPart, distance, connectionDirection));
+                                            if (!potentialConectionValidStarts.TryGetValue((partSource.Id, tileOwnerPart), out List<(int, int)> sourcesList))
+                                            {
+                                                sourcesList = new List<(int, int)>();
+                                                potentialConectionValidStarts.Add((partSource.Id, tileOwnerPart), sourcesList);
+                                            }
+                                            sourcesList.Add((x, y));
+                                        }
+                                        else if (spaceToJoin.GetSetParent(partSource.Id) != spaceToJoin.GetSetParent(tileOwnerPart)) // If they're already joined, just connect the disjoint sets (if not yet)
+                                        {
+                                            spaceToJoin.Join(partSource.Id, tileOwnerPart);
+                                            connectionsPerNode[partSource.Id]++;
+                                            connectionsPerNode[tileOwnerPart]++;
+                                        }
+                                        else
+                                        {
+                                            // Already known to be joined
+                                        }
+                                        knownPartitionStarts.Add(pathToCheck); // In any case we know where this leads now so we don't need to check this path again
+                                        knownPartitionStarts.Add((tileOwnerPart, coord.Item1, coord.Item2, GetOppositeDirection(connectionDirection))); // We also know that this path on the way back will end the same way so one less thing to check
+                                        break; // Done, next path
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // At this point I have a list of all the potential connections from everywhere to everywhere, so now it's time to sort by better and start joining. Distance negative to sort small distances first
+            List<(int, int, int, Direction)> bestConnections = [.. potentialConnections.OrderBy(c => GeneralUtilities.GetSortableRandomWeight(Math.Pow(-c.Item3, sortingExponent), _rng))];
+            foreach ((int, int, int, Direction) potentialConnection in bestConnections) // Now connect, one by one
+            {
+                // The elements that would force a path to be drawn no matter what
+                double redundancyChance = 0;
+                int nextNodesMinConnection = 1;
+                PropagationDimension dimensionalParam = parameters.DimensionalParameters[1];
+                if (dimensionalParam.Min >= 1 && dimensionalParam.Max >= 1)
+                {
+                    nextNodesMinConnection = GeneralUtilities.GetRandomDecayingInt(dimensionalParam.Min, dimensionalParam.Max, dimensionalParam.Decay, _rng);
+                }
+                else if (dimensionalParam.Min < 1 && dimensionalParam.Max < 1)
+                {
+                    redundancyChance = GeneralUtilities.GetRandomDecayingFloat(dimensionalParam.Min, dimensionalParam.Max, dimensionalParam.Decay, _rng);
+                }
+                else
+                {
+                    throw new Exception("Redundancy or forced min number, can't have a mix!");
+                }
+                bool forceDraw = (spaceToJoin.GetSetParent(potentialConnection.Item1) != spaceToJoin.GetSetParent(potentialConnection.Item2)); // Unjoined sets are always forced to join
+                if (!forceDraw) // If not needed, can still try the other params for luck
+                {
+                    if (connectionsPerNode[potentialConnection.Item1] < nextNodesMinConnection || connectionsPerNode[potentialConnection.Item2] < nextNodesMinConnection)
+                    {
+                        forceDraw = true; // Will need to force min for these nodes anyway so do it
+                    }
+                    else // Otherwise just try the luck with the redundancy chance
+                    {
+                        forceDraw = GeneralUtilities.GetRandomBool(redundancyChance, _rng);
+                    }
+                }
+                // Will join these 2 spaces if they are from disjoint sets OR we allow redundances
+                if (forceDraw)
+                {
+                    List<(int, int)> possibleStarts = potentialConectionValidStarts[(potentialConnection.Item1, potentialConnection.Item2)];
+                    GeneralUtilities.ShuffleList(possibleStarts, _rng); // Shuffle it, so we get random option
+                    // FirstEvaluate that path can be made, and if so, apply it
+                    bool connectionMade = false;
+                    for (int i = 0; !connectionMade && i < possibleStarts.Count; i++) // Keep going until run out of possible connections or satisfied quota
+                    {
+                        (int x, int y) = possibleStarts[i];
+                        (int, int) latDelta = GetLatDelta(potentialConnection.Item4); // Will check tunnels as I draw them because new tunnels may disallow some paths
+                        List<(int, int)> tunnelingCoords = []; // These are the tiles we need to apply brush to
+                        foreach (Tile nextTile in RaycastSimple(x, y, potentialConnection.Item4, parameters.Brush.Size)) // Start the raycast
+                        {
+                            (int, int) coord = (nextTile.X, nextTile.Y);
+                            if (!tilePartDict.TryGetValue(coord, out int tileOwnerPart))
+                            {
+                                bool canTunnel = !tilePartDict.ContainsKey((coord.Item1 + latDelta.Item1, coord.Item2 + latDelta.Item2)); // Avoid adjacent tunnels to the same place (for visuals)
+                                canTunnel &= !tilePartDict.ContainsKey((coord.Item1 - latDelta.Item1, coord.Item2 - latDelta.Item2));
+                                if (canTunnel)
+                                {
+                                    tunnelingCoords.Add(coord); // Can do this one
+                                }
+                                else // If path broke due to tunneling, then try the next...
+                                {
+                                    break;
+                                }
+                            }
+                            else if (tileOwnerPart == potentialConnection.Item1 || tileOwnerPart == potentialConnection.Item2) // If tile arrived to whatever it needed to
+                            {
+                                // Then thats it, path is completed
+                                connectionMade = true; // An extra connection made
+                                int id = spaceToJoin.Join(potentialConnection.Item1, potentialConnection.Item2); // Join the partitions if they weren't yet
+                                connectionsPerNode[potentialConnection.Item1]++;
+                                connectionsPerNode[potentialConnection.Item2]++;
+                                foreach ((int, int) coordToPaint in tunnelingCoords) // Paint all the coords that need to be painted
+                                {
+                                    ApplyBrushToTile(parameters.Brush, coordToPaint.Item1, coordToPaint.Item2);
+                                    tilePartDict[coordToPaint] = id; // Technically breaks with a big brush but it should never ever happen anyway so
+                                }
+                                break;
+                            }
+                            else // Path is not able to continue, so will need to try something else ig
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            // And thats it? By the end here everything should be joined methink
+            return true;
         }
     }
 }

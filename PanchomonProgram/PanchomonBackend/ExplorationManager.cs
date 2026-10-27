@@ -324,7 +324,7 @@ namespace PanchomonBackend
                     {
                         // Otherwise, random pick of encounters, given their absolute weights and then a bit of shenanigans to softmax weights with some rng, sorts the resulting list (bit of black magic ngl)
                         possibleEncountersThisRoom = [.. _context.DungeonData.EncounterPool.OrderBy(e => GeneralUtilities.GetSortableRandomWeight(GetRoomEncounterWeight(e, room, pastEncounters), _context.Rng))];
-                        int numberOfRooms = GeneralUtilities.GetRandomDecayingNumber(1, GameplayElementsContainer.MAX_SIMULTANEOUS_ROOM_PICKS, 2, _context.Rng); // Choose between 1-5 rooms
+                        int numberOfRooms = GeneralUtilities.GetRandomDecayingInt(1, GameplayElementsContainer.MAX_SIMULTANEOUS_ROOM_PICKS, 2, _context.Rng); // Choose between 1-5 rooms
                         possibleEncountersThisRoom = possibleEncountersThisRoom[..numberOfRooms]; // Splice only the first n
                     }
                     Encounter roomEncounter = GeneralUtilities.GetRandomPick(possibleEncountersThisRoom, _context.Rng); // Feels wasteful but now choose a random one of these encounters (all this was for animation sake)
@@ -799,7 +799,7 @@ namespace PanchomonBackend
                 EncounterItemType.EVO_PLATE => [GeneralUtilities.GetRandomPick([.. GameplayElementsContainer.GlobalData.EvoPlates.Keys], _context.Rng)], // Random evo plate
                 EncounterItemType.SANDWICH => [GameplayElementsContainer.GlobalData.GetSandwichByEffect(
                     GeneralUtilities.GetRandomPick([.. Enum.GetValues<SandwichEffectType>()], _context.Rng),
-                    GeneralUtilities.GetRandomDecayingNumber(1,5,2,_context.Rng),
+                    GeneralUtilities.GetRandomDecayingInt(1,5,2,_context.Rng),
                     GeneralUtilities.GetRandomNumber(1,5,_context.Rng)
                     ).Name], // Generate a random sandwich on the spot with a random effect, random duration and decaying power
                 EncounterItemType.UNOWN => [GameplayElementsContainer.GlobalData.UnownLookup[encounter.Params[paramsIndex++]]],

@@ -19,9 +19,16 @@ namespace Gameplay.GameEngine
         public Surface Surface = null;
         public TileEffect Effect = null;
         public PhysicalInstance Occupier = null;
+        public readonly int X; /// Its coords. Immutable
+        public readonly int Y;
+        public Tile(int x, int y)
+        {
+            X = x;
+            Y = y;
+        }
         public bool IsWalkable()
         {
-            return !(Surface.AltersMovement || Occupier != null); // Tile not walkable depending on the surface or if it has an occupier
+            return !(Surface.HindersMovement || Occupier != null); // Tile not walkable depending on the surface or if it has an occupier
         }
         public override string ToString()
         {

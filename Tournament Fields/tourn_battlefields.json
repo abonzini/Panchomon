@@ -15,10 +15,12 @@
                     },
                     "Action": "SPLIT_LINE",
                     "SplitOrientation": "VERTICAL",
-                    "MainOffset": {
-                        "Min": 0,
-                        "Max": 0
-                    }
+                    "DimensionalParameters": [
+                        {
+                            "Min": 0,
+                            "Max": 0
+                        }
+                    ]
                 },
                 {
                     "ChildTarget": "FIELD",
@@ -28,10 +30,12 @@
                     },
                     "Action": "SPLIT_LINE",
                     "SplitOrientation": "VERTICAL",
-                    "MainOffset": {
-                        "Min": 0.99999,
-                        "Max": 0.99999
-                    }
+                    "DimensionalParameters": [
+                        {
+                            "Min": 0.99999,
+                            "Max": 0.99999
+                        }
+                    ]
                 },
                 {
                     "ChildTarget": "FIELD",
@@ -41,10 +45,12 @@
                     },
                     "Action": "SPLIT_LINE",
                     "SplitOrientation": "VERTICAL",
-                    "MainOffset": {
-                        "Min": 0.5,
-                        "Max": 0.5
-                    }
+                    "DimensionalParameters": [
+                        {
+                            "Min": 0.5,
+                            "Max": 0.5
+                        }
+                    ]
                 },
                 {
                     "ChildTarget": "BOTTOM",
@@ -54,10 +60,12 @@
                     },
                     "Action": "SPLIT_LINE",
                     "SplitOrientation": "VERTICAL",
-                    "MainOffset": {
-                        "Min": 0.99999,
-                        "Max": 0.99999
-                    }
+                    "DimensionalParameters": [
+                        {
+                            "Min": 0.99999,
+                            "Max": 0.99999
+                        }
+                    ]
                 },
                 {
                     "ChildTarget": "TOP",
@@ -67,10 +75,12 @@
                     },
                     "Action": "SPLIT_LINE",
                     "SplitOrientation": "VERTICAL",
-                    "MainOffset": {
-                        "Min": 0,
-                        "Max": 0
-                    }
+                    "DimensionalParameters": [
+                        {
+                            "Min": 0,
+                            "Max": 0
+                        }
+                    ]
                 },
                 {
                     "ChildTarget": "ALL",
@@ -80,10 +90,12 @@
                     },
                     "Action": "SPLIT_LINE",
                     "SplitOrientation": "HORIZONTAL",
-                    "MainOffset": {
-                        "Min": 0,
-                        "Max": 0
-                    }
+                    "DimensionalParameters": [
+                        {
+                            "Min": 0,
+                            "Max": 0
+                        }
+                    ]
                 },
                 {
                     "ChildTarget": "ALL",
@@ -93,10 +105,12 @@
                     },
                     "Action": "SPLIT_LINE",
                     "SplitOrientation": "HORIZONTAL",
-                    "MainOffset": {
-                        "Min": 0.99999,
-                        "Max": 0.99999
-                    }
+                    "DimensionalParameters": [
+                        {
+                            "Min": 0.99999,
+                            "Max": 0.99999
+                        }
+                    ]
                 },
                 {
                     "ChildTarget": "FIELD",
@@ -106,22 +120,24 @@
                     },
                     "Action": "SPLIT_ROOM",
                     "SplitOrientation": "ANY",
-                    "MainDimension": {
-                        "Min": 0.34,
-                        "Max": 0.34
-                    },
-                    "SecondaryDimension": {
-                        "Min": 0.34,
-                        "Max": 0.34
-                    },
-                    "MainOffset": {
-                        "Min": 0.5,
-                        "Max": 0.5
-                    },
-                    "SecondaryOffset": {
-                        "Min": 0.5,
-                        "Max": 0.5
-                    },
+                    "DimensionalParameters": [
+                        {
+                            "Min": 0.34,
+                            "Max": 0.34
+                        },
+                        {
+                            "Min": 0.34,
+                            "Max": 0.34
+                        },
+                        {
+                            "Min": 0.5,
+                            "Max": 0.5
+                        },
+                        {
+                            "Min": 0.5,
+                            "Max": 0.5
+                        }
+                    ],
                     "PartitionActions": [
                         {
                             "ChildTarget": "CENTER",
