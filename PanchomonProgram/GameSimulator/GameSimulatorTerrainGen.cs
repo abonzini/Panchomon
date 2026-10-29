@@ -97,7 +97,7 @@ namespace GameSimulator
                     SplitOrientation.VERTICAL => Height,
                     _ => throw new Exception("Horizontal or Vertical are the only valid options here"),
                 };
-                ret = (int)(dim * max);
+                ret = (int)Math.Round(dim * max);
             }
             else
             {
@@ -575,6 +575,7 @@ namespace GameSimulator
             // Begin with the line examination, which tile does it begin? Horizontal-Vertical is flipped since it refers to the "line" orientation not the length of the rectangle
             SplitOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.SplitOrientation);
             TileBrush brush = parameters.Brush;
+            int brushSize = brush.Size;
             if ((parameters.DimensionalParameters[0].Min >= 1) ^ (parameters.DimensionalParameters[0].Max >= 1)) // XOR to verify that both elements are in the same side of 1
             {
                 throw new Exception("For a split the param min/max need to both be an integer or both be a fraction!");
@@ -588,13 +589,14 @@ namespace GameSimulator
                     (int)Math.Round(1 / parameters.DimensionalParameters[0].Max),
                     (int)Math.Round(1 / parameters.DimensionalParameters[0].Min),
                     parameters.DimensionalParameters[0].Decay, _rng);
+            int w = partition.GetAbsoluteDimension(0.999, orientation); // Need to get w for limiting w properly
+            n = Math.Clamp(n, 1, (w + brushSize) / (brushSize + 1)); // Limit N to realistic amount
             // Begin split
             int minX;
             int maxX;
             int minY;
             int maxY;
             double step = 1.0 / n; // How much the step'll be
-            int brushSize = brush.Size;
             int remainingChunkIndex = partition.GetAbsoluteOffset(0, orientation, brushSize); // Get the index to start parititoning
             for (int i = 0; i < n - 1; i++) // Need to partition using n-1 walls
             {
@@ -672,6 +674,7 @@ namespace GameSimulator
                 {
                     Partition partDest = partitions[j];
                     if (!partDest.Alive) continue; // No joining dead partitions
+                    if (spaceToJoin.GetSetParent(partSource.Id) != spaceToJoin.GetSetParent(partDest.Id)) continue; // Also, won't join partitions that are already joined at the beginning of this op (because they were purposely joined as part of a previous one)
                     // Check if there's chance of overlap, and which tiles will do that, cause a raycast in each
                     (Direction connectionDirection, int overlapMin, int overlapMax) = partSource.GetRaycastableTowards(partDest);
                     if (connectionDirection != Direction.NONE)
