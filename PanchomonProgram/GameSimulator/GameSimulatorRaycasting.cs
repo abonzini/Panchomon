@@ -53,9 +53,8 @@ namespace GameSimulator
         /// <param name="x">X coord, wont be evaluated</param>
         /// <param name="y">y coord, wont be evaluated</param>
         /// <param name="direction">Direction to follow</param>
-        /// <param name="stride">Stride of the raycast to check, i.e. tile separation</param>
         /// <returns>Each tile in the path</returns>
-        IEnumerable<Tile> RaycastSimple(int x, int y, Direction direction, int stride)
+        IEnumerable<Tile> RaycastSimple(int x, int y, Direction direction)
         {
 
             int incX = GetXIncrement(direction);
@@ -67,8 +66,8 @@ namespace GameSimulator
             while (i < maxX && j < maxY) // Iterate all tiles in that direction
             {
                 yield return _grid[i, j];
-                i += (stride * incX);
-                j += (stride * incY);
+                i += incX;
+                j += incY;
             }
         }
         /// <summary>

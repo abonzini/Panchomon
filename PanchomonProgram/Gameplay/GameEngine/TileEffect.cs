@@ -7,10 +7,11 @@ namespace Gameplay.GameEngine
     /// </summary>
     public class TileEffect : SimulationElement
     {
-        public Tile AssociatedTile; // To be able to destory itself or something
+        public Tile AssociatedTile; // To be able to remove itself from tiles or something
         public TileEffect Clone()
         {
-            return (TileEffect)MemberwiseClone();
+            TileEffect newEffect = (TileEffect)MemberwiseClone();
+            return newEffect;
         }
         static public IEnumerable<TileEffect> GetAllTileEffects()
         {

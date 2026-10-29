@@ -5,5 +5,10 @@
     /// </summary>
     public class PhysicalObject : PhysicalInstance
     {
+        static public IEnumerable<PhysicalInstance> GetAllOccupierObjects()
+        {
+            Console.WriteLine("Getting all Physical Objects");
+            yield break;
+        }
     }
 }

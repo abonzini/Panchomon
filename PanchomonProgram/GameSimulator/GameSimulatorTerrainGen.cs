@@ -247,6 +247,15 @@ namespace GameSimulator
     }
     public partial class GameSimulator
     {
+        Tile GetTileIfValid(int x, int y)
+        {
+            Tile theTile = null;
+            if (x >= 0 && x < _grid.GetLength(0) && y >= 0 && y < _grid.GetLength(1))
+            {
+                theTile = _grid[x, y];
+            }
+            return theTile;
+        }
         /// <summary>
         /// Applies a brush to tile, overrides if "" does nothing if null. Applies ocuppier size tiling
         /// </summary>
@@ -255,37 +264,87 @@ namespace GameSimulator
         /// <param name="y">coord</param>
         void ApplyBrushToTile(TileBrush brush, int x, int y)
         {
-            int brushSize = brush.Size;
-            if (brushSize == 0) return;
-            bool overrideOcupier = brush.Occupier != null;
-            PhysicalInstance newOccupierInstance = null;
-            if (!string.IsNullOrEmpty(brush.Occupier))
+            if (!brush.DoesSomething) return;
+            Tile tile = GetTileIfValid(x, y);
+            if (brush.Occupier != null)
             {
-                newOccupierInstance = GameplayElementsContainer.GlobalData.PhysicalObjects[brush.Occupier].Clone();
-                newOccupierInstance.X = x; // Object is in the first element of the tile, useful for when the object needs to remove itself or something
-                newOccupierInstance.Y = y;
-            }
-            bool overrideTileEffect = brush.TileEffect != null;
-            TileEffect newTileEffectInstance = null;
-            if (!string.IsNullOrEmpty(brush.TileEffect))
-            {
-                newTileEffectInstance = GameplayElementsContainer.GlobalData.TileEffects[brush.TileEffect].Clone();
-            }
-            for (int i = x; i < x + brushSize; i += brushSize)
-            {
-                for (int j = y; j < y + brushSize; j += brushSize)
+                if (brush.Occupier == "")
                 {
-                    Tile tile = _grid[i, j];
-                    if (overrideOcupier) tile.Occupier = newOccupierInstance;
-                    if (overrideTileEffect)
-                    {
-                        tile.Effect = newTileEffectInstance;
-                        newTileEffectInstance.AssociatedTile = tile;
-                    }
-                    if (brush.TileSurface != null) tile.Surface = GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface]; // This should never be "no surface""
-                    if (brush.CliffFace != null) tile.CliffFace = brush.CliffFace == "" ? CliffFace.NONE : Enum.Parse<CliffFace>(brush.CliffFace);
+                    tile.Occupier = null;
+                }
+                else
+                {
+                    tile.Occupier = GameplayElementsContainer.GlobalData.PhysicalObjects[brush.Occupier].Clone();
+                    tile.Occupier.AssociatedTile = tile;
                 }
             }
+            if (brush.TileEffect != null)
+            {
+                if (brush.TileEffect == "")
+                {
+                    tile.Effect = null;
+                }
+                else
+                {
+                    tile.Effect = GameplayElementsContainer.GlobalData.TileEffects[brush.TileEffect].Clone();
+                    tile.Effect.AssociatedTile = tile;
+                }
+            }
+            if (brush.TileSurface != null) tile.Surface = GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface]; // This should never be "no surface""
+            if (brush.CliffFace != null) tile.CliffFace = brush.CliffFace == "" ? CliffFace.NONE : Enum.Parse<CliffFace>(brush.CliffFace);
+        }
+        /// <summary>
+        /// Checks if placing the brush in a specific X,Y coord blocks the way. Useful to avoid adding roadblocks. This only checks up-down and left-right as most solids block diagonals anyway
+        /// </summary>
+        /// <param name="brush">Which brush is checked</param>
+        /// <param name="x">X where to check</param>
+        /// <param name="y">Y where to check</param>
+        /// <returns></returns>
+        bool IsBrushBlockingWay(TileBrush brush, int x, int y)
+        {
+            bool blocksWay = false;
+            if (brush.BlocksTheWay) // If brush blocks the way, need a precautionary measure
+            {
+                // Need to check if the 3x3 area around brush is free
+                bool[] topOccupied = new bool[3];
+                bool[] bottomOccupied = new bool[3];
+                bool[] leftOccupied = new bool[3];
+                bool[] rightOccupied = new bool[3];
+                bool topFree = true;
+                bool bottomFree = true;
+                bool leftFree = true;
+                bool rightFree = true;
+                // Quick pass to verify what's around
+                int i, j;
+                for (i = x - 1; i <= x + 1; i++) // Check vertical occupancy
+                {
+                    j = y - 1;
+                    topOccupied[i] = GetTileIfValid(i, j)?.IsWalkable() ?? false; // Tile is occupied if tile oob, non init or it is init but is occupied
+                    topFree &= !topOccupied[i];
+                    j = y + 1;
+                    bottomOccupied[i] = GetTileIfValid(i, j)?.IsWalkable() ?? false;
+                    bottomFree &= !bottomOccupied[i];
+                }
+                for (j = y - 1; j <= y + 1; j++) // Check horizontal occupancy
+                {
+                    i = x - 1;
+                    leftOccupied[j] = GetTileIfValid(i, j)?.IsWalkable() ?? false;
+                    leftFree &= !leftOccupied[i];
+                    i = x + 1;
+                    rightOccupied[j] = GetTileIfValid(i, j)?.IsWalkable() ?? false;
+                    rightFree &= !rightOccupied[i];
+                }
+                // Now, check UD and LR occupance and the result will depend on whether the mon can move lr
+                if ((!topOccupied[1] && !bottomOccupied[1]) && !(leftFree || rightFree))
+                {
+                    blocksWay = true;
+                }
+                if ((!leftOccupied[1] && !rightOccupied[1]) && !(topFree || bottomFree))
+                {
+                    blocksWay = true;
+                }
+            }
+            return blocksWay;
         }
         /// <summary>
         /// Initializes and draws battlefield, ready to start sim after
@@ -375,15 +434,6 @@ namespace GameSimulator
             }
         }
         /// <summary>
-        /// Returns whether a brush will generate a partition or not
-        /// </summary>
-        /// <param name="brush">Brush to check</param>
-        /// <returns>Whether it's a "solid" separator brush</returns>
-        static bool GeneratesPartition(TileBrush brush)
-        {
-            return (brush.Occupier != null && brush.Occupier != "") || (brush.TileSurface != null && GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface].HindersMovement);
-        }
-        /// <summary>
         /// Applies a specific brush to a line in the map
         /// </summary>
         /// <param name="brush">Which brush to apply</param>
@@ -393,11 +443,10 @@ namespace GameSimulator
         /// <param name="maxY">Max Y</param>
         void ApplyBrushToRectangularRegion(TileBrush brush, int minX, int minY, int maxX, int maxY)
         {
-            int brushSize = brush.Size;
-            if (brushSize == 0) return;
-            for (int i = minX; i <= maxX; i += brushSize)
+            if (!brush.DoesSomething) return;
+            for (int i = minX; i <= maxX; i++)
             {
-                for (int j = minY; j <= maxY; j += brushSize)
+                for (int j = minY; j <= maxY; j++)
                 {
                     ApplyBrushToTile(brush, i, j);
                 }
@@ -414,14 +463,13 @@ namespace GameSimulator
         void ApplyBrushToRectangularBorders(TileBrush brush, int startX, int startY, int width, int height)
         {
             // Do it in 2 parts, first = and then || on the rest lol
-            int brushSize = brush.Size;
-            if (brushSize == 0) return;
-            for (int i = startX; i < startX + width; i += brushSize)
+            if (!brush.DoesSomething) return;
+            for (int i = startX; i < startX + width; i++)
             {
                 ApplyBrushToTile(brush, i, startY);
                 ApplyBrushToTile(brush, i, startY + height - 1);
             }
-            for (int i = startY + brushSize; i < startX + width - 1; i += brushSize) // Remaining ones are smaller
+            for (int i = startY + 1; i < startX + width - 1; i++) // Remaining ones are smaller
             {
                 ApplyBrushToTile(brush, startX, i);
                 ApplyBrushToTile(brush, startX + width - 1, i);
@@ -467,7 +515,7 @@ namespace GameSimulator
             // Begin with the line examination, which tile does it begin? Horizontal-Vertical is flipped since it refers to the "line" orientation not the length of the rectangle
             SplitOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.SplitOrientation);
             TileBrush brush = parameters.Brush;
-            int brushSize = brush.Size;
+            int brushSize = brush.DoesSomething ? 1 : 0;
             int dimension = GeneralUtilities.GetRandomDecayingInt(partition.GetAbsoluteOffset(parameters.DimensionalParameters[0].Min, orientation, brushSize),
                 partition.GetAbsoluteOffset(parameters.DimensionalParameters[0].Max, orientation, brushSize),
                 parameters.DimensionalParameters[0].Decay, _rng);
@@ -484,7 +532,7 @@ namespace GameSimulator
             (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (dimension + brushSize, partition.EndY);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 1);
             // Finally, returns whether this part should be removed
-            return !GeneratesPartition(brush);
+            return !brush.BlocksTheWay;
         }
         /// <summary>
         /// Divides a partition by placing a square with a wall in the middle, results in 9 partitions somehow, since the division is the square itself plus its potential 8 neighbors.
@@ -522,7 +570,7 @@ namespace GameSimulator
             TileBrush brush = parameters.Brush;
             ApplyBrushToRectangularBorders(brush, xBase, yBase, xDim, yDim);
             // Then partition the 9 spaces with the center one being 0. Mind the brush size as this sets the wall size, there may not be a wall
-            int brushSize = brush.Size;
+            int brushSize = brush.DoesSomething ? 1 : 0;
             // Partition 0 is the inside of the box
             (int minX, int maxX) = (xBase + brushSize, xBase + xDim - brushSize - 1); // An inset of the walls
             (int minY, int maxY) = (yBase + brushSize, yBase + yDim - brushSize - 1);
@@ -561,7 +609,7 @@ namespace GameSimulator
             (minY, maxY) = (yBase + yDim, partition.EndY);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 8);
             // Finally, returns whether this part should be removed
-            return !GeneratesPartition(brush);
+            return !brush.BlocksTheWay;
         }
         /// <summary>
         /// Divides the current partition into multiple N divisions which may then be offset slightly
@@ -575,7 +623,7 @@ namespace GameSimulator
             // Begin with the line examination, which tile does it begin? Horizontal-Vertical is flipped since it refers to the "line" orientation not the length of the rectangle
             SplitOrientation orientation = GetAbsolutePartitionOrientation(partition, parameters.SplitOrientation);
             TileBrush brush = parameters.Brush;
-            int brushSize = brush.Size;
+            int brushSize = brush.DoesSomething ? 1 : 0;
             if ((parameters.DimensionalParameters[0].Min >= 1) ^ (parameters.DimensionalParameters[0].Max >= 1)) // XOR to verify that both elements are in the same side of 1
             {
                 throw new Exception("For a split the param min/max need to both be an integer or both be a fraction!");
@@ -623,7 +671,7 @@ namespace GameSimulator
             (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (remainingChunkIndex, partition.EndY);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions);
             // Finally, returns whether this part should be removed
-            return !GeneratesPartition(brush);
+            return !brush.BlocksTheWay;
         }
         /// <summary>
         /// Fills a partition with a brush, invalidates it if the brush is non-movement
@@ -633,7 +681,7 @@ namespace GameSimulator
         /// <returns>Whether the element operated on still exists</returns>
         bool FillPartition(Partition partition, TilePropagatorAction parameters)
         {
-            bool partitionKill = GeneratesPartition(parameters.Brush); // A brush that serves as a wall would kill the partition if it fills it
+            bool partitionKill = parameters.Brush.BlocksTheWay; // A brush that serves as a wall would kill the partition if it fills it
             ApplyBrushToRectangularRegion(parameters.Brush, partition.BegX, partition.BegY, partition.EndX, partition.EndY);
             if (partitionKill)
             {
@@ -704,7 +752,7 @@ namespace GameSimulator
                                 int distance = 0;
                                 (int, int, int, Direction) pathToCheck = (partSource.Id, x, y, connectionDirection);
                                 if (knownPartitionStarts.Contains(pathToCheck)) continue; // Skip if path outcome known
-                                foreach (Tile nextTile in RaycastSimple(x, y, connectionDirection, 1))
+                                foreach (Tile nextTile in RaycastSimple(x, y, connectionDirection))
                                 {
                                     (int, int) coord = (nextTile.X, nextTile.Y);
                                     if (!tilePartDict.TryGetValue(coord, out int tileOwnerPart)) // Check if no valid partition reached yet...
@@ -799,7 +847,7 @@ namespace GameSimulator
                         (int x, int y) = possibleStarts[i];
                         (int, int) latDelta = GetLatDelta(potentialConnection.Item4); // Will check tunnels as I draw them because new tunnels may disallow some paths
                         List<(int, int)> tunnelingCoords = []; // These are the tiles we need to apply brush to
-                        foreach (Tile nextTile in RaycastSimple(x, y, potentialConnection.Item4, parameters.Brush.Size)) // Start the raycast
+                        foreach (Tile nextTile in RaycastSimple(x, y, potentialConnection.Item4)) // Start the raycast
                         {
                             (int, int) coord = (nextTile.X, nextTile.Y);
                             if (!tilePartDict.TryGetValue(coord, out int tileOwnerPart))

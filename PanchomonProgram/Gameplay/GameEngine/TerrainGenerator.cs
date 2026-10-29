@@ -10,12 +10,18 @@
         public string TileSurface { get; set; } = null;
         public string TileEffect { get; set; } = null;
         public string Occupier { get; set; } = null;
-        public int Size
+        public bool DoesSomething
         {
             get
             {
-                if (CliffFace == null && TileSurface == null && TileEffect == null && Occupier == null) return 0; // Brush has nothing in it, nothing is painted
-                return string.IsNullOrEmpty(Occupier) ? 1 : GameplayElementsContainer.GameplayElementsContainer.GlobalData.PhysicalObjects[Occupier].Size;
+                return !(CliffFace == null && TileSurface == null && TileEffect == null && Occupier == null); // Brush has nothing in it, nothing is painted
+            }
+        }
+        public bool BlocksTheWay
+        {
+            get
+            {
+                return (Occupier != null && Occupier != "") || (TileSurface != null && GameplayElementsContainer.GameplayElementsContainer.GlobalData.Surfaces[TileSurface].HindersMovement);
             }
         }
     }

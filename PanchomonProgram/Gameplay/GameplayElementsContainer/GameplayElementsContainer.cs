@@ -44,7 +44,7 @@ namespace Gameplay.GameplayElementsContainer
             LoadAllElements(FieldModifiers, FieldModifier.GetAllFieldMods());
             LoadAllElements(NvStatuses, NonVolatileStatus.GetAllNonVolatileStatus());
             LoadAllElements(Surfaces, Surface.GetAllSurfaces());
-            LoadAllElements(PhysicalObjects, PhysicalInstance.GetAllOccupierObjects());
+            LoadAllElements(PhysicalObjects, PhysicalObject.GetAllOccupierObjects());
             LoadAllElements(TileEffects, TileEffect.GetAllTileEffects());
             // Then, load the data from the google sheets
             string typechartTab = lines[1].Split(",")[0];
