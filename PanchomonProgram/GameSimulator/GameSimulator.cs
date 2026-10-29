@@ -52,7 +52,8 @@ namespace GameSimulator
             // Override the ones in params (wouldn't matter if it's the whole flow, but does allow for some SICK DEBUG)
             _parameters.TerrainGenerator = terrainGen;
             _parameters.FieldModifier = extraFieldMods;
-            InitBattlefield(sides);
+            _parameters.SidesPresent = sides;
+            InitBattlefield();
         }
     }
 }

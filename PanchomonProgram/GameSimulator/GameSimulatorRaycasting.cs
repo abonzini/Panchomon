@@ -2,18 +2,6 @@
 
 namespace GameSimulator
 {
-    public enum Direction
-    {
-        NONE,
-        N,
-        NE,
-        E,
-        SE,
-        S,
-        SW,
-        W,
-        NW
-    }
     // This part deals with raycasting and tilewalking for aux game functionalities
     public partial class GameSimulator
     {
@@ -47,27 +35,46 @@ namespace GameSimulator
                 _ => 0,
             };
         }
+        class RaycastParams
+        {
+            public int L = int.MaxValue;
+            public int Stride = 1;
+            public Partition Bounds = null;
+        }
         /// <summary>
         /// Returns all tiles walking from a coord (X,Y) in a specific direction, for targeting and stuff
         /// </summary>
         /// <param name="x">X coord, wont be evaluated</param>
         /// <param name="y">y coord, wont be evaluated</param>
         /// <param name="direction">Direction to follow</param>
+        /// <param name="parameters">Raycast parameters if intending something more complex</param>
         /// <returns>Each tile in the path</returns>
-        IEnumerable<Tile> RaycastSimple(int x, int y, Direction direction)
+        IEnumerable<Tile> RaycastDirection(int x, int y, Direction direction, RaycastParams parameters = null)
         {
-
+            parameters ??= new RaycastParams(); // Basic ones if needed
             int incX = GetXIncrement(direction);
-            int maxX = _grid.GetLength(0);
             int incY = GetYIncrement(direction);
+            int minX = 0;
+            int minY = 0;
+            int maxX = _grid.GetLength(0);
             int maxY = _grid.GetLength(1);
+            if (parameters.Bounds != null)
+            {
+                // Bounds are always within grid right? So these become the new limits
+                minX = parameters.Bounds.BegX;
+                minY = parameters.Bounds.BegY;
+                maxX = parameters.Bounds.EndX - 1;
+                maxY = parameters.Bounds.EndY - 1;
+            }
             int i = x + incX;
             int j = y + incY;
-            while (i < maxX && j < maxY) // Iterate all tiles in that direction
+            int l = 0;
+            while (i >= minX && i < maxX && j >= minY && j < maxY && l < parameters.L) // Iterate all tiles in that direction until EOB or max len
             {
                 yield return _grid[i, j];
-                i += incX;
-                j += incY;
+                l += parameters.Stride;
+                i += parameters.Stride * incX;
+                j += parameters.Stride * incY;
             }
         }
         /// <summary>

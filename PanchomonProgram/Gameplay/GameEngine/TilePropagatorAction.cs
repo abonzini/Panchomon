@@ -29,6 +29,22 @@ namespace Gameplay.GameEngine
         ANY_WEIGHTED, /// Like ANY but it weights w.r.t. the dimensions of the room, so that a long room will be partitioned properly but a square one is more random
     }
     /// <summary>
+    /// Direction for trajectories
+    /// </summary>
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum Direction
+    {
+        NONE,
+        N,
+        NE,
+        E,
+        SE,
+        S,
+        SW,
+        W,
+        NW
+    }
+    /// <summary>
     /// The actions that can actually be performed
     /// </summary>
     [JsonConverter(typeof(StringEnumConverter))]
@@ -40,14 +56,17 @@ namespace Gameplay.GameEngine
         SPLIT_LINES, /// Like draw line, but is based on splitting the space in the desired direction into N pieces (firs dim). The second dim is an offset allows to move the walls a bit proportional to the original part's dimension but do be careful as they may flip.
         FILL, /// Fills a partition, marked as invalid too depending on fill
         JOIN_PARTITIONS, /// Joins all partitions with a hallway brush. If multiple partitions, there's a modified Kruskal algo what does it. First dim's DECAY controls the sorting power, with 0 making the sorting completely random, 1 being distance-weighted and N++ making the sorting absolute. Next param sets a min value of room connections to avoid many dead end rooms, 1 for dead ends but 2+ will attempt to force to connect to more; Values >=1 forces a min of those connections per node, as values <1 are probabilities
-        PAINT_RANDOMLY, /// Paints randomly
-        PAINT_AT_CENTER, /// Paints brush in center area
-        PAINT_AT_CORNER, /// Paints brush in corner area
-        PAINT_AT_EDGE /// Paints brush in edge area
+        PAINT_EVERYWHERE, /// Paints randomly. Has a param where >=1 means an absolute number of tiles painted. Values <1 means as a percentage of the tile surface of desired partition
+        PAINT_AT_CENTER, /// Same as above, but paints in the center of the room
+        PAINT_AT_CORNER, /// Same as above, but paints in the corners. Uses directions to see which ones to add
+        PAINT_ALL_EDGES, /// Same as above, but paints in the edges of the room, uses directions to see which ones to add. Doesnt use corners
+        PAINT_MID_EDGES, /// Same as above, but paints in the middle of the edges of the room only, uses directions to see which ones to add
+        PATH_FROM_PARTITION, /// From a partition, extends a path within parent partition, for aesthetics that require a line somewhere. First param is the length, either % of max or absolute (capped). Then stride, as tile step or proportion of total steps. Finally the anchor stride, which is either an absolute count ot a relative count depending on l/stride. Extension stops if this breaks pathing
     }
     [JsonConverter(typeof(StringEnumConverter))]
     public enum PropagationTarget
     {
+        NON_LAUNCHPAD = -3, /// Operation applies to tiles that aren't launchpad, meaning 0 and any other ones
         INSETS = -2, /// Operation applies to inset squares, 1-9
         ALL = -1, /// Operation will apply to all subdivisions
         CENTER = 0, /// Operation applies to center square OR the field OR first partition
@@ -73,6 +92,7 @@ namespace Gameplay.GameEngine
         public SplitOrientation SplitOrientation { get; set; } = SplitOrientation.ANY; // If the action requires an orientation
         // Controls all dimensional parameters
         public List<PropagationDimension> DimensionalParameters { get; set; } = new List<PropagationDimension>();
+        public List<Direction> DirectionsToApply { get; set; } = new List<Direction>(); // For actions that propagate towards somewhere
         public override string ToString()
         {
             return Action.ToString();
