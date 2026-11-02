@@ -12,7 +12,7 @@ namespace Gameplay.GameplayElementsContainer
         ///// <typeparam name="T"></typeparam>
         ///// <param name="dict"></param>
         ///// <param name="getter"></param>
-        void LoadAllElements<T>(Dictionary<string, T> dict, IEnumerable<T> getter) where T : GameplayElement
+        static void LoadAllElements<T>(Dictionary<string, T> dict, IEnumerable<T> getter) where T : GameplayElement
         {
             dict.Clear();
             foreach (T t in getter)
@@ -41,7 +41,6 @@ namespace Gameplay.GameplayElementsContainer
             LoadAllElements(KeyItems, KeyItem.GetAllKeyItems());
             LoadAllElements(Essences, Essence.GetAllEssences());
             LoadAllElements(Mints, Nature.GetAllMints());
-            LoadAllElements(FieldModifiers, FieldModifier.GetAllFieldMods());
             LoadAllElements(NvStatuses, NonVolatileStatus.GetAllNonVolatileStatus());
             LoadAllElements(Surfaces, Surface.GetAllSurfaces());
             LoadAllElements(PhysicalObjects, PhysicalObject.GetAllOccupierObjects());
@@ -91,7 +90,6 @@ namespace Gameplay.GameplayElementsContainer
         public Dictionary<string, PokemonEntity> BoxedMons = new Dictionary<string, PokemonEntity>();
         public Dictionary<string, TrainerEntity> Trainers = new Dictionary<string, TrainerEntity>();
         public Dictionary<string, Dungeon> Dungeons = new Dictionary<string, Dungeon>();
-        public Dictionary<string, FieldModifier> FieldModifiers = new Dictionary<string, FieldModifier>();
         public Dictionary<string, NonVolatileStatus> NvStatuses = new Dictionary<string, NonVolatileStatus>();
         public Dictionary<string, Surface> Surfaces = new Dictionary<string, Surface>();
         public Dictionary<string, PhysicalInstance> PhysicalObjects = new Dictionary<string, PhysicalInstance>();

@@ -39,8 +39,8 @@ namespace PanchomonBackend
             // Put current dungeon weathers
             foreach (Dungeon dung in GameplayElementsContainer.GlobalData.Dungeons.Values)
             {
-                FieldModifier dungWeather = GameplayElementsContainer.GlobalData.FieldModifiers[dung.CurrentWeather.Name];
-                glossary[dungWeather.Name] = dungWeather.GetDescription();
+                WeatherForecast dungWeather = dung.CurrentWeather;
+                glossary[dungWeather.Name] = dungWeather.Description;
             }
             // File complete, save
             List<string> glossarySorted = [.. glossary.Select(x => $"{x.Key},{x.Value}").Order()];

@@ -31,9 +31,10 @@ namespace Gameplay.GameplayElements
         NEUTRAL, // Neutral rooms
         DANGER, // Dangerous rooms
     }
-    public class FieldModForecast
+    public class WeatherForecast
     {
         public string Name { get; set; }
+        public string Description { get; set; }
         public double Chance { get; set; }
         public override string ToString()
         {
@@ -129,7 +130,7 @@ namespace Gameplay.GameplayElements
         public double BaseWeight { get; set; } = 1; /// Weight of event to be compared with others, to create "rare" events
         // For battle events, there's Enemy1 and Enemy2, this allows for both Boss + Followers (1 and 2 respectively) or 2 separate group of enemies in some fights
         public bool UseEnemyCountSandwich { get; set; } = false;
-        public List<FieldModForecast> WeatherOverrides { get; set; } = [];
+        public List<WeatherForecast> WeatherOverrides { get; set; } = [];
         public Battlefield BattlefieldOverride { get; set; } = null; /// Whether the battlefield will be custom
         public List<EnemyParams> Enemies { get; set; } = [];
         public bool UseFollower { get; set; } = true; // If follower also plays here
@@ -144,9 +145,9 @@ namespace Gameplay.GameplayElements
         public string Description1 { get; set; }
         public string Description2 { get; set; }
         public int Difficulty { get; set; }
-        public List<FieldModForecast> WeatherForecasts { get; set; }
+        public List<WeatherForecast> WeatherForecasts { get; set; }
         public List<Battlefield> PossibleBattlefields { get; set; }
-        public FieldModForecast CurrentWeather { get; set; }
+        public WeatherForecast CurrentWeather { get; set; }
         public double GeneralItemDropChance { get; set; }
         public List<ItemDrop> CommonDrops { get; set; }
         public List<ItemDrop> RareDrops { get; set; }

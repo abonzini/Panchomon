@@ -148,14 +148,19 @@ namespace GameSimulator
         {
             if (actions == null) return; // Nothing to do here...
             Debug.DebugAction(DebugLevel.BATTLE_STATE, () => DrawGrid($"About to start next level of propagation"));
+            List<Partition> donePartitions = [];
             foreach (TilePropagatorAction action in actions)
             {
+                if (!string.IsNullOrEmpty(action.Tag) && !_parameters.TerrainGenTags.Contains(action.Tag)) continue; // Skip action if has a tag that is not present in this context
                 double chance = action.Chance;
                 while (GeneralUtilities.GetRandomBool(chance, _rng)) // Roll to check if action applied
                 {
                     // Execute action
                     List<Partition> targets = action.ChildTarget switch// (action.ChildTarget == -1) ? [.. currentPartitions.GetPartitions()] : [currentPartitions.GetPartition(action.ChildTarget)]; // Get all the partitions I'm going to work with
                     {
+                        PropagationTarget.ALL_NONMARKED => [.. currentPartitions.GetPartitions().Where(p => !donePartitions.Contains(p))], // Get all that haven't been marked yet
+                        PropagationTarget.ANY_NONMARKED => [GeneralUtilities.GetRandomPick([.. currentPartitions.GetPartitions().Where(p => !donePartitions.Contains(p))], _rng)], // Get all that haven't been marked yet
+                        PropagationTarget.ALL_SIMULTANEOUSLY => [currentPartitions.GetPartitions().First()], // It doesn't matter which one, just apply all
                         PropagationTarget.NON_LAUNCHPAD => [.. currentPartitions.GetPartitions().Where(p => !_parameters.SidesPresent.Contains((Side)p.Id))],
                         PropagationTarget.INSETS => [.. currentPartitions.GetPartitions().Where(p => p.Id >= 1 && p.Id <= 9)], // The inset pair
                         PropagationTarget.ALL => [.. currentPartitions.GetPartitions()], // All
@@ -186,9 +191,9 @@ namespace GameSimulator
                             }
                         }
                         Debug.DebugAction(DebugLevel.BATTLE_STATE, () => DrawGrid($"After {action.Action} on partition {target.Id}"));
-                        if (action.Action == PropagationAction.JOIN_PARTITIONS) // This is an action that occurs in all partitions at once and doesn't subdivide, so it can skip once it passes once
+                        if (action.ChildTarget == PropagationTarget.ALL_NONMARKED || action.ChildTarget == PropagationTarget.ANY_NONMARKED)
                         {
-                            break;
+                            donePartitions.Add(target);
                         }
                     }
                     chance--; // If >1, has a chance of going again. This is risky if the action involves sub-partitioning as this will sub partition everything
@@ -258,7 +263,7 @@ namespace GameSimulator
         /// <param name="maxY">Dimension</param>
         /// <param name="spaceToAddTo">Where to add</param>
         /// <param name="desiredIndex">Index to use (or default one)</param>
-        void AddPartitionIfValid(int minX, int maxX, int minY, int maxY, PartitionSpace spaceToAddTo, int desiredIndex = -1)
+        static void AddPartitionIfValid(int minX, int maxX, int minY, int maxY, PartitionSpace spaceToAddTo, int desiredIndex = -1)
         {
             if (minX <= maxX && minY <= maxY) // If square exists, i.e. the partition line is such that there's still a part square, then generate it
             {
@@ -414,9 +419,12 @@ namespace GameSimulator
                 double nextWallLocation = step * (i + 1);
                 int wallIndex = partition.GetAbsoluteOffset(nextWallLocation, orientation, brushSize);
                 // Add some noise offset
+                int offsetMax = orientation == SplitOrientation.HORIZONTAL ? partition.Width : partition.Height; // This gets us the width/height of the rectangle before subdividing
+                offsetMax /= 2 * n; // Limit the max value
                 int offsetNoise = GeneralUtilities.GetRandomDecayingInt(partition.GetAbsoluteDimension(parameters.DimensionalParameters[1].Min, orientation),
                 partition.GetAbsoluteDimension(parameters.DimensionalParameters[1].Max, orientation),
                 parameters.DimensionalParameters[1].Decay, _rng);
+                offsetNoise = Math.Clamp(offsetNoise, 0, offsetMax); // Clamp it to avoid excessive overlapping and stuff
                 wallIndex += GeneralUtilities.GetRandomBool(0.5, _rng) ? offsetNoise : -offsetNoise; // Add or remove this offset. This can work terribly bad if user is not extremely careful with offsets
                 // Apply the next draw
                 (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (wallIndex, wallIndex); // Determine how x and y move

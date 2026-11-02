@@ -66,6 +66,9 @@ namespace Gameplay.GameEngine
     [JsonConverter(typeof(StringEnumConverter))]
     public enum PropagationTarget
     {
+        ALL_NONMARKED = -6, /// Nonmarked applies to partitions that are tagged so an any/all nonmarked action won't apply to them again. Used for decorating unique rooms
+        ANY_NONMARKED = -5,
+        ALL_SIMULTANEOUSLY = -4, /// Op applies to all targets at the same time so it only needs to be ran once with whatever target
         NON_LAUNCHPAD = -3, /// Operation applies to tiles that aren't launchpad, meaning 0 and any other ones
         INSETS = -2, /// Operation applies to inset squares, 1-9
         ALL = -1, /// Operation will apply to all subdivisions
@@ -84,6 +87,7 @@ namespace Gameplay.GameEngine
     public class TilePropagatorAction
     {
         public PropagationTarget ChildTarget { get; set; } = PropagationTarget.ALL; // Children of partition are numbered, in base one they equal TOP/BOTTOM/ETC. -1 indicates the action to be done in all child partitions
+        public string Tag { get; set; } = ""; // Tag string, if nonempty, needs to be present in terrain gen params
         public double Chance { get; set; } = 1; // Chance for this step to be executed or skipped. If more than one, chance to do it again
         public TileBrush Brush { get; set; }
         public List<TilePropagatorAction> PartitionActions { get; set; } = null; // Further actions, e.g. if after a partition is made, what to do inside (can allow for other sub-partitions, etc)

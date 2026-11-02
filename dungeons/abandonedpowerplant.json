@@ -5,18 +5,22 @@
     "WeatherForecasts": [
         {
             "Name": "No Weather",
+            "Description": "No particular weather in this dungeon.",
             "Chance": 0.5
         },
         {
             "Name": "Flood",
+            "Description": "The dungeon is partly flooded this week. Expect water all over the floor.",
             "Chance": 0.20
         },
         {
             "Name": "High Voltage Arcs",
+            "Description": "There's a constant discharge of electricty around the Plant that may hit Pokemon.",
             "Chance": 0.20
         },
         {
             "Name": "Ion Deluge",
+            "Description":  "The air is Ionized and smells funny. All Normal-type attacks become Electric-type.",
             "Chance": 0.1
         }
     ],

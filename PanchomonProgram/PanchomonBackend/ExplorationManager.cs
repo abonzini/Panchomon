@@ -1019,20 +1019,20 @@ namespace PanchomonBackend
                 battlefieldUsed = potentialBattlefileds[battlefieldIdx];
             }
             // Check the field mods for this time (or if overriden)
-            FieldModifier fieldMod;
+            HashSet<string> fieldModStrings;
             if (encounter.WeatherOverrides.Count > 0)
             {
                 int weatherOverrideIdx = GeneralUtilities.GetRandomWeightedIndex([.. encounter.WeatherOverrides.Select(w => w.Chance)], _context.Rng);
-                fieldMod = GameplayElementsContainer.GlobalData.FieldModifiers[encounter.WeatherOverrides[weatherOverrideIdx].Name];
+                fieldModStrings = [encounter.WeatherOverrides[weatherOverrideIdx].Name];
             }
             else
             {
-                fieldMod = GameplayElementsContainer.GlobalData.FieldModifiers[_context.DungeonData.CurrentWeather.Name];
+                fieldModStrings = [_context.DungeonData.CurrentWeather.Name];
             }
             // Now instance it
             GameParameters parameters = new GameParameters()
             {
-                FieldModifier = fieldMod, // Fetch the weather
+                TerrainGenTags = fieldModStrings,
                 FocusedSide = Side.BOTTOM // Player is the star here
             };
             return parameters;
