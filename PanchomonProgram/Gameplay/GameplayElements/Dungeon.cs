@@ -131,7 +131,7 @@ namespace Gameplay.GameplayElements
         // For battle events, there's Enemy1 and Enemy2, this allows for both Boss + Followers (1 and 2 respectively) or 2 separate group of enemies in some fights
         public bool UseEnemyCountSandwich { get; set; } = false;
         public List<WeatherForecast> WeatherOverrides { get; set; } = [];
-        public Battlefield BattlefieldOverride { get; set; } = null; /// Whether the battlefield will be custom
+        public string BattlefieldOverride { get; set; }
         public List<EnemyParams> Enemies { get; set; } = [];
         public bool UseFollower { get; set; } = true; // If follower also plays here
         public override string ToString()

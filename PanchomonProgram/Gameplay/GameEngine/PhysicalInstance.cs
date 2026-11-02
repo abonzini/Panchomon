@@ -8,6 +8,7 @@ namespace Gameplay.GameEngine
     public class PhysicalInstance : SimulationElement
     {
         public Tile AssociatedTile; /// Contains coordinates of object to see where the object is
+        public virtual char DebugChar { get; set; }
         public PhysicalInstance Clone()
         {
             return (PhysicalInstance)MemberwiseClone();

@@ -42,7 +42,10 @@ namespace Gameplay.GameEngine
         S,
         SW,
         W,
-        NW
+        NW,
+        CENTER_HORIZONTAL,
+        CENTER_VERTICAL,
+        CENTER_DIAGONAL
     }
     /// <summary>
     /// The actions that can actually be performed
@@ -69,6 +72,7 @@ namespace Gameplay.GameEngine
     [JsonConverter(typeof(StringEnumConverter))]
     public enum PropagationTarget
     {
+        ALL_LAUNCHPAD = -7, /// Operation applies to tiles that have the id of valid launchpads for this game
         ALL_NONMARKED = -6, /// Nonmarked applies to partitions that are tagged so an any/all nonmarked action won't apply to them again. Used for decorating unique rooms
         ANY_NONMARKED = -5,
         ALL_SIMULTANEOUSLY = -4, /// Op applies to all targets at the same time so it only needs to be ran once with whatever target

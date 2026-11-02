@@ -151,5 +151,234 @@
                 }
             ]
         }
+    },
+    {
+        "Name": "Paradox 2-Side",
+        "TerrainGenerator": {
+            "BasicBrush": {
+                "CliffFace": "PARADOX_TILE",
+                "TileSurface": "Paradox Tile"
+            },
+            "PropagatorActions": [
+                {
+                    "ChildTarget": "ALL_LAUNCHPAD",
+                    "Brush": {
+                        "CliffFace": "PARADOX_TILE",
+                        "TileSurface": "White Paint"
+                    },
+                    "Action": "SPLIT_ROOM",
+                    "DimensionalParameters": [
+                        {
+                            "Min": 0.99999,
+                            "Max": 0.99999
+                        },
+                        {
+                            "Min": 0.99999,
+                            "Max": 0.99999
+                        },
+                        {},
+                        {}
+                    ]
+                },
+                {
+                    "ChildTarget": "CENTER",
+                    "Action": "SPLIT_LINES",
+                    "Brush": {},
+                    "SplitOrientation": "VERTICAL",
+                    "DimensionalParameters": [
+                        {
+                            "Min": 2,
+                            "Max": 5
+                        },
+                        {}
+                    ],
+                    "PartitionActions": [
+                        {
+                            "ChildTarget": "ALL",
+                            "Action": "PAINT_MID_EDGES",
+                            "DirectionsToApply": [
+                                "E",
+                                "W"
+                            ],
+                            "Brush": {
+                                "Occupier": "Paradox Table"
+                            },
+                            "DimensionalParameters": [
+                                {
+                                    "Min": 2,
+                                    "Max": 2
+                                },
+                                {
+                                    "Min": 2,
+                                    "Max": 5
+                                }
+                            ],
+                            "PartitionActions": [
+                                {
+                                    "ChildTarget": "ALL",
+                                    "Action": "PATH_FROM_PARTITION",
+                                    "DirectionsToApply": [
+                                        "NE",
+                                        "NW",
+                                        "SE",
+                                        "SW"
+                                    ],
+                                    "Brush": {
+                                        "Occupier": "Paradox Chair"
+                                    },
+                                    "DimensionalParameters": [
+                                        {
+                                            "Min": 1,
+                                            "Max": 1
+                                        },
+                                        {
+                                            "Min": 1,
+                                            "Max": 1
+                                        },
+                                        {}
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "Name": "Paradox 4-Side",
+        "TerrainGenerator": {
+            "BasicBrush": {
+                "CliffFace": "PARADOX_TILE",
+                "TileSurface": "Paradox Tile"
+            },
+            "PropagatorActions": [
+                {
+                    "ChildTarget": "ALL_LAUNCHPAD",
+                    "Brush": {
+                        "CliffFace": "PARADOX_TILE",
+                        "TileSurface": "White Paint"
+                    },
+                    "Action": "SPLIT_ROOM",
+                    "DimensionalParameters": [
+                        {
+                            "Min": 0.99999,
+                            "Max": 0.99999
+                        },
+                        {
+                            "Min": 0.99999,
+                            "Max": 0.99999
+                        },
+                        {},
+                        {}
+                    ]
+                },
+                {
+                    "ChildTarget": "CENTER",
+                    "Action": "PAINT_AT_CORNER",
+                    "DirectionsToApply": [
+                        "NE",
+                        "NW",
+                        "SE",
+                        "SW"
+                    ],
+                    "Brush": {
+                        "Occupier": "Paradox Table"
+                    },
+                    "DimensionalParameters": [
+                        {
+                            "Min": 4,
+                            "Max": 4
+                        },
+                        {
+                            "Min": 1,
+                            "Max": 2
+                        }
+                    ],
+                    "PartitionActions": [
+                        {
+                            "ChildTarget": "ALL",
+                            "Action": "PATH_FROM_PARTITION",
+                            "DirectionsToApply": [
+                                "CENTER_DIAGONAL"
+                            ],
+                            "Brush": {
+                                "Occupier": "Paradox Table"
+                            },
+                            "DimensionalParameters": [
+                                {
+                                    "Min": 2,
+                                    "Max": 3
+                                },
+                                {
+                                    "Min": 1,
+                                    "Max": 1
+                                },
+                                {
+                                    "Min": 1,
+                                    "Max": 1
+                                }
+                            ],
+                            "PartitionActions": [
+                                {
+                                    "ChildTarget": "ALL",
+                                    "Action": "PATH_FROM_PARTITION",
+                                    "DirectionsToApply": [
+                                        "NW",
+                                        "NE",
+                                        "SW",
+                                        "SE"
+                                    ],
+                                    "Brush": {
+                                        "Occupier": "Paradox Chair"
+                                    },
+                                    "DimensionalParameters": [
+                                        {
+                                            "Min": 1,
+                                            "Max": 1
+                                        },
+                                        {
+                                            "Min": 1,
+                                            "Max": 1
+                                        },
+                                        {
+                                            "Min": 1,
+                                            "Max": 1
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "ChildTarget": "ALL",
+                            "Action": "PATH_FROM_PARTITION",
+                            "DirectionsToApply": [
+                                "NW",
+                                "NE",
+                                "SW",
+                                "SE"
+                            ],
+                            "Brush": {
+                                "Occupier": "Paradox Chair"
+                            },
+                            "DimensionalParameters": [
+                                {
+                                    "Min": 1,
+                                    "Max": 1
+                                },
+                                {
+                                    "Min": 1,
+                                    "Max": 1
+                                },
+                                {
+                                    "Min": 1,
+                                    "Max": 1
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
     }
 ]

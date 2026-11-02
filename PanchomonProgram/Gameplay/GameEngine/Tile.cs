@@ -11,7 +11,10 @@ namespace Gameplay.GameEngine
     public enum CliffFace
     {
         NONE, // Non-rendered
-        STONE
+        STONE,
+        WATERFALL,
+        PARADOX_TILE,
+        CLEAN_TILE
     }
     public class Tile : SimulationElement
     {

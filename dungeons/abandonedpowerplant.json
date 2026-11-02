@@ -499,12 +499,10 @@
         "WeatherOverrides": [
             {
                 "Name": "High Voltage Arcs",
-                "Description": "There's a constant discharge of electricty around the Plant that may hit Pokemon.",
                 "Chance": 0.5
             },
             {
                 "Name": "Ion Deluge",
-                "Description": "The air is Ionized and smells funny. All Normal-type attacks become Electric-type.",
                 "Chance": 0.5
             }
         ],

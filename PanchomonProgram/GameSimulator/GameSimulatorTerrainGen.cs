@@ -61,7 +61,6 @@ namespace GameSimulator
         /// <returns></returns>
         bool IsBrushBlockingWay(TileBrush brush, int x, int y)
         {
-            bool blocksWay = false;
             if (brush.BlocksTheWay && (GetTileIfValid(x, y)?.IsWalkable() ?? false)) // If brush blocks the way, need a precautionary measure. If the tile already was blocker, then I don't care because this brush won't change that ig
             {
                 // Need to check if the 3x3 area around brush is free
@@ -74,36 +73,61 @@ namespace GameSimulator
                 bool leftFree = true;
                 bool rightFree = true;
                 // Quick pass to verify what's around
-                int i, j;
-                for (i = x - 1; i <= x + 1; i++) // Check vertical occupancy
+                int i, j, idx;
+                for (i = x - 1, idx = 0; i <= x + 1; i++, idx++) // Check vertical occupancy
                 {
                     j = y - 1;
-                    topOccupied[i] = GetTileIfValid(i, j)?.IsWalkable() ?? false; // Tile is occupied if tile oob, non init or it is init but is occupied
-                    topFree &= !topOccupied[i];
+                    topOccupied[idx] = !(GetTileIfValid(i, j)?.IsWalkable() ?? false); // Tile is occupied if tile oob, non init or it is init but is occupied
+                    topFree &= !topOccupied[idx];
                     j = y + 1;
-                    bottomOccupied[i] = GetTileIfValid(i, j)?.IsWalkable() ?? false;
-                    bottomFree &= !bottomOccupied[i];
+                    bottomOccupied[idx] = !(GetTileIfValid(i, j)?.IsWalkable() ?? false);
+                    bottomFree &= !bottomOccupied[idx];
                 }
-                for (j = y - 1; j <= y + 1; j++) // Check horizontal occupancy
+                for (j = y - 1, idx = 0; j <= y + 1; j++, idx++) // Check horizontal occupancy
                 {
                     i = x - 1;
-                    leftOccupied[j] = GetTileIfValid(i, j)?.IsWalkable() ?? false;
-                    leftFree &= !leftOccupied[i];
+                    leftOccupied[idx] = !(GetTileIfValid(i, j)?.IsWalkable() ?? false);
+                    leftFree &= !leftOccupied[idx];
                     i = x + 1;
-                    rightOccupied[j] = GetTileIfValid(i, j)?.IsWalkable() ?? false;
-                    rightFree &= !rightOccupied[i];
+                    rightOccupied[idx] = !(GetTileIfValid(i, j)?.IsWalkable() ?? false);
+                    rightFree &= !rightOccupied[idx];
                 }
                 // Now, check UD and LR occupance and the result will depend on whether the mon can move lr
                 if ((!topOccupied[1] && !bottomOccupied[1]) && !(leftFree || rightFree))
                 {
-                    blocksWay = true;
+                    return true;
                 }
                 if ((!leftOccupied[1] && !rightOccupied[1]) && !(topFree || bottomFree))
                 {
-                    blocksWay = true;
+                    return true;
+                }
+                // The ones where the mon turns in an L shape
+                if (!topOccupied[1] && !rightOccupied[1])
+                {
+                    bool longWayFree = bottomFree && leftFree;
+                    bool shortWayFree = !topOccupied[2];
+                    if (!(longWayFree || shortWayFree)) return true;
+                }
+                if (!topOccupied[1] && !leftOccupied[1])
+                {
+                    bool longWayFree = bottomFree && rightFree;
+                    bool shortWayFree = !topOccupied[0];
+                    if (!(longWayFree || shortWayFree)) return true;
+                }
+                if (!bottomOccupied[1] && !rightOccupied[1])
+                {
+                    bool longWayFree = topFree && leftFree;
+                    bool shortWayFree = !bottomOccupied[2];
+                    if (!(longWayFree || shortWayFree)) return true;
+                }
+                if (!bottomOccupied[1] && !leftOccupied[1])
+                {
+                    bool longWayFree = topFree && rightFree;
+                    bool shortWayFree = !bottomOccupied[0];
+                    if (!(longWayFree || shortWayFree)) return true;
                 }
             }
-            return blocksWay;
+            return false;
         }
         /// <summary>
         /// Initializes and draws battlefield, ready to start sim after
@@ -162,6 +186,7 @@ namespace GameSimulator
                         PropagationTarget.ANY_NONMARKED => [GeneralUtilities.GetRandomPick([.. currentPartitions.GetPartitions().Where(p => !donePartitions.Contains(p))], _rng)], // Get all that haven't been marked yet
                         PropagationTarget.ALL_SIMULTANEOUSLY => [currentPartitions.GetPartitions().First()], // It doesn't matter which one, just apply all
                         PropagationTarget.NON_LAUNCHPAD => [.. currentPartitions.GetPartitions().Where(p => !_parameters.SidesPresent.Contains((Side)p.Id))],
+                        PropagationTarget.ALL_LAUNCHPAD => [.. currentPartitions.GetPartitions().Where(p => _parameters.SidesPresent.Contains((Side)p.Id))],
                         PropagationTarget.INSETS => [.. currentPartitions.GetPartitions().Where(p => p.Id >= 1 && p.Id <= 9)], // The inset pair
                         PropagationTarget.ALL => [.. currentPartitions.GetPartitions()], // All
                         _ => [currentPartitions.GetPartition((int)action.ChildTarget)], // Otherwise try to cast and fuck it
@@ -186,7 +211,25 @@ namespace GameSimulator
                         };
                         if (newSpace.GetPartitionCount() > 0) // If the op caused more sub-partitions (childs) need to apply axtra actions and decide who remains
                         {
-                            PropagateActions(action.PartitionActions, newSpace, target); // Apply further actions to the new spaces that were created
+                            Partition newParent = action.Action switch // Parent will actually depend on whether the action is a partition action or not
+                            {
+                                PropagationAction.SPLIT_LINE or
+                                PropagationAction.SPLIT_ROOM or
+                                PropagationAction.SPLIT_LINES => target, // These truly are subdivisions where they become the new parent
+                                PropagationAction.FILL or
+                                PropagationAction.JOIN_PARTITIONS or
+                                PropagationAction.PAINT_EVERYWHERE or
+                                PropagationAction.PAINT_AT_CENTER or
+                                PropagationAction.PAINT_AT_CORNER or
+                                PropagationAction.PAINT_ALL_EDGES or
+                                PropagationAction.PAINT_MID_EDGES or
+                                PropagationAction.PATH_FROM_PARTITION or
+                                PropagationAction.FLOOD_OFFTSET or
+                                PropagationAction.FLOOD_OFFSET_AGGRESSIVE or
+                                PropagationAction.FLOOD_DRY => parent, // These don't, bound parent is the same, useful for raycasting
+                                _ => throw new Exception($"Unsupported partition action {action.Action}")
+                            };
+                            PropagateActions(action.PartitionActions, newSpace, newParent); // Apply further actions to the new spaces that were created
                             if (!partitionStillExists) // If this action caused this partition to be split or removed
                             {
                                 currentPartitions.RemovePartition(target); // Then, removes parent since it was subdivided
@@ -407,7 +450,7 @@ namespace GameSimulator
                     (int)Math.Round(1 / parameters.DimensionalParameters[0].Max),
                     (int)Math.Round(1 / parameters.DimensionalParameters[0].Min),
                     parameters.DimensionalParameters[0].Decay, _rng);
-            int w = partition.GetAbsoluteDimension(0.999, orientation); // Need to get w for limiting w properly
+            int w = (orientation == SplitOrientation.VERTICAL) ? partition.Height : partition.Width; // Need to get w for limiting w properly
             n = Math.Clamp(n, 1, (w + brushSize) / (brushSize + 1)); // Limit N to realistic amount
             // Begin split
             int minX;
@@ -671,44 +714,53 @@ namespace GameSimulator
         /// <returns>True. Even if this generates "partitions" they will never override the parent partition</returns>
         bool Paint(Partition partition, TilePropagatorAction parameters, PartitionSpace newPartitions)
         {
+            // Find the geometries of this
+            int midpointX = partition.GetAbsoluteOffset(0.5, SplitOrientation.HORIZONTAL, 1); // Just using these helper functions with brush size 1 to get the center quicker
+            int midpointY = partition.GetAbsoluteOffset(0.5, SplitOrientation.VERTICAL, 1);
+            int maxOffset = Math.Min(partition.Width / 2, partition.Height / 2); // Offset is to avoid overlapping stuff
+            // Get params
             PropagationDimension dim = parameters.DimensionalParameters[0];
             int n = (dim.Min < 1) ? // Check how much i need to paint in this partition
                 GeneralUtilities.GetRandomDecayingInt(partition.Surface * dim.Min, partition.Surface * dim.Max, dim.Decay, _rng) :
                 GeneralUtilities.GetRandomDecayingInt(dim.Min, dim.Max, dim.Decay, _rng);
+            dim = parameters.DimensionalParameters[1];
+            int offset = (dim.Max < 1) ? // Check how much offsets the draw gets
+                GeneralUtilities.GetRandomDecayingInt(maxOffset * dim.Min, maxOffset * dim.Max, dim.Decay, _rng) :
+                GeneralUtilities.GetRandomDecayingInt(dim.Min, dim.Max, dim.Decay, _rng);
+            // Now see which points are paintable and how many needed
             int maxPossibleSpaces = 0;
-            int midpointX = partition.GetAbsoluteOffset(0.5, SplitOrientation.HORIZONTAL, 1); // Just using these helper functions with brush size 1 to get the center quicker
-            int midpointY = partition.GetAbsoluteOffset(0.5, SplitOrientation.VERTICAL, 1);
             List<(int, int)> allPaintableCoords;
             switch (parameters.Action)
             {
                 case PropagationAction.PAINT_EVERYWHERE:
                     allPaintableCoords = [.. partition.GetAllTileCoords()]; // All tiles are free game
+                    // No offset is needed
                     break;
                 case PropagationAction.PAINT_ALL_EDGES:
                     allPaintableCoords = [];
                     // Add all the parts from the side too, no corners
-                    for (int i = partition.BegX + 1; i < partition.EndX; i++)
+                    for (int i = partition.BegX + 1 + offset; i < partition.EndX - offset; i++)
                     {
                         if (parameters.DirectionsToApply.Contains(Direction.N))
                         {
-                            allPaintableCoords.Add((i, partition.BegY));
+                            allPaintableCoords.Add((i, partition.BegY + offset));
                             maxPossibleSpaces++;
                         }
                         if (parameters.DirectionsToApply.Contains(Direction.S))
                         {
-                            allPaintableCoords.Add((i, partition.EndY));
+                            allPaintableCoords.Add((i, partition.EndY - offset));
                         }
                     }
-                    for (int i = partition.BegY + 1 + 1; i < partition.EndY; i++)
+                    for (int i = partition.BegY + 1 + offset; i < partition.EndY - offset; i++)
                     {
                         if (parameters.DirectionsToApply.Contains(Direction.E))
                         {
-                            allPaintableCoords.Add((partition.EndX, i));
+                            allPaintableCoords.Add((partition.EndX - offset, i));
                             maxPossibleSpaces++;
                         }
                         if (parameters.DirectionsToApply.Contains(Direction.W))
                         {
-                            allPaintableCoords.Add((partition.BegX, i));
+                            allPaintableCoords.Add((partition.BegX + offset, i));
                             maxPossibleSpaces++;
                         }
                     }
@@ -718,22 +770,22 @@ namespace GameSimulator
                     allPaintableCoords = [];
                     if (parameters.DirectionsToApply.Contains(Direction.NE))
                     {
-                        allPaintableCoords.Add((partition.EndX, partition.BegY));
+                        allPaintableCoords.Add((partition.EndX - offset, partition.BegY + offset));
                         maxPossibleSpaces++;
                     }
                     if (parameters.DirectionsToApply.Contains(Direction.SE))
                     {
-                        allPaintableCoords.Add((partition.EndX, partition.EndY));
+                        allPaintableCoords.Add((partition.EndX - offset, partition.EndY - offset));
                         maxPossibleSpaces++;
                     }
                     if (parameters.DirectionsToApply.Contains(Direction.NW))
                     {
-                        allPaintableCoords.Add((partition.BegX, partition.BegY));
+                        allPaintableCoords.Add((partition.BegX + offset, partition.BegY + offset));
                         maxPossibleSpaces++;
                     }
                     if (parameters.DirectionsToApply.Contains(Direction.SW))
                     {
-                        allPaintableCoords.Add((partition.BegX, partition.EndY));
+                        allPaintableCoords.Add((partition.BegX + offset, partition.EndY - offset));
                         maxPossibleSpaces++;
                     }
                     n = Math.Clamp(n, 0, maxPossibleSpaces); // 4 corners max obviously
@@ -741,26 +793,27 @@ namespace GameSimulator
                 case PropagationAction.PAINT_AT_CENTER:
                     n = Math.Clamp(n, 0, 1); // Only one center
                     allPaintableCoords = [(midpointX, midpointY)];
+                    // No offset
                     break;
                 case PropagationAction.PAINT_MID_EDGES:
                     allPaintableCoords = [];
                     if (parameters.DirectionsToApply.Contains(Direction.N))
                     {
-                        allPaintableCoords.Add((midpointX, partition.BegY));
+                        allPaintableCoords.Add((midpointX, partition.BegY + offset));
                         maxPossibleSpaces++;
                     }
                     if (parameters.DirectionsToApply.Contains(Direction.S))
                     {
-                        allPaintableCoords.Add((midpointX, partition.EndY));
+                        allPaintableCoords.Add((midpointX, partition.EndY - offset));
                     }
                     if (parameters.DirectionsToApply.Contains(Direction.E))
                     {
-                        allPaintableCoords.Add((partition.EndX, midpointX));
+                        allPaintableCoords.Add((partition.EndX - offset, midpointY));
                         maxPossibleSpaces++;
                     }
                     if (parameters.DirectionsToApply.Contains(Direction.W))
                     {
-                        allPaintableCoords.Add((partition.BegX, midpointX));
+                        allPaintableCoords.Add((partition.BegX + offset, midpointY));
                         maxPossibleSpaces++;
                     }
                     n = Math.Clamp(n, 0, maxPossibleSpaces); // Absolutely max amount of things that can be painted are @ the perimeter
@@ -778,6 +831,7 @@ namespace GameSimulator
                 (int x, int y) = allPaintableCoords[i];
                 ApplyBrushToTile(parameters.Brush, x, y);
                 AddPartitionIfValid(x, x, y, y, newPartitions); // Also, add this small 1x1 square to the list of stuff I did, to be used in future propagations
+                numberPainted++;
             }
             return true;
         }
@@ -791,15 +845,31 @@ namespace GameSimulator
         /// <returns></returns>
         bool DrawPath(Partition source, TilePropagatorAction parameters, Partition parent, PartitionSpace newPartitions)
         {
-            RaycastParams auxParams = new RaycastParams()
-            {
-                Bounds = parent,
-            };
             // Quick length checking for all the desired starts
             int midpointX = source.GetAbsoluteOffset(0.5, SplitOrientation.HORIZONTAL, 1);
             int midpointY = source.GetAbsoluteOffset(0.5, SplitOrientation.VERTICAL, 1);
-            foreach (Direction dir in parameters.DirectionsToApply)
+            foreach (Direction nextDirection in parameters.DirectionsToApply)
             {
+                // Need to define where is the direction. As some are relative, need to check which way they'll result in
+                Direction dir = nextDirection;
+                if (dir == Direction.CENTER_HORIZONTAL || dir == Direction.CENTER_VERTICAL || dir == Direction.CENTER_DIAGONAL)
+                {
+                    int parentMidpointX = parent.GetAbsoluteOffset(0.5, SplitOrientation.HORIZONTAL, 1);
+                    int parentMidpointY = parent.GetAbsoluteOffset(0.5, SplitOrientation.VERTICAL, 1);
+                    bool isLeft = midpointX <= parentMidpointX;
+                    bool isAbove = midpointY <= parentMidpointY;
+                    dir = dir switch
+                    {
+                        Direction.CENTER_HORIZONTAL => (isLeft) ? Direction.E : Direction.W,
+                        Direction.CENTER_VERTICAL => (isAbove) ? Direction.S : Direction.N,
+                        Direction.CENTER_DIAGONAL => (isLeft) ? (isAbove ? Direction.SE : Direction.NE) : (isAbove ? Direction.SW : Direction.NW),
+                        _ => dir // This wouldn't happen
+                    };
+                }
+                RaycastParams auxParams = new RaycastParams()
+                {
+                    Bounds = parent,
+                };
                 (int anchorX, int anchorY) = dir switch
                 {
                     Direction.N => (midpointX, source.EndY),
@@ -836,14 +906,16 @@ namespace GameSimulator
                 int stride = (dim.Min < 1) ? // Absolute stride vs relative to len
                     GeneralUtilities.GetRandomDecayingInt(length * dim.Min, length * dim.Max, dim.Decay, _rng) :
                     GeneralUtilities.GetRandomDecayingInt(dim.Min, dim.Max, dim.Decay, _rng);
-                stride = Math.Clamp(stride, 1, length);
+                if (stride > length) stride = length;
+                if (stride < 1) stride = 1;
                 // Finally, the anchored stride, which determines every how many steps there'll be a new anchor
                 dim = parameters.DimensionalParameters[2];
                 int estimatedNumSteps = length / stride;
                 int anchorStride = (dim.Min < 1) ?
                     GeneralUtilities.GetRandomDecayingInt(estimatedNumSteps * dim.Min, estimatedNumSteps * dim.Max, dim.Decay, _rng) :
                     GeneralUtilities.GetRandomDecayingInt(dim.Min, dim.Max, dim.Decay, _rng);
-                anchorStride = Math.Clamp(anchorStride, 1, estimatedNumSteps); // Worst case, if you didn't want anchor, just ignore and don't use it
+                if (anchorStride > estimatedNumSteps) stride = estimatedNumSteps; // Worst case, if you didn't want anchor, just ignore and don't use it
+                if (anchorStride < 1) stride = 1;
                 // Ok! now do the raycast, and apply
                 int stepCount = 0;
                 auxParams.L = length;
@@ -856,10 +928,10 @@ namespace GameSimulator
                     if (stepCount >= anchorStride) // Time to involve the next anchor!
                     {
                         AddPartitionIfValid(x, x, y, y, newPartitions);
+                        stepCount = 0;
                     }
                 }
             }
-
             return true; // This tool is not powerful enough to know whether it partitioned space further, unfortunately. It definitely should avoid closing spaces tho
         }
         /// <summary>

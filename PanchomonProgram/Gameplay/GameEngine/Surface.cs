@@ -20,6 +20,13 @@ namespace Gameplay.GameEngine
             Console.WriteLine("Getting all Surfaces");
             yield return new Surface()
             {
+                Name = "Grass",
+                _description = "Grassy stuff.",
+                HindersMovement = false,
+                DebugColor = ConsoleColor.Green
+            };
+            yield return new Surface()
+            {
                 Name = "Dirt",
                 _description = "Dirt as commonly seen in reg Pokemon battles.",
                 HindersMovement = false,
@@ -43,6 +50,20 @@ namespace Gameplay.GameEngine
             {
                 Name = "Conductive Cables",
                 _description = "Grid-like cables on the floor.",
+                HindersMovement = false,
+                DebugColor = ConsoleColor.DarkGray
+            };
+            yield return new Surface()
+            {
+                Name = "Paradox Tile",
+                _description = "Paradox tile floor used for the paradox venue.",
+                HindersMovement = false,
+                DebugColor = ConsoleColor.DarkMagenta
+            };
+            yield return new Surface()
+            {
+                Name = "Clean Tile",
+                _description = "Clean Tile as seen in laboratory settings.",
                 HindersMovement = false,
                 DebugColor = ConsoleColor.Gray
             };

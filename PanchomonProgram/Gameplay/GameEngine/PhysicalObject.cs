@@ -8,7 +8,18 @@
         static public IEnumerable<PhysicalInstance> GetAllOccupierObjects()
         {
             Console.WriteLine("Getting all Physical Objects");
-            yield break;
+            yield return new PhysicalObject()
+            {
+                Name = "Paradox Table",
+                _description = "Table seen in Paradox venue.",
+                DebugChar = 'P'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Paradox Chair",
+                _description = "Chair seen in Paradox venue.",
+                DebugChar = 'p'
+            };
         }
     }
 }

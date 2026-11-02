@@ -1006,18 +1006,20 @@ namespace PanchomonBackend
         GameParameters GetGameParameters(Encounter encounter)
         {
             // Check the battlefield to be used
+            List<Battlefield> potentialBattlefileds;
             Battlefield battlefieldUsed;
-            if (encounter.BattlefieldOverride != null)
+            if (!string.IsNullOrEmpty(encounter.BattlefieldOverride))
             {
-                battlefieldUsed = encounter.BattlefieldOverride;
+                // If there's a battlefield override, get the battlefield by name
+                potentialBattlefileds = [.. _context.DungeonData.PossibleBattlefields.Where(b => b.Name == encounter.BattlefieldOverride)];
             }
             else
             {
-                // Otherwise get the dungeon's, picked at random
-                List<Battlefield> potentialBattlefileds = [.. _context.DungeonData.PossibleBattlefields.Where(b => b.Floors.Contains(_context.CurrentFloor))]; // Obtain battlefields for this floor
-                int battlefieldIdx = GeneralUtilities.GetRandomWeightedIndex([.. potentialBattlefileds.Select(b => b.Weight)], _context.Rng);
-                battlefieldUsed = potentialBattlefileds[battlefieldIdx];
+                // Otherwise get the dungeon's, picked at random when valid
+                potentialBattlefileds = [.. _context.DungeonData.PossibleBattlefields.Where(b => b.Floors.Contains(_context.CurrentFloor))]; // Obtain battlefields for this floor
             }
+            int battlefieldIdx = GeneralUtilities.GetRandomWeightedIndex([.. potentialBattlefileds.Select(b => b.Weight)], _context.Rng);
+            battlefieldUsed = potentialBattlefileds[battlefieldIdx];
             // Check the field mods for this time (or if overriden)
             HashSet<string> fieldModStrings;
             if (encounter.WeatherOverrides.Count > 0)

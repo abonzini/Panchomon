@@ -165,9 +165,16 @@ namespace PanchomonBackend
                             seed = GameplayElementsContainer.GlobalData.CommonRng.Next();
                         }
                         Random rng = new Random(seed);
-                        GameSimulator.GameSimulator testSim = new GameSimulator.GameSimulator();
-                        testSim.AssembleBattlefield(sides, terrainGen, rng);
-                        Console.WriteLine($"Seed was {seed}");
+                        try
+                        {
+                            GameSimulator.GameSimulator testSim = new GameSimulator.GameSimulator();
+                            testSim.AssembleBattlefield(sides, terrainGen, rng);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine($"Exception: {e}");
+                        }
+                        Console.WriteLine($"Seed #{seed}");
                         break;
                     case "8":
                         //{

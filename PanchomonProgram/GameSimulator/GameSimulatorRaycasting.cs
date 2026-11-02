@@ -63,14 +63,15 @@ namespace GameSimulator
                 // Bounds are always within grid right? So these become the new limits
                 minX = parameters.Bounds.BegX;
                 minY = parameters.Bounds.BegY;
-                maxX = parameters.Bounds.EndX - 1;
-                maxY = parameters.Bounds.EndY - 1;
+                maxX = parameters.Bounds.EndX + 1;
+                maxY = parameters.Bounds.EndY + 1;
             }
             int i = x + incX;
             int j = y + incY;
             int l = 0;
             while (i >= minX && i < maxX && j >= minY && j < maxY && l < parameters.L) // Iterate all tiles in that direction until EOB or max len
             {
+                if (_grid[i, j] == null) break;
                 yield return _grid[i, j];
                 l += parameters.Stride;
                 i += parameters.Stride * incX;

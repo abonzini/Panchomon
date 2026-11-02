@@ -36,6 +36,7 @@ namespace Gameplay.GameEngine
             return $"{AssociatedEntity} ({HpPercent * 100}%)";
         }
         public override string Name { get => AssociatedEntity.Name; set => base.Name = value; } // Use associated entitiy's name
+        public override char DebugChar { get => AssociatedEntity.Name[0]; set => base.DebugChar = value; } // Use associated entitiy's name first char
 
         /// <summary>
         /// Used to create a pokemon gameplay instance from a base Pokemon. Deals with defining the remaining sets (move disks) as well as set up Hp and etc. Can then be made permanent for the rest of the event

@@ -52,7 +52,8 @@ namespace GameSimulator
                         Console.BackgroundColor = nextTile.Surface.DebugColor;
                         Console.ForegroundColor = GetFontColor(nextTile.Surface.DebugColor);
                         Console.SetCursorPosition(i, j);
-                        Console.WriteLine("▢");
+                        char objectDebug = (nextTile.Occupier != null) ? nextTile.Occupier.DebugChar : ' ';
+                        Console.Write(objectDebug);
                     }
                 }
             }
