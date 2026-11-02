@@ -166,7 +166,7 @@ namespace PanchomonBackend
                         }
                         Random rng = new Random(seed);
                         GameSimulator.GameSimulator testSim = new GameSimulator.GameSimulator();
-                        testSim.AssembleBattlefield(sides, terrainGen, null, rng); // No field mod ig
+                        testSim.AssembleBattlefield(sides, terrainGen, rng);
                         Console.WriteLine($"Seed was {seed}");
                         break;
                     case "8":

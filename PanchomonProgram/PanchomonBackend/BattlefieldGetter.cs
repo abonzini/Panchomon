@@ -19,14 +19,24 @@ namespace PanchomonBackend
             List<Battlefield> validBattlefields = GetValidBattlefields(source, dirPath);
             Console.WriteLine($"Which one? {string.Join(", ", validBattlefields.Select(b => b.Name))}");
             string battlefield = Console.ReadLine();
-            return $"{source},{battlefield}";
+            Console.WriteLine($"Any tags for construction? (use CSV if needed)");
+            string tags = Console.ReadLine();
+            return $"{source},{battlefield},{tags}";
         }
         public static TerrainGenerator GetTerrainGenerator(string battlefieldIdString, string dirPath)
         {
-            string source = battlefieldIdString.Split(",")[0];
-            string battlefield = battlefieldIdString.Split(",")[1];
+            string[] csv = battlefieldIdString.Split(",");
+            string source = csv[0];
+            string battlefield = csv[1];
+            HashSet<string> tags = [];
+            for (int i = 2; i < csv.Length; i++)
+            {
+                tags.Add(csv[i].Trim());
+            }
             List<Battlefield> validBattlefields = GetValidBattlefields(source, dirPath);
-            return validBattlefields.Where(b => b.Name == battlefield).FirstOrDefault().TerrainGenerator;
+            TerrainGenerator gen = validBattlefields.Where(b => b.Name == battlefield).FirstOrDefault().TerrainGenerator;
+            gen.TagsToApply = tags;
+            return gen;
         }
         static List<Battlefield> GetValidBattlefields(string source, string dirPath)
         {

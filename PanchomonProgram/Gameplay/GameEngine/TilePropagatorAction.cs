@@ -62,6 +62,9 @@ namespace Gameplay.GameEngine
         PAINT_ALL_EDGES, /// Same as above, but paints in the edges of the room, uses directions to see which ones to add. Doesnt use corners
         PAINT_MID_EDGES, /// Same as above, but paints in the middle of the edges of the room only, uses directions to see which ones to add
         PATH_FROM_PARTITION, /// From a partition, extends a path within parent partition, for aesthetics that require a line somewhere. First param is the length, either % of max or absolute (capped). Then stride, as tile step or proportion of total steps. Finally the anchor stride, which is either an absolute count ot a relative count depending on l/stride. Extension stops if this breaks pathing
+        FLOOD_OFFTSET, /// Expands the desired brush outwards. This one doesn't block existing paths. Param is the min outwards offset, then max, and then the decaying chance between these
+        FLOOD_OFFSET_AGGRESSIVE, /// Same as above but does block paths
+        FLOOD_DRY, /// Flood Drting has a similar algo than flood filling but the other way around. Finds tiles of a surface and erases them, filling them with an adjacent surf instead
     }
     [JsonConverter(typeof(StringEnumConverter))]
     public enum PropagationTarget

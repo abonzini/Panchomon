@@ -384,7 +384,6 @@ namespace PanchomonBackend
                 GameParameters gameParams = new GameParameters() // These will be the game params for this tournament
                 {
                     TerrainGenerator = fightTerrainGen,
-                    TerrainGenTags = []
                 };
                 GameSimulator.GameSimulator sim = new GameSimulator.GameSimulator();
                 GameOutcome outcome = sim.Simulate([trainer1, trainer2], gameParams, _rng); // Simulates the game

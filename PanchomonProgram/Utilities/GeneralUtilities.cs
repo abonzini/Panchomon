@@ -109,6 +109,7 @@ namespace Utilities
         /// <returns>True or false</returns>
         public static bool GetRandomBool(double trueChance, Random rng)
         {
+            if (trueChance > 1) return true;
             return rng.NextDouble() < trueChance;
         }
         /// <summary>
@@ -154,6 +155,7 @@ namespace Utilities
         /// <returns>Element, not removed from list</returns>
         public static T GetRandomPick<T>(List<T> list, Random rng)
         {
+            if (list.Count == 1) return list[0];
             return list[GetRandomNumber(list.Count, rng)];
         }
         /// <summary>

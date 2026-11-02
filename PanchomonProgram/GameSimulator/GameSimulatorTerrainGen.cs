@@ -151,7 +151,7 @@ namespace GameSimulator
             List<Partition> donePartitions = [];
             foreach (TilePropagatorAction action in actions)
             {
-                if (!string.IsNullOrEmpty(action.Tag) && !_parameters.TerrainGenTags.Contains(action.Tag)) continue; // Skip action if has a tag that is not present in this context
+                if (!string.IsNullOrEmpty(action.Tag) && !_parameters.TerrainGenerator.TagsToApply.Contains(action.Tag)) continue; // Skip action if has a tag that is not present in this context
                 double chance = action.Chance;
                 while (GeneralUtilities.GetRandomBool(chance, _rng)) // Roll to check if action applied
                 {
@@ -179,6 +179,9 @@ namespace GameSimulator
                             PropagationAction.JOIN_PARTITIONS => JoinPartitionsInSpace(currentPartitions, action), // Works to merge all current partitions
                             PropagationAction.PAINT_EVERYWHERE or PropagationAction.PAINT_AT_CENTER or PropagationAction.PAINT_AT_CORNER or PropagationAction.PAINT_ALL_EDGES or PropagationAction.PAINT_MID_EDGES => Paint(target, action, newSpace),
                             PropagationAction.PATH_FROM_PARTITION => DrawPath(target, action, parent, newSpace),
+                            PropagationAction.FLOOD_OFFTSET => FloodExpand(target, action, false), // Flood expansion
+                            PropagationAction.FLOOD_OFFSET_AGGRESSIVE => FloodExpand(target, action, true),
+                            PropagationAction.FLOOD_DRY => FloodDry(target, action),
                             _ => throw new Exception($"Unsupported partition action {action.Action}")
                         };
                         if (newSpace.GetPartitionCount() > 0) // If the op caused more sub-partitions (childs) need to apply axtra actions and decide who remains
@@ -467,6 +470,7 @@ namespace GameSimulator
         /// <returns>Always true, this operation never removes partitions</returns>
         bool JoinPartitionsInSpace(PartitionSpace spaceToJoin, TilePropagatorAction parameters)
         {
+            if (parameters.ChildTarget != PropagationTarget.ALL_SIMULTANEOUSLY) throw new Exception("This action is meant to be used on all simultaneously. If this is not the case, something has gone wrong.");
             // Get partitions to join and a map of tiles and which partition it belongs to
             List<Partition> partitions = [.. spaceToJoin.GetPartitions()]; // Get all partitions, raw, need to check what joins to what
             Dictionary<(int, int), int> tilePartDict = new Dictionary<(int, int), int>();
@@ -857,6 +861,116 @@ namespace GameSimulator
             }
 
             return true; // This tool is not powerful enough to know whether it partitioned space further, unfortunately. It definitely should avoid closing spaces tho
+        }
+        /// <summary>
+        /// Expands a specific tile corresponding to a brush. Tiles that hinder movement can't be overriden, this means no other hinderers or objects on it. Brush in this case means a surface brush
+        /// </summary>
+        /// <param name="bounds">Bounds where the brush will be checked and performed</param>
+        /// <param name="parameters">Params for expansion</param>
+        /// <param name="aggressive">Whether it can close off walkable paths</param>
+        /// <returns>False, as this doesn't generate partitions in any case</returns>
+        bool FloodExpand(Partition bounds, TilePropagatorAction parameters, bool aggressive)
+        {
+            TileBrush brush = parameters.Brush;
+            Surface brushSurface = GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface];
+            // First, check within bounds what tiles will be expandable, to avoid re-searching whole space
+            HashSet<(int, int)> allFloodedCoords = [];
+            foreach ((int x, int y) in bounds.GetAllTileCoords())
+            {
+                if (_grid[x, y].Surface == brushSurface) // If there's a surface match, will be valid candidate for flood fill
+                {
+                    allFloodedCoords.Add((x, y));
+                }
+            }
+            // Now begin flood
+            int minDepth = (int)Math.Round(parameters.DimensionalParameters[0].Min < 1 ? Math.Sqrt(bounds.Surface) * parameters.DimensionalParameters[0].Min : parameters.DimensionalParameters[0].Min);
+            int maxDepth = (int)Math.Round(parameters.DimensionalParameters[0].Max < 1 ? Math.Sqrt(bounds.Surface) * parameters.DimensionalParameters[0].Max : parameters.DimensionalParameters[0].Max);
+            double decay = parameters.DimensionalParameters[0].Decay;
+            for (int depth = 0; depth <= maxDepth; depth++) // Do all depths until max
+            {
+                double floodChance = Math.Pow(decay, depth - minDepth); // Decay makes more layers less frequent exponentially. Chances for lesser will always be >1 in theory...
+                foreach ((int x, int y) in allFloodedCoords)
+                {
+                    for (int i = x - 1; i <= x + 1; i++)
+                    {
+                        if (bounds.BegX < i && i > bounds.EndX) continue; // Skip coords out of bounds
+                        for (int j = y - 1; i <= y + 1; i++)
+                        {
+                            if (bounds.BegY < j && j > bounds.EndY) continue; // Skip coords out of bounds
+                            Tile nextTile = GetTileIfValid(i, j);
+                            if (nextTile != null && nextTile.Surface != brushSurface && nextTile.IsWalkable() && (aggressive || !IsBrushBlockingWay(brush, i, j))) // Candidate for painting only if tile extists, has diff surface, is walkable, and, in non-aggresive floods, there's no blocked path
+                            {
+                                if (GeneralUtilities.GetRandomBool(floodChance, _rng)) // ok, if floodable, check if the statistics lets us do it
+                                {
+                                    ApplyBrushToTile(brush, i, j);
+                                    allFloodedCoords.Add((i, j)); // This tile is now flooded too
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return false; // This tool won't be able to generate new partitions even in aggressive mode, so use carefully and usually by the end
+        }
+        /// <summary>
+        /// Dries tiles of a specific tile corresponding to a brush. The drying is done in layers. Drying copies surface/cliff and removes objects/effects
+        /// </summary>
+        /// <param name="bounds">Bounds where the brush will be checked and performed</param>
+        /// <param name="parameters">Params for expansion</param>
+        /// <returns>False, as this doesn't generate partitions in any case</returns>
+        bool FloodDry(Partition bounds, TilePropagatorAction parameters)
+        {
+            TileBrush brush = parameters.Brush;
+            Surface brushSurface = GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface];
+            // First, check within bounds what tiles are candidates for removal
+            HashSet<(int, int)> coordsToDry = [];
+            foreach ((int x, int y) in bounds.GetAllTileCoords())
+            {
+                if (_grid[x, y].Surface == brushSurface) // If there's a surface match, will be valid candidate for flood fill
+                {
+                    coordsToDry.Add((x, y));
+                }
+            }
+            // Now begin drying
+            int minDepth = (int)Math.Round(parameters.DimensionalParameters[0].Min < 1 ? Math.Sqrt(bounds.Surface) * parameters.DimensionalParameters[0].Min : parameters.DimensionalParameters[0].Min);
+            int maxDepth = (int)Math.Round(parameters.DimensionalParameters[0].Max < 1 ? Math.Sqrt(bounds.Surface) * parameters.DimensionalParameters[0].Max : parameters.DimensionalParameters[0].Max);
+            double decay = parameters.DimensionalParameters[0].Decay;
+            for (int depth = 0; depth <= maxDepth; depth++) // Do all depths until max
+            {
+                double dryChance = Math.Pow(decay, depth - minDepth); // Decay makes more layers less frequent exponentially. Chances for lesser will always be >1 in theory...
+                foreach ((int x, int y) in coordsToDry)
+                {
+                    List<(int, int)> coordsToCheck = [(x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)]; // Only pure adjacents are checked for drying, not diagonals
+                    List<Tile> overrideCandidates = [];
+                    int nNeighbors = 0;
+                    foreach ((int i, int j) in coordsToCheck)
+                    {
+                        Tile tile = GetTileIfValid(i, j);
+                        if (tile == null || coordsToDry.Contains((i, j)))
+                        {
+                            nNeighbors++;
+                        }
+                        else
+                        {
+                            overrideCandidates.Add(tile);
+                        }
+                    }
+                    if (nNeighbors < 4) // If the tile has 4 dryable neighbors and/or invalid tiles, this one can't be dried in this stage
+                    {
+                        if (GeneralUtilities.GetRandomBool(dryChance, _rng)) // ok, if dryable, check if the statistics lets us do it
+                        {
+                            Tile overrideTile = GeneralUtilities.GetRandomPick(overrideCandidates, _rng); // Choose which tile will be used to override
+                            Tile tileToOverride = GetTileIfValid(x, y);
+                            tileToOverride.Occupier = null;
+                            tileToOverride.Effect = null;
+                            tileToOverride.Surface = overrideTile.Surface;
+                            tileToOverride.CliffFace = overrideTile.CliffFace;
+                            coordsToDry.Remove((x, y)); // This tile is now dry and is now removed
+                        }
+                    }
+                }
+            }
+            return false; // No partitions generated at all
         }
     }
 }
