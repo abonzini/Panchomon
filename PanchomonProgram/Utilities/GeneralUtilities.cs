@@ -55,8 +55,9 @@ namespace Utilities
         /// <param name="list">List to shuffle</param>
         /// <param name="offset">Where to start shuffle</param>
         /// <param name="number">How many elements to shuffle</param>
-        /// <param name="rng">The rng</param>
-        public static void ShuffleList<T>(List<T> list, int offset, int number, Random rng)
+        /// <param name="rng">The rng</param>#
+        /// <returns>The (shuffled) list (not a copy)</returns>
+        public static List<T> ShuffleList<T>(List<T> list, int offset, int number, Random rng)
         {
             rng ??= new Random(); // New rng if passed a null one
             int n = number;
@@ -66,15 +67,17 @@ namespace Utilities
                 int k = rng.Next(n + 1);
                 (list[offset + k], list[offset + n]) = (list[offset + n], list[offset + k]); // Swap
             }
+            return list;
         }
         /// <summary>
         /// Shuffle a list with F-Y but with a deterministic (i..e repeatable) rng
         /// </summary>
         /// <param name="list">List to shuffle</param>
         /// <param name="rng">The rng</param>
-        public static void ShuffleList<T>(List<T> list, Random rng)
+        /// <returns>The (shuffled) list (not a copy)</returns>
+        public static List<T> ShuffleList<T>(List<T> list, Random rng)
         {
-            ShuffleList(list, 0, list.Count, rng);
+            return ShuffleList(list, 0, list.Count, rng);
         }
         /// <summary>
         /// Generates an integer between min-max that decays exponentially

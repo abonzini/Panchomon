@@ -180,8 +180,9 @@ namespace GameSimulator
                 while (GeneralUtilities.GetRandomBool(chance, _rng)) // Roll to check if action applied
                 {
                     // Execute action
-                    List<Partition> targets = action.ChildTarget switch// (action.ChildTarget == -1) ? [.. currentPartitions.GetPartitions()] : [currentPartitions.GetPartition(action.ChildTarget)]; // Get all the partitions I'm going to work with
+                    List<Partition> targets = action.ChildTarget switch // Get all the partitions I'm going to work with
                     {
+                        PropagationTarget.ALL_SHUFFLE => GeneralUtilities.ShuffleList([.. currentPartitions.GetPartitions()], _rng),
                         PropagationTarget.ALL_NONMARKED => [.. currentPartitions.GetPartitions().Where(p => !donePartitions.Contains(p))], // Get all that haven't been marked yet
                         PropagationTarget.ANY_NONMARKED => [GeneralUtilities.GetRandomPick([.. currentPartitions.GetPartitions().Where(p => !donePartitions.Contains(p))], _rng)], // Get all that haven't been marked yet
                         PropagationTarget.ALL_SIMULTANEOUSLY => [currentPartitions.GetPartitions().First()], // It doesn't matter which one, just apply all
@@ -204,8 +205,7 @@ namespace GameSimulator
                             PropagationAction.JOIN_PARTITIONS => JoinPartitionsInSpace(currentPartitions, action), // Works to merge all current partitions
                             PropagationAction.PAINT_EVERYWHERE or PropagationAction.PAINT_AT_CENTER or PropagationAction.PAINT_AT_CORNER or PropagationAction.PAINT_ALL_EDGES or PropagationAction.PAINT_MID_EDGES => Paint(target, action, newSpace),
                             PropagationAction.PATH_FROM_PARTITION => DrawPath(target, action, parent, newSpace),
-                            PropagationAction.FLOOD_OFFTSET => FloodExpand(target, action, false), // Flood expansion
-                            PropagationAction.FLOOD_OFFSET_AGGRESSIVE => FloodExpand(target, action, true),
+                            PropagationAction.FLOOD_OFFTSET => FloodExpand(target, action), // Flood expansion
                             PropagationAction.FLOOD_DRY => FloodDry(target, action),
                             _ => throw new Exception($"Unsupported partition action {action.Action}")
                         };
@@ -225,7 +225,6 @@ namespace GameSimulator
                                 PropagationAction.PAINT_MID_EDGES or
                                 PropagationAction.PATH_FROM_PARTITION or
                                 PropagationAction.FLOOD_OFFTSET or
-                                PropagationAction.FLOOD_OFFSET_AGGRESSIVE or
                                 PropagationAction.FLOOD_DRY => parent, // These don't, bound parent is the same, useful for raycasting
                                 _ => throw new Exception($"Unsupported partition action {action.Action}")
                             };
@@ -822,7 +821,7 @@ namespace GameSimulator
                     throw new Exception("Invalid parameter to decide where to paint");
             }
             // Now that points are defined, need to do a second cleanup stage of only the points I can actually legally add
-            allPaintableCoords = [.. allPaintableCoords.Where(c => !IsBrushBlockingWay(parameters.Brush, c.Item1, c.Item2))];
+            allPaintableCoords = [.. allPaintableCoords.Where(c => (parameters.Aggressive || !IsBrushBlockingWay(parameters.Brush, c.Item1, c.Item2)))];
             GeneralUtilities.ShuffleList(allPaintableCoords, _rng); // Shufflerino to be random
             // Finally, paint. I've determined that since I don't paint illegal things, there's no case where a prev illegal tile becomes legal, so can just paint in order
             int numberPainted = 0;
@@ -885,7 +884,7 @@ namespace GameSimulator
                 int maxLength = 0;
                 foreach (Tile nextTile in RaycastDirection(anchorX, anchorY, dir, auxParams))
                 {
-                    if (nextTile.IsWalkable() && !IsBrushBlockingWay(parameters.Brush, nextTile.X, nextTile.Y)) // If valid tile to continue walk
+                    if (nextTile.IsWalkable() && (parameters.Aggressive || !IsBrushBlockingWay(parameters.Brush, nextTile.X, nextTile.Y))) // If valid tile to continue walk
                     {
                         maxLength++;
                     }
@@ -939,9 +938,8 @@ namespace GameSimulator
         /// </summary>
         /// <param name="bounds">Bounds where the brush will be checked and performed</param>
         /// <param name="parameters">Params for expansion</param>
-        /// <param name="aggressive">Whether it can close off walkable paths</param>
         /// <returns>False, as this doesn't generate partitions in any case</returns>
-        bool FloodExpand(Partition bounds, TilePropagatorAction parameters, bool aggressive)
+        bool FloodExpand(Partition bounds, TilePropagatorAction parameters)
         {
             TileBrush brush = parameters.Brush;
             Surface brushSurface = GameplayElementsContainer.GlobalData.Surfaces[brush.TileSurface];
@@ -970,7 +968,7 @@ namespace GameSimulator
                         {
                             if (bounds.BegY < j && j > bounds.EndY) continue; // Skip coords out of bounds
                             Tile nextTile = GetTileIfValid(i, j);
-                            if (nextTile != null && nextTile.Surface != brushSurface && nextTile.IsWalkable() && (aggressive || !IsBrushBlockingWay(brush, i, j))) // Candidate for painting only if tile extists, has diff surface, is walkable, and, in non-aggresive floods, there's no blocked path
+                            if (nextTile != null && nextTile.Surface != brushSurface && nextTile.IsWalkable() && (parameters.Aggressive || !IsBrushBlockingWay(brush, i, j))) // Candidate for painting only if tile extists, has diff surface, is walkable, and, in non-aggresive floods, there's no blocked path
                             {
                                 if (GeneralUtilities.GetRandomBool(floodChance, _rng)) // ok, if floodable, check if the statistics lets us do it
                                 {

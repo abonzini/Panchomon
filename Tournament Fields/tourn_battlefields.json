@@ -194,7 +194,7 @@
                     ],
                     "PartitionActions": [
                         {
-                            "ChildTarget": "ALL",
+                            "ChildTarget": "ALL_SHUFFLE",
                             "Action": "PAINT_MID_EDGES",
                             "DirectionsToApply": [
                                 "E",
@@ -321,7 +321,7 @@
                             ],
                             "PartitionActions": [
                                 {
-                                    "ChildTarget": "ALL",
+                                    "ChildTarget": "ALL_SHUFFLE",
                                     "Action": "PATH_FROM_PARTITION",
                                     "DirectionsToApply": [
                                         "NW",
