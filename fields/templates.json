@@ -1,0 +1,30 @@
+{
+    "Paradox Chairs": {
+        "Note": "Paints Paradox Chairs diagonally around an object in shuffled order, for populating paradox venues.",
+        "ChildTarget": "ALL_SHUFFLE",
+        "Action": "PATH_FROM_PARTITION",
+        "DirectionsToApply": [
+            "N",
+            "E",
+            "W",
+            "S"
+        ],
+        "Brush": {
+            "Occupier": "Paradox Chair"
+        },
+        "DimensionalParameters": [
+            {
+                "Min": 1,
+                "Max": 1
+            },
+            {
+                "Min": 1,
+                "Max": 1
+            },
+            {
+                "Min": 1,
+                "Max": 1
+            }
+        ]
+    }
+}

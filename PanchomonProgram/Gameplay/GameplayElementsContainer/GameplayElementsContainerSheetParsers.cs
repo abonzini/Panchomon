@@ -1,4 +1,5 @@
-﻿using Gameplay.GameplayElements;
+﻿using Gameplay.GameEngine;
+using Gameplay.GameplayElements;
 using Newtonsoft.Json;
 using Utilities;
 
@@ -514,11 +515,15 @@ namespace Gameplay.GameplayElementsContainer
         /// <param name="sheetTab">Which tab has the data</param>
         void ParseDungeonData(string directory, string sheetId, string sheetTab)
         {
+            // Extract additional Json templates
+            Console.WriteLine("Extracting propagation templates");
+            string folder = Path.Combine(directory, "fields", "templates.json");
+            TemplatePropagationActions = JsonConvert.DeserializeObject<Dictionary<string, TilePropagatorAction>>(File.ReadAllText(folder));
             Console.WriteLine("Extracting dungeon mechanics data");
             Dungeons.Clear();
             // Extract all jsons
-            string dungeonFolder = Path.Combine(directory, "dungeons");
-            foreach (string file in Directory.EnumerateFiles(dungeonFolder, "*.json"))
+            folder = Path.Combine(directory, "dungeons");
+            foreach (string file in Directory.EnumerateFiles(folder, "*.json"))
             {
                 Dungeon nextDungeon = JsonConvert.DeserializeObject<Dungeon>(File.ReadAllText(file));
                 Dungeons.Add(nextDungeon.Name, nextDungeon);

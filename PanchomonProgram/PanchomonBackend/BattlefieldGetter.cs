@@ -14,7 +14,7 @@ namespace PanchomonBackend
         /// <returns></returns>
         public static string GetBattlefieldIdString(string dirPath)
         {
-            Console.WriteLine($"Where to fetch battlefield(s) from? either 'Tournament Fields' or: {string.Join(", ", [.. GameplayElementsContainer.GlobalData.Dungeons.Values.Select(d => d.Name)])}");
+            Console.WriteLine($"Where to fetch battlefield(s) from? either 'fields' or: {string.Join(", ", [.. GameplayElementsContainer.GlobalData.Dungeons.Values.Select(d => d.Name)])}");
             string source = Console.ReadLine();
             List<Battlefield> validBattlefields = GetValidBattlefields(source, dirPath);
             Console.WriteLine($"Which one? {string.Join(", ", validBattlefields.Select(b => b.Name))}");
@@ -40,9 +40,9 @@ namespace PanchomonBackend
         }
         static List<Battlefield> GetValidBattlefields(string source, string dirPath)
         {
-            if (source == "Tournament Fields")
+            if (source == "fields")
             {
-                return JsonConvert.DeserializeObject<List<Battlefield>>(File.ReadAllText(Path.Combine(dirPath, "Tournament Fields", "tourn_battlefields.json")));
+                return JsonConvert.DeserializeObject<List<Battlefield>>(File.ReadAllText(Path.Combine(dirPath, "fields", "tourn_battlefields.json")));
             }
             else
             {

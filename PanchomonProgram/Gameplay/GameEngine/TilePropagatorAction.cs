@@ -54,6 +54,7 @@ namespace Gameplay.GameEngine
     public enum PropagationAction
     {
         NONE, /// Unused ig
+        TEMPLATE, /// Instead of an action, invokes a template defined in Tag. All other fields are ignored
         SPLIT_LINE, /// Splits a parition in 2. LineOrientation defines which direction. Unique parameter specifies where the line will hit, either absolute offset (?) or percentage of part. Partitions 0,1 generated are left/right respectively.
         SPLIT_ROOM, /// Sub partitions as a rectangle in a X,Y area. LineOrientation defines which one will be the MainDimension and vice versa. The parameters will be Dim1 Dim2 Offset1 Offset2. Partition 0 is inside the square, while 0-8 are in order from up-left. Using empty brush allows for insetting while workign on partitions 1-9
         SPLIT_LINES, /// Like draw line, but is based on splitting the space in the desired direction into N pieces (firs dim). The second dim is an offset allows to move the walls a bit proportional to the original part's dimension but do be careful as they may flip.

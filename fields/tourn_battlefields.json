@@ -215,28 +215,8 @@
                             ],
                             "PartitionActions": [
                                 {
-                                    "ChildTarget": "ALL",
-                                    "Action": "PATH_FROM_PARTITION",
-                                    "DirectionsToApply": [
-                                        "NE",
-                                        "NW",
-                                        "SE",
-                                        "SW"
-                                    ],
-                                    "Brush": {
-                                        "Occupier": "Paradox Chair"
-                                    },
-                                    "DimensionalParameters": [
-                                        {
-                                            "Min": 1,
-                                            "Max": 1
-                                        },
-                                        {
-                                            "Min": 1,
-                                            "Max": 1
-                                        },
-                                        {}
-                                    ]
+                                    "Action": "TEMPLATE",
+                                    "Tag": "Paradox Chairs"
                                 }
                             ]
                         }
@@ -321,60 +301,14 @@
                             ],
                             "PartitionActions": [
                                 {
-                                    "ChildTarget": "ALL_SHUFFLE",
-                                    "Action": "PATH_FROM_PARTITION",
-                                    "DirectionsToApply": [
-                                        "NW",
-                                        "NE",
-                                        "SW",
-                                        "SE"
-                                    ],
-                                    "Brush": {
-                                        "Occupier": "Paradox Chair"
-                                    },
-                                    "DimensionalParameters": [
-                                        {
-                                            "Min": 1,
-                                            "Max": 1
-                                        },
-                                        {
-                                            "Min": 1,
-                                            "Max": 1
-                                        },
-                                        {
-                                            "Min": 1,
-                                            "Max": 1
-                                        }
-                                    ]
+                                    "Action": "TEMPLATE",
+                                    "Tag": "Paradox Chairs"
                                 }
                             ]
                         },
                         {
-                            "ChildTarget": "ALL",
-                            "Action": "PATH_FROM_PARTITION",
-                            "DirectionsToApply": [
-                                "NW",
-                                "NE",
-                                "SW",
-                                "SE"
-                            ],
-                            "Brush": {
-                                "Occupier": "Paradox Chair"
-                            },
-                            "DimensionalParameters": [
-                                {
-                                    "Min": 1,
-                                    "Max": 1
-                                },
-                                {
-                                    "Min": 1,
-                                    "Max": 1
-                                },
-                                {
-                                    "Min": 1,
-                                    "Max": 1
-                                }
-                            ]
+                            "Action": "TEMPLATE",
+                            "Tag": "Paradox Chairs"
                         }
                     ]
                 }

@@ -175,12 +175,14 @@ namespace GameSimulator
             List<Partition> donePartitions = [];
             foreach (TilePropagatorAction action in actions)
             {
-                if (!string.IsNullOrEmpty(action.Tag) && !_parameters.TerrainGenerator.TagsToApply.Contains(action.Tag)) continue; // Skip action if has a tag that is not present in this context
-                double chance = action.Chance;
+                // Check which action to actually perform. Normally, it's the action itself but if it is templated, fetch the action instead from template db
+                TilePropagatorAction nextAction = (action.Action == PropagationAction.TEMPLATE) ? GameplayElementsContainer.GlobalData.TemplatePropagationActions[action.Tag] : action;
+                if (!string.IsNullOrEmpty(nextAction.Tag) && !_parameters.TerrainGenerator.TagsToApply.Contains(nextAction.Tag)) continue; // Skip action if has a tag that is not present in this context
+                double chance = nextAction.Chance;
                 while (GeneralUtilities.GetRandomBool(chance, _rng)) // Roll to check if action applied
                 {
                     // Execute action
-                    List<Partition> targets = action.ChildTarget switch // Get all the partitions I'm going to work with
+                    List<Partition> targets = nextAction.ChildTarget switch // Get all the partitions I'm going to work with
                     {
                         PropagationTarget.ALL_SHUFFLE => GeneralUtilities.ShuffleList([.. currentPartitions.GetPartitions()], _rng),
                         PropagationTarget.ALL_NONMARKED => [.. currentPartitions.GetPartitions().Where(p => !donePartitions.Contains(p))], // Get all that haven't been marked yet
@@ -190,28 +192,28 @@ namespace GameSimulator
                         PropagationTarget.ALL_LAUNCHPAD => [.. currentPartitions.GetPartitions().Where(p => _parameters.SidesPresent.Contains((Side)p.Id))],
                         PropagationTarget.INSETS => [.. currentPartitions.GetPartitions().Where(p => p.Id >= 1 && p.Id <= 9)], // The inset pair
                         PropagationTarget.ALL => [.. currentPartitions.GetPartitions()], // All
-                        _ => [currentPartitions.GetPartition((int)action.ChildTarget)], // Otherwise try to cast and fuck it
+                        _ => [currentPartitions.GetPartition((int)nextAction.ChildTarget)], // Otherwise try to cast and fuck it
                     };
                     // Party space can now be modified freely from this point onwards since targets was isolated. However user will need to be careful with op order as further tasks will also operate on generated partitions
                     foreach (Partition target in targets) // About to perform the action on each part
                     {
                         PartitionSpace newSpace = new PartitionSpace();
-                        bool partitionStillExists = action.Action switch
+                        bool partitionStillExists = nextAction.Action switch
                         {
-                            PropagationAction.SPLIT_LINE => LineDivide(target, action, newSpace),
-                            PropagationAction.SPLIT_ROOM => RectangularDivide(target, action, newSpace),
-                            PropagationAction.SPLIT_LINES => MultiLineDivide(target, action, newSpace),
-                            PropagationAction.FILL => FillPartition(target, action), // A fill never generates more things so
-                            PropagationAction.JOIN_PARTITIONS => JoinPartitionsInSpace(currentPartitions, action), // Works to merge all current partitions
-                            PropagationAction.PAINT_EVERYWHERE or PropagationAction.PAINT_AT_CENTER or PropagationAction.PAINT_AT_CORNER or PropagationAction.PAINT_ALL_EDGES or PropagationAction.PAINT_MID_EDGES => Paint(target, action, newSpace),
-                            PropagationAction.PATH_FROM_PARTITION => DrawPath(target, action, parent, newSpace),
-                            PropagationAction.FLOOD_OFFTSET => FloodExpand(target, action), // Flood expansion
-                            PropagationAction.FLOOD_DRY => FloodDry(target, action),
-                            _ => throw new Exception($"Unsupported partition action {action.Action}")
+                            PropagationAction.SPLIT_LINE => LineDivide(target, nextAction, newSpace),
+                            PropagationAction.SPLIT_ROOM => RectangularDivide(target, nextAction, newSpace),
+                            PropagationAction.SPLIT_LINES => MultiLineDivide(target, nextAction, newSpace),
+                            PropagationAction.FILL => FillPartition(target, nextAction), // A fill never generates more things so
+                            PropagationAction.JOIN_PARTITIONS => JoinPartitionsInSpace(currentPartitions, nextAction), // Works to merge all current partitions
+                            PropagationAction.PAINT_EVERYWHERE or PropagationAction.PAINT_AT_CENTER or PropagationAction.PAINT_AT_CORNER or PropagationAction.PAINT_ALL_EDGES or PropagationAction.PAINT_MID_EDGES => Paint(target, nextAction, newSpace),
+                            PropagationAction.PATH_FROM_PARTITION => DrawPath(target, nextAction, parent, newSpace),
+                            PropagationAction.FLOOD_OFFTSET => FloodExpand(target, nextAction), // Flood expansion
+                            PropagationAction.FLOOD_DRY => FloodDry(target, nextAction),
+                            _ => throw new Exception($"Unsupported partition action {nextAction.Action}")
                         };
                         if (newSpace.GetPartitionCount() > 0) // If the op caused more sub-partitions (childs) need to apply axtra actions and decide who remains
                         {
-                            Partition newParent = action.Action switch // Parent will actually depend on whether the action is a partition action or not
+                            Partition newParent = nextAction.Action switch // Parent will actually depend on whether the action is a partition action or not
                             {
                                 PropagationAction.SPLIT_LINE or
                                 PropagationAction.SPLIT_ROOM or
@@ -226,17 +228,17 @@ namespace GameSimulator
                                 PropagationAction.PATH_FROM_PARTITION or
                                 PropagationAction.FLOOD_OFFTSET or
                                 PropagationAction.FLOOD_DRY => parent, // These don't, bound parent is the same, useful for raycasting
-                                _ => throw new Exception($"Unsupported partition action {action.Action}")
+                                _ => throw new Exception($"Unsupported partition action {nextAction.Action}")
                             };
-                            PropagateActions(action.PartitionActions, newSpace, newParent); // Apply further actions to the new spaces that were created
+                            PropagateActions(nextAction.PartitionActions, newSpace, newParent); // Apply further actions to the new spaces that were created
                             if (!partitionStillExists) // If this action caused this partition to be split or removed
                             {
                                 currentPartitions.RemovePartition(target); // Then, removes parent since it was subdivided
                                 currentPartitions.MergeSpace(newSpace); // Apply the new space to the merge space
                             }
                         }
-                        Debug.DebugAction(DebugLevel.BATTLE_STATE, () => DrawGrid($"After {action.Action} on partition {target.Id}"));
-                        if (action.ChildTarget == PropagationTarget.ALL_NONMARKED || action.ChildTarget == PropagationTarget.ANY_NONMARKED)
+                        Debug.DebugAction(DebugLevel.BATTLE_STATE, () => DrawGrid($"After {nextAction.Action} on partition {target.Id}"));
+                        if (nextAction.ChildTarget == PropagationTarget.ALL_NONMARKED || nextAction.ChildTarget == PropagationTarget.ANY_NONMARKED)
                         {
                             donePartitions.Add(target);
                         }
