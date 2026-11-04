@@ -24,6 +24,11 @@
                 return (Occupier != null && Occupier != "") || (TileSurface != null && GameplayElementsContainer.GameplayElementsContainer.GlobalData.Surfaces[TileSurface].HindersMovement);
             }
         }
+        public override string ToString()
+        {
+            List<string> allstrings = [TileSurface, Occupier, TileEffect];
+            return string.Join(" + ", allstrings.Where(s => s != null));
+        }
     }
     /// <summary>
     /// Contains all the elements for terrain generation, this includes all the elements that will result in a completed map (although later on the weather mods will alter these)

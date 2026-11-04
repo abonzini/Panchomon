@@ -183,7 +183,6 @@
                 {
                     "ChildTarget": "CENTER",
                     "Action": "SPLIT_LINES",
-                    "Brush": {},
                     "SplitOrientation": "VERTICAL",
                     "DimensionalParameters": [
                         {
@@ -216,7 +215,8 @@
                             "PartitionActions": [
                                 {
                                     "Action": "TEMPLATE",
-                                    "Tag": "Paradox Chairs"
+                                    "Tag": "Paradox Chairs",
+                                    "ChildTarget": "ALL_SHUFFLE"
                                 }
                             ]
                         }
@@ -302,15 +302,156 @@
                             "PartitionActions": [
                                 {
                                     "Action": "TEMPLATE",
-                                    "Tag": "Paradox Chairs"
+                                    "Tag": "Paradox Chairs",
+                                    "ChildTarget": "ALL_SHUFFLE"
                                 }
                             ]
                         },
                         {
                             "Action": "TEMPLATE",
-                            "Tag": "Paradox Chairs"
+                            "Tag": "Paradox Chairs",
+                            "ChildTarget": "ALL_SHUFFLE"
                         }
                     ]
+                }
+            ]
+        }
+    },
+    {
+        "Name": "Research Building",
+        "TerrainGenerator": {
+            "BasicBrush": {
+                "CliffFace": "STONE",
+                "TileSurface": "Grass"
+            },
+            "PropagatorActions": [
+                {
+                    "ChildTarget": "ALL_LAUNCHPAD",
+                    "Brush": {
+                        "CliffFace": "STONE",
+                        "TileSurface": "White Paint"
+                    },
+                    "Action": "SPLIT_ROOM",
+                    "DimensionalParameters": [
+                        {
+                            "Min": 0.99999,
+                            "Max": 0.99999
+                        },
+                        {
+                            "Min": 0.99999,
+                            "Max": 0.99999
+                        },
+                        {},
+                        {}
+                    ]
+                },
+                {
+                    "ChildTarget": "CENTER",
+                    "Action": "FILL",
+                    "Brush": {
+                        "CliffFace": "STONE",
+                        "TileSurface": "Wood Floor"
+                    }
+                },
+                {
+                    "ChildTarget": "CENTER",
+                    "Brush": {
+                        "Occupier": "Dark Painted Wall"
+                    },
+                    "Action": "SPLIT_ROOM",
+                    "DimensionalParameters": [
+                        {
+                            "Min": 0.99999,
+                            "Max": 0.99999
+                        },
+                        {
+                            "Min": 0.99999,
+                            "Max": 0.99999
+                        },
+                        {},
+                        {}
+                    ],
+                    "PartitionActions": [
+                        {
+                            "ChildTarget": "ALL_SHUFFLE",
+                            "Action": "SPLIT_LINES",
+                            "SplitOrientation": "HORIZONTAL",
+                            "Brush": {
+                                "Occupier": "Dark Painted Wall"
+                            },
+                            "DimensionalParameters": [
+                                {
+                                    "Min": 2,
+                                    "Max": 4,
+                                    "Decay": 1.5
+                                },
+                                {
+                                    "Min": 0,
+                                    "Max": 0.9
+                                }
+                            ],
+                            "PartitionActions": [
+                                {
+                                    "ChildTarget": "ALL_SHUFFLE",
+                                    "Action": "SPLIT_LINES",
+                                    "SplitOrientation": "VERTICAL",
+                                    "Brush": {
+                                        "Occupier": "Dark Painted Wall"
+                                    },
+                                    "DimensionalParameters": [
+                                        {
+                                            "Min": 2,
+                                            "Max": 4,
+                                            "Decay": 1.5
+                                        },
+                                        {
+                                            "Min": 0,
+                                            "Max": 0.9
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "ChildTarget": "ALL_SIMULTANEOUSLY",
+                            "Action": "JOIN_PARTITIONS",
+                            "Brush": {
+                                "Occupier": ""
+                            },
+                            "DimensionalParameters": [
+                                {
+                                    "Decay": 0
+                                },
+                                {
+                                    "Min": 0.5,
+                                    "Max": 0.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "ChildTarget": "ALL_SIMULTANEOUSLY",
+                    "Action": "JOIN_PARTITIONS",
+                    "Brush": {
+                        "Occupier": ""
+                    },
+                    "DimensionalParameters": [
+                        {
+                            "Decay": 0
+                        },
+                        {
+                            "Min": 2,
+                            "Max": 4,
+                            "Decay": 2
+                        }
+                    ]
+                },
+                {
+                    "ChildTarget": "ANY_NONMARKED",
+                    "Action": "TEMPLATE",
+                    "Chance": 0.9,
+                    "Tag": "Lab"
                 }
             ]
         }

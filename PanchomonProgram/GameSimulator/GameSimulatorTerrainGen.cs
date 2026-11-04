@@ -175,20 +175,20 @@ namespace GameSimulator
             List<Partition> donePartitions = [];
             foreach (TilePropagatorAction action in actions)
             {
+                // Will perform this a certain amount of chances
+                double chance = action.Chance;
                 // Check which action to actually perform. Normally, it's the action itself but if it is templated, fetch the action instead from template db
                 TilePropagatorAction nextAction = (action.Action == PropagationAction.TEMPLATE) ? GameplayElementsContainer.GlobalData.TemplatePropagationActions[action.Tag] : action;
                 if (!string.IsNullOrEmpty(nextAction.Tag) && !_parameters.TerrainGenerator.TagsToApply.Contains(nextAction.Tag)) continue; // Skip action if has a tag that is not present in this context
-                double chance = nextAction.Chance;
                 while (GeneralUtilities.GetRandomBool(chance, _rng)) // Roll to check if action applied
                 {
                     // Execute action
-                    List<Partition> targets = nextAction.ChildTarget switch // Get all the partitions I'm going to work with
+                    List<Partition> targets = action.ChildTarget switch // Get all the partitions I'm going to work with
                     {
                         PropagationTarget.ALL_SHUFFLE => GeneralUtilities.ShuffleList([.. currentPartitions.GetPartitions()], _rng),
-                        PropagationTarget.ALL_NONMARKED => [.. currentPartitions.GetPartitions().Where(p => !donePartitions.Contains(p))], // Get all that haven't been marked yet
-                        PropagationTarget.ANY_NONMARKED => [GeneralUtilities.GetRandomPick([.. currentPartitions.GetPartitions().Where(p => !donePartitions.Contains(p))], _rng)], // Get all that haven't been marked yet
+                        PropagationTarget.ALL_NONMARKED => [.. currentPartitions.GetPartitions().Where(p => !_parameters.SidesPresent.Contains((Side)p.Id) && !donePartitions.Contains(p))], // Get all that haven't been marked yet
+                        PropagationTarget.ANY_NONMARKED => [GeneralUtilities.GetRandomPick([.. currentPartitions.GetPartitions().Where(p => !_parameters.SidesPresent.Contains((Side)p.Id) && !donePartitions.Contains(p))], _rng)], // Get all that haven't been marked yet
                         PropagationTarget.ALL_SIMULTANEOUSLY => [currentPartitions.GetPartitions().First()], // It doesn't matter which one, just apply all
-                        PropagationTarget.NON_LAUNCHPAD => [.. currentPartitions.GetPartitions().Where(p => !_parameters.SidesPresent.Contains((Side)p.Id))],
                         PropagationTarget.ALL_LAUNCHPAD => [.. currentPartitions.GetPartitions().Where(p => _parameters.SidesPresent.Contains((Side)p.Id))],
                         PropagationTarget.INSETS => [.. currentPartitions.GetPartitions().Where(p => p.Id >= 1 && p.Id <= 9)], // The inset pair
                         PropagationTarget.ALL => [.. currentPartitions.GetPartitions()], // All
@@ -205,7 +205,7 @@ namespace GameSimulator
                             PropagationAction.SPLIT_LINES => MultiLineDivide(target, nextAction, newSpace),
                             PropagationAction.FILL => FillPartition(target, nextAction), // A fill never generates more things so
                             PropagationAction.JOIN_PARTITIONS => JoinPartitionsInSpace(currentPartitions, nextAction), // Works to merge all current partitions
-                            PropagationAction.PAINT_EVERYWHERE or PropagationAction.PAINT_AT_CENTER or PropagationAction.PAINT_AT_CORNER or PropagationAction.PAINT_ALL_EDGES or PropagationAction.PAINT_MID_EDGES => Paint(target, nextAction, newSpace),
+                            PropagationAction.PAINT_EVERYWHERE or PropagationAction.PAINT_AT_CENTER or PropagationAction.PAINT_AT_CORNER or PropagationAction.PAINT_AT_EDGES or PropagationAction.PAINT_MID_EDGES => Paint(target, nextAction, newSpace),
                             PropagationAction.PATH_FROM_PARTITION => DrawPath(target, nextAction, parent, newSpace),
                             PropagationAction.FLOOD_OFFTSET => FloodExpand(target, nextAction), // Flood expansion
                             PropagationAction.FLOOD_DRY => FloodDry(target, nextAction),
@@ -223,7 +223,7 @@ namespace GameSimulator
                                 PropagationAction.PAINT_EVERYWHERE or
                                 PropagationAction.PAINT_AT_CENTER or
                                 PropagationAction.PAINT_AT_CORNER or
-                                PropagationAction.PAINT_ALL_EDGES or
+                                PropagationAction.PAINT_AT_EDGES or
                                 PropagationAction.PAINT_MID_EDGES or
                                 PropagationAction.PATH_FROM_PARTITION or
                                 PropagationAction.FLOOD_OFFTSET or
@@ -238,7 +238,7 @@ namespace GameSimulator
                             }
                         }
                         Debug.DebugAction(DebugLevel.BATTLE_STATE, () => DrawGrid($"After {nextAction.Action} on partition {target.Id}"));
-                        if (nextAction.ChildTarget == PropagationTarget.ALL_NONMARKED || nextAction.ChildTarget == PropagationTarget.ANY_NONMARKED)
+                        if (action.ChildTarget == PropagationTarget.ALL_NONMARKED || action.ChildTarget == PropagationTarget.ANY_NONMARKED)
                         {
                             donePartitions.Add(target);
                         }
@@ -442,15 +442,16 @@ namespace GameSimulator
             {
                 throw new Exception("For a split the param min/max need to both be an integer or both be a fraction!");
             }
-            int n = (parameters.DimensionalParameters[0].Min >= 1) ?
+            PropagationDimension dim = parameters.DimensionalParameters[0];
+            int n = (dim.Min >= 1) ?
                 GeneralUtilities.GetRandomDecayingInt(
-                    (int)Math.Round(parameters.DimensionalParameters[0].Min),
-                    (int)Math.Round(parameters.DimensionalParameters[0].Max),
-                    parameters.DimensionalParameters[0].Decay, _rng) :
+                    (int)Math.Round(dim.Min),
+                    (int)Math.Round(dim.Max),
+                    dim.Decay, _rng) :
                 GeneralUtilities.GetRandomDecayingInt( // Would be kinda stupid to do it this way. This split is better with integers
-                    (int)Math.Round(1 / parameters.DimensionalParameters[0].Max),
-                    (int)Math.Round(1 / parameters.DimensionalParameters[0].Min),
-                    parameters.DimensionalParameters[0].Decay, _rng);
+                    (int)Math.Round(1 / dim.Max),
+                    (int)Math.Round(1 / dim.Min),
+                    dim.Decay, _rng);
             int w = (orientation == SplitOrientation.VERTICAL) ? partition.Height : partition.Width; // Need to get w for limiting w properly
             n = Math.Clamp(n, 1, (w + brushSize) / (brushSize + 1)); // Limit N to realistic amount
             // Begin split
@@ -459,6 +460,8 @@ namespace GameSimulator
             int minY;
             int maxY;
             double step = 1.0 / n; // How much the step'll be
+            int offsetMax = orientation == SplitOrientation.HORIZONTAL ? partition.Width : partition.Height; // This gets us the width/height of the rectangle before subdividing
+            offsetMax /= 2 * n; // Limit the max value for an offset to avoid potential for overlaps
             int remainingChunkIndex = partition.GetAbsoluteOffset(0, orientation, brushSize); // Get the index to start parititoning
             for (int i = 0; i < n - 1; i++) // Need to partition using n-1 walls
             {
@@ -466,11 +469,10 @@ namespace GameSimulator
                 double nextWallLocation = step * (i + 1);
                 int wallIndex = partition.GetAbsoluteOffset(nextWallLocation, orientation, brushSize);
                 // Add some noise offset
-                int offsetMax = orientation == SplitOrientation.HORIZONTAL ? partition.Width : partition.Height; // This gets us the width/height of the rectangle before subdividing
-                offsetMax /= 2 * n; // Limit the max value
-                int offsetNoise = GeneralUtilities.GetRandomDecayingInt(partition.GetAbsoluteDimension(parameters.DimensionalParameters[1].Min, orientation),
-                partition.GetAbsoluteDimension(parameters.DimensionalParameters[1].Max, orientation),
-                parameters.DimensionalParameters[1].Decay, _rng);
+                dim = parameters.DimensionalParameters[1];
+                int offsetNoise = (dim.Max >= 1) ?
+                GeneralUtilities.GetRandomDecayingInt((int)Math.Round(dim.Min), (int)Math.Round(dim.Max), dim.Decay, _rng) :
+                GeneralUtilities.GetRandomDecayingInt(dim.Min * offsetMax, dim.Max * offsetMax, dim.Decay, _rng);
                 offsetNoise = Math.Clamp(offsetNoise, 0, offsetMax); // Clamp it to avoid excessive overlapping and stuff
                 wallIndex += GeneralUtilities.GetRandomBool(0.5, _rng) ? offsetNoise : -offsetNoise; // Add or remove this offset. This can work terribly bad if user is not extremely careful with offsets
                 // Apply the next draw
@@ -540,7 +542,7 @@ namespace GameSimulator
                 {
                     Partition partDest = partitions[j];
                     if (!partDest.Alive) continue; // No joining dead partitions
-                    if (spaceToJoin.GetSetParent(partSource.Id) != spaceToJoin.GetSetParent(partDest.Id)) continue; // Also, won't join partitions that are already joined at the beginning of this op (because they were purposely joined as part of a previous one)
+                    if (spaceToJoin.GetSetParent(partSource.Id) == spaceToJoin.GetSetParent(partDest.Id)) continue; // Also, won't join partitions that are already joined at the beginning of this op (because they were purposely joined as part of a previous one)
                     // Check if there's chance of overlap, and which tiles will do that, cause a raycast in each
                     (Direction connectionDirection, int overlapMin, int overlapMax) = partSource.GetRaycastableTowards(partDest);
                     if (connectionDirection != Direction.NONE)
@@ -591,25 +593,24 @@ namespace GameSimulator
                                     else // Check if tile arrived to destination. Even if not, it will have arrived somewhere so may aswell register this path to avoid overtesting
                                     {
                                         // Found a potential one! Add if they're not already joined ofc
-                                        if (distance > 0) // If they "could" be joined at some distance by a brush tunnel
+                                        if (spaceToJoin.GetSetParent(partSource.Id) != spaceToJoin.GetSetParent(tileOwnerPart)) // This connection is only tryable if they'd bridge the gaps, won't recconect rooms already joined earlier
                                         {
-                                            potentialConnections.Add((partSource.Id, tileOwnerPart, distance, connectionDirection));
-                                            if (!potentialConectionValidStarts.TryGetValue((partSource.Id, tileOwnerPart), out List<(int, int)> sourcesList))
+                                            if (distance > 0) // If they "could" be joined at some distance by a brush tunnel
                                             {
-                                                sourcesList = new List<(int, int)>();
-                                                potentialConectionValidStarts.Add((partSource.Id, tileOwnerPart), sourcesList);
+                                                potentialConnections.Add((partSource.Id, tileOwnerPart, distance, connectionDirection));
+                                                if (!potentialConectionValidStarts.TryGetValue((partSource.Id, tileOwnerPart), out List<(int, int)> sourcesList))
+                                                {
+                                                    sourcesList = new List<(int, int)>();
+                                                    potentialConectionValidStarts.Add((partSource.Id, tileOwnerPart), sourcesList);
+                                                }
+                                                sourcesList.Add((x, y));
                                             }
-                                            sourcesList.Add((x, y));
-                                        }
-                                        else if (spaceToJoin.GetSetParent(partSource.Id) != spaceToJoin.GetSetParent(tileOwnerPart)) // If they're already joined, just connect the disjoint sets (if not yet)
-                                        {
-                                            spaceToJoin.Join(partSource.Id, tileOwnerPart);
-                                            connectionsPerNode[partSource.Id]++;
-                                            connectionsPerNode[tileOwnerPart]++;
-                                        }
-                                        else
-                                        {
-                                            // Already known to be joined
+                                            else // If they're touching, just connect the disjoint sets
+                                            {
+                                                spaceToJoin.Join(partSource.Id, tileOwnerPart);
+                                                connectionsPerNode[partSource.Id]++;
+                                                connectionsPerNode[tileOwnerPart]++;
+                                            }
                                         }
                                         knownPartitionStarts.Add(pathToCheck); // In any case we know where this leads now so we don't need to check this path again
                                         knownPartitionStarts.Add((tileOwnerPart, coord.Item1, coord.Item2, GetOppositeDirection(connectionDirection))); // We also know that this path on the way back will end the same way so one less thing to check
@@ -720,16 +721,11 @@ namespace GameSimulator
             int midpointY = partition.GetAbsoluteOffset(0.5, SplitOrientation.VERTICAL, 1);
             int maxOffset = Math.Min(partition.Width / 2, partition.Height / 2); // Offset is to avoid overlapping stuff
             // Get params
-            PropagationDimension dim = parameters.DimensionalParameters[0];
-            int n = (dim.Min < 1) ? // Check how much i need to paint in this partition
-                GeneralUtilities.GetRandomDecayingInt(partition.Surface * dim.Min, partition.Surface * dim.Max, dim.Decay, _rng) :
-                GeneralUtilities.GetRandomDecayingInt(dim.Min, dim.Max, dim.Decay, _rng);
-            dim = parameters.DimensionalParameters[1];
+            PropagationDimension dim = parameters.DimensionalParameters[1];
             int offset = (dim.Max < 1) ? // Check how much offsets the draw gets
                 GeneralUtilities.GetRandomDecayingInt(maxOffset * dim.Min, maxOffset * dim.Max, dim.Decay, _rng) :
                 GeneralUtilities.GetRandomDecayingInt(dim.Min, dim.Max, dim.Decay, _rng);
             // Now see which points are paintable and how many needed
-            int maxPossibleSpaces = 0;
             List<(int, int)> allPaintableCoords;
             switch (parameters.Action)
             {
@@ -737,7 +733,7 @@ namespace GameSimulator
                     allPaintableCoords = [.. partition.GetAllTileCoords()]; // All tiles are free game
                     // No offset is needed
                     break;
-                case PropagationAction.PAINT_ALL_EDGES:
+                case PropagationAction.PAINT_AT_EDGES:
                     allPaintableCoords = [];
                     // Add all the parts from the side too, no corners
                     for (int i = partition.BegX + 1 + offset; i < partition.EndX - offset; i++)
@@ -745,7 +741,6 @@ namespace GameSimulator
                         if (parameters.DirectionsToApply.Contains(Direction.N))
                         {
                             allPaintableCoords.Add((i, partition.BegY + offset));
-                            maxPossibleSpaces++;
                         }
                         if (parameters.DirectionsToApply.Contains(Direction.S))
                         {
@@ -757,42 +752,33 @@ namespace GameSimulator
                         if (parameters.DirectionsToApply.Contains(Direction.E))
                         {
                             allPaintableCoords.Add((partition.EndX - offset, i));
-                            maxPossibleSpaces++;
                         }
                         if (parameters.DirectionsToApply.Contains(Direction.W))
                         {
                             allPaintableCoords.Add((partition.BegX + offset, i));
-                            maxPossibleSpaces++;
                         }
                     }
-                    n = Math.Clamp(n, 0, maxPossibleSpaces); // Absolutely max amount of things that can be painted are @ the perimeter
                     break;
                 case PropagationAction.PAINT_AT_CORNER:
                     allPaintableCoords = [];
                     if (parameters.DirectionsToApply.Contains(Direction.NE))
                     {
                         allPaintableCoords.Add((partition.EndX - offset, partition.BegY + offset));
-                        maxPossibleSpaces++;
                     }
                     if (parameters.DirectionsToApply.Contains(Direction.SE))
                     {
                         allPaintableCoords.Add((partition.EndX - offset, partition.EndY - offset));
-                        maxPossibleSpaces++;
                     }
                     if (parameters.DirectionsToApply.Contains(Direction.NW))
                     {
                         allPaintableCoords.Add((partition.BegX + offset, partition.BegY + offset));
-                        maxPossibleSpaces++;
                     }
                     if (parameters.DirectionsToApply.Contains(Direction.SW))
                     {
                         allPaintableCoords.Add((partition.BegX + offset, partition.EndY - offset));
-                        maxPossibleSpaces++;
                     }
-                    n = Math.Clamp(n, 0, maxPossibleSpaces); // 4 corners max obviously
                     break;
                 case PropagationAction.PAINT_AT_CENTER:
-                    n = Math.Clamp(n, 0, 1); // Only one center
                     allPaintableCoords = [(midpointX, midpointY)];
                     // No offset
                     break;
@@ -801,7 +787,6 @@ namespace GameSimulator
                     if (parameters.DirectionsToApply.Contains(Direction.N))
                     {
                         allPaintableCoords.Add((midpointX, partition.BegY + offset));
-                        maxPossibleSpaces++;
                     }
                     if (parameters.DirectionsToApply.Contains(Direction.S))
                     {
@@ -810,20 +795,22 @@ namespace GameSimulator
                     if (parameters.DirectionsToApply.Contains(Direction.E))
                     {
                         allPaintableCoords.Add((partition.EndX - offset, midpointY));
-                        maxPossibleSpaces++;
                     }
                     if (parameters.DirectionsToApply.Contains(Direction.W))
                     {
                         allPaintableCoords.Add((partition.BegX + offset, midpointY));
-                        maxPossibleSpaces++;
                     }
-                    n = Math.Clamp(n, 0, maxPossibleSpaces); // Absolutely max amount of things that can be painted are @ the perimeter
                     break;
                 default:
                     throw new Exception("Invalid parameter to decide where to paint");
             }
+            dim = parameters.DimensionalParameters[0];
+            int n = (dim.Max < 1) ? // Check how much i need to paint in this partition
+                GeneralUtilities.GetRandomDecayingInt(allPaintableCoords.Count * dim.Min, allPaintableCoords.Count * dim.Max, dim.Decay, _rng) :
+                GeneralUtilities.GetRandomDecayingInt(dim.Min, dim.Max, dim.Decay, _rng);
+            n = Math.Clamp(n, 0, allPaintableCoords.Count); // Absolutely max amount of things that can be painted are @ the perimeter
             // Now that points are defined, need to do a second cleanup stage of only the points I can actually legally add
-            allPaintableCoords = [.. allPaintableCoords.Where(c => (parameters.Aggressive || !IsBrushBlockingWay(parameters.Brush, c.Item1, c.Item2)))];
+            allPaintableCoords = [.. allPaintableCoords.Where(c => _grid[c.Item1, c.Item2].IsWalkable() && (parameters.Aggressive || (!IsBrushBlockingWay(parameters.Brush, c.Item1, c.Item2))))];
             GeneralUtilities.ShuffleList(allPaintableCoords, _rng); // Shufflerino to be random
             // Finally, paint. I've determined that since I don't paint illegal things, there's no case where a prev illegal tile becomes legal, so can just paint in order
             int numberPainted = 0;
@@ -853,16 +840,19 @@ namespace GameSimulator
             {
                 // Need to define where is the direction. As some are relative, need to check which way they'll result in
                 Direction dir = nextDirection;
-                if (dir == Direction.CENTER_HORIZONTAL || dir == Direction.CENTER_VERTICAL || dir == Direction.CENTER_DIAGONAL)
+                if (dir == Direction.CENTER_HORIZONTAL || dir == Direction.CENTER_VERTICAL || dir == Direction.CENTER_LINEAR || dir == Direction.CENTER_DIAGONAL)
                 {
                     int parentMidpointX = parent.GetAbsoluteOffset(0.5, SplitOrientation.HORIZONTAL, 1);
                     int parentMidpointY = parent.GetAbsoluteOffset(0.5, SplitOrientation.VERTICAL, 1);
-                    bool isLeft = midpointX <= parentMidpointX;
-                    bool isAbove = midpointY <= parentMidpointY;
+                    int horizDistance = midpointX - parentMidpointX;
+                    int vertDistance = midpointY - parentMidpointY;
+                    bool isLeft = horizDistance < 0;
+                    bool isAbove = vertDistance < 0;
                     dir = dir switch
                     {
-                        Direction.CENTER_HORIZONTAL => (isLeft) ? Direction.E : Direction.W,
-                        Direction.CENTER_VERTICAL => (isAbove) ? Direction.S : Direction.N,
+                        Direction.CENTER_HORIZONTAL => isLeft ? Direction.E : Direction.W,
+                        Direction.CENTER_VERTICAL => isAbove ? Direction.S : Direction.N,
+                        Direction.CENTER_LINEAR => (Math.Abs(horizDistance) > Math.Abs(vertDistance)) ? (isLeft ? Direction.E : Direction.W) : (isAbove ? Direction.S : Direction.N),
                         Direction.CENTER_DIAGONAL => (isLeft) ? (isAbove ? Direction.SE : Direction.NE) : (isAbove ? Direction.SW : Direction.NW),
                         _ => dir // This wouldn't happen
                     };

@@ -45,6 +45,7 @@ namespace Gameplay.GameEngine
         NW,
         CENTER_HORIZONTAL,
         CENTER_VERTICAL,
+        CENTER_LINEAR,
         CENTER_DIAGONAL
     }
     /// <summary>
@@ -54,7 +55,7 @@ namespace Gameplay.GameEngine
     public enum PropagationAction
     {
         NONE, /// Unused ig
-        TEMPLATE, /// Instead of an action, invokes a template defined in Tag. All other fields are ignored
+        TEMPLATE, /// Instead of an action, invokes a template defined in Tag. All other fields are ignored except chance and the target
         SPLIT_LINE, /// Splits a parition in 2. LineOrientation defines which direction. Unique parameter specifies where the line will hit, either absolute offset (?) or percentage of part. Partitions 0,1 generated are left/right respectively.
         SPLIT_ROOM, /// Sub partitions as a rectangle in a X,Y area. LineOrientation defines which one will be the MainDimension and vice versa. The parameters will be Dim1 Dim2 Offset1 Offset2. Partition 0 is inside the square, while 0-8 are in order from up-left. Using empty brush allows for insetting while workign on partitions 1-9
         SPLIT_LINES, /// Like draw line, but is based on splitting the space in the desired direction into N pieces (firs dim). The second dim is an offset allows to move the walls a bit proportional to the original part's dimension but do be careful as they may flip.
@@ -63,7 +64,7 @@ namespace Gameplay.GameEngine
         PAINT_EVERYWHERE, /// Paints randomly. Has a param where >=1 means an absolute number of tiles painted. Values <1 means as a percentage of the tile surface of desired partition
         PAINT_AT_CENTER, /// Same as above, but paints in the center of the room
         PAINT_AT_CORNER, /// Same as above, but paints in the corners. Uses directions to see which ones to add
-        PAINT_ALL_EDGES, /// Same as above, but paints in the edges of the room, uses directions to see which ones to add. Doesnt use corners
+        PAINT_AT_EDGES, /// Same as above, but paints in the edges of the room, uses directions to see which ones to add. Doesnt use corners
         PAINT_MID_EDGES, /// Same as above, but paints in the middle of the edges of the room only, uses directions to see which ones to add
         PATH_FROM_PARTITION, /// From a partition, extends a path within parent partition, for aesthetics that require a line somewhere. First param is the length, either % of max or absolute (capped). Then stride, as tile step or proportion of total steps. Finally the anchor stride, which is either an absolute count ot a relative count depending on l/stride. Extension stops if this breaks pathing
         FLOOD_OFFTSET, /// Expands the desired brush outwards. This one doesn't block existing paths. Param is the min outwards offset, then max, and then the decaying chance between these
@@ -72,12 +73,11 @@ namespace Gameplay.GameEngine
     [JsonConverter(typeof(StringEnumConverter))]
     public enum PropagationTarget
     {
-        ALL_SHUFFLE = -8, /// All the partitions but a bit of a shufflerino beforehand
         ALL_LAUNCHPAD = -7, /// Operation applies to tiles that have the id of valid launchpads for this game
-        ALL_NONMARKED = -6, /// Nonmarked applies to partitions that are tagged so an any/all nonmarked action won't apply to them again. Used for decorating unique rooms
+        ALL_NONMARKED = -6, /// Nonmarked applies to non-launchpad partitions that are tagged so an any/all nonmarked action won't apply to them again. Used for decorating unique rooms
         ANY_NONMARKED = -5,
         ALL_SIMULTANEOUSLY = -4, /// Op applies to all targets at the same time so it only needs to be ran once with whatever target
-        NON_LAUNCHPAD = -3, /// Operation applies to tiles that aren't launchpad, meaning 0 and any other ones
+        ALL_SHUFFLE = -3, /// All the partitions but a bit of a shufflerino beforehand
         INSETS = -2, /// Operation applies to inset squares, 1-9
         ALL = -1, /// Operation will apply to all subdivisions
         CENTER = 0, /// Operation applies to center square OR the field OR first partition
@@ -97,7 +97,7 @@ namespace Gameplay.GameEngine
         public PropagationTarget ChildTarget { get; set; } = PropagationTarget.ALL; // Children of partition are numbered, in base one they equal TOP/BOTTOM/ETC. -1 indicates the action to be done in all child partitions
         public string Tag { get; set; } = ""; // Tag string, if nonempty, needs to be present in terrain gen params
         public double Chance { get; set; } = 1; // Chance for this step to be executed or skipped. If more than one, chance to do it again
-        public TileBrush Brush { get; set; }
+        public TileBrush Brush { get; set; } = new TileBrush();
         public List<TilePropagatorAction> PartitionActions { get; set; } = null; // Further actions, e.g. if after a partition is made, what to do inside (can allow for other sub-partitions, etc)
         // What action to actually perform
         public PropagationAction Action { get; set; } = PropagationAction.NONE;

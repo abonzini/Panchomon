@@ -112,7 +112,7 @@ namespace Utilities
         /// <returns>True or false</returns>
         public static bool GetRandomBool(double trueChance, Random rng)
         {
-            if (trueChance > 1) return true;
+            if (trueChance >= 1) return true;
             return rng.NextDouble() < trueChance;
         }
         /// <summary>

@@ -44,13 +44,15 @@ namespace Gameplay.GameEngine
                 Name = "Water",
                 _description = "Standard water tile.",
                 HindersMovement = true,
+                Elevation = -5,
                 DebugColor = ConsoleColor.Cyan
             };
             yield return new Surface()
             {
-                Name = "Conductive Cables",
+                Name = "Conductive Grid",
                 _description = "Grid-like cables on the floor.",
                 HindersMovement = false,
+                Elevation = 3,
                 DebugColor = ConsoleColor.DarkGray
             };
             yield return new Surface()
@@ -66,6 +68,13 @@ namespace Gameplay.GameEngine
                 _description = "Clean Tile as seen in laboratory settings.",
                 HindersMovement = false,
                 DebugColor = ConsoleColor.Gray
+            };
+            yield return new Surface()
+            {
+                Name = "Wood Floor",
+                _description = "Multi-purpose wood floor.",
+                HindersMovement = false,
+                DebugColor = ConsoleColor.DarkYellow
             };
         }
     }

@@ -1,7 +1,6 @@
 {
     "Paradox Chairs": {
         "Note": "Paints Paradox Chairs diagonally around an object in shuffled order, for populating paradox venues.",
-        "ChildTarget": "ALL_SHUFFLE",
         "Action": "PATH_FROM_PARTITION",
         "DirectionsToApply": [
             "N",
@@ -24,6 +23,212 @@
             {
                 "Min": 1,
                 "Max": 1
+            }
+        ]
+    },
+    "Lab": {
+        "Note": "Generates a lab based on RSE lab. Creates blank room space, fills it and starts decorating",
+        "Action": "SPLIT_ROOM",
+        "DimensionalParameters": [
+            {
+                "Min": 0.99999,
+                "Max": 0.99999
+            },
+            {
+                "Min": 0.99999,
+                "Max": 0.99999
+            },
+            {},
+            {}
+        ],
+        "PartitionActions": [
+            {
+                "ChildTarget": "ALL",
+                "Action": "FILL",
+                "Brush": {
+                    "CliffFace": "CLEAN_TILE",
+                    "TileSurface": "Clean Tile"
+                }
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_CORNER",
+                "DirectionsToApply": [
+                    "NE",
+                    "NW",
+                    "SW",
+                    "SE"
+                ],
+                "Brush": {
+                    "Occupier": "Short Plant"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 1,
+                        "Decay": 3
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_CORNER",
+                "DirectionsToApply": [
+                    "NE",
+                    "NW",
+                    "SW",
+                    "SE"
+                ],
+                "Brush": {
+                    "Occupier": "Piled Books"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 1,
+                        "Decay": 3
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_CORNER",
+                "DirectionsToApply": [
+                    "NE",
+                    "NW",
+                    "SW",
+                    "SE"
+                ],
+                "Brush": {
+                    "Occupier": "Piled Boxes"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 1,
+                        "Decay": 3
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "DirectionsToApply": [
+                    "W"
+                ],
+                "Brush": {
+                    "Occupier": "Computer Desk"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 1,
+                        "Max": 1
+                    },
+                    {}
+                ],
+                "PartitionActions": [
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "PATH_FROM_PARTITION",
+                        "DirectionsToApply": [
+                            "E"
+                        ],
+                        "Brush": {
+                            "Occupier": "Office Chair"
+                        },
+                        "DimensionalParameters": [
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            },
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            },
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "DirectionsToApply": [
+                    "N",
+                    "W"
+                ],
+                "Brush": {
+                    "Occupier": "Lab Tank"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 1,
+                        "Max": 1
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "DirectionsToApply": [
+                    "N"
+                ],
+                "Brush": {
+                    "Occupier": "Bookshelf"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 1,
+                        "Max": 5,
+                        "Decay": 2
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "DirectionsToApply": [
+                    "N",
+                    "W"
+                ],
+                "Brush": {
+                    "Occupier": "Piled Books"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 2,
+                        "Decay": 2.5
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "DirectionsToApply": [
+                    "N",
+                    "W"
+                ],
+                "Brush": {
+                    "Occupier": "Piled Boxes"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 2,
+                        "Decay": 2.5
+                    },
+                    {}
+                ]
             }
         ]
     }

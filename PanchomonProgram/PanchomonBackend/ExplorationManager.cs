@@ -1033,6 +1033,7 @@ namespace PanchomonBackend
             }
             TerrainGenerator generator = battlefieldUsed.TerrainGenerator;
             generator.TagsToApply.UnionWith(fieldModStrings); // Add weather tags to ones done by field generator
+            generator.TagsToApply.Add(_context.DungeonData.Name); // Add dungeon name to this too
             // Now instance it
             GameParameters parameters = new GameParameters()
             {
