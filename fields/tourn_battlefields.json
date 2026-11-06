@@ -215,7 +215,7 @@
                             "PartitionActions": [
                                 {
                                     "Action": "TEMPLATE",
-                                    "Tag": "Paradox Chairs",
+                                    "Tag": "Stools",
                                     "ChildTarget": "ALL_SHUFFLE"
                                 }
                             ]
@@ -302,14 +302,14 @@
                             "PartitionActions": [
                                 {
                                     "Action": "TEMPLATE",
-                                    "Tag": "Paradox Chairs",
+                                    "Tag": "Stools",
                                     "ChildTarget": "ALL_SHUFFLE"
                                 }
                             ]
                         },
                         {
                             "Action": "TEMPLATE",
-                            "Tag": "Paradox Chairs",
+                            "Tag": "Stools",
                             "ChildTarget": "ALL_SHUFFLE"
                         }
                     ]
@@ -349,8 +349,8 @@
                     "ChildTarget": "CENTER",
                     "Action": "FILL",
                     "Brush": {
-                        "CliffFace": "STONE",
-                        "TileSurface": "Wood Floor"
+                        "CliffFace": "CLEAN_TILE",
+                        "TileSurface": "Clean Tile"
                     }
                 },
                 {
@@ -382,8 +382,7 @@
                             "DimensionalParameters": [
                                 {
                                     "Min": 2,
-                                    "Max": 4,
-                                    "Decay": 1.5
+                                    "Max": 3
                                 },
                                 {
                                     "Min": 0,
@@ -401,8 +400,7 @@
                                     "DimensionalParameters": [
                                         {
                                             "Min": 2,
-                                            "Max": 4,
-                                            "Decay": 1.5
+                                            "Max": 3
                                         },
                                         {
                                             "Min": 0,
@@ -448,10 +446,27 @@
                     ]
                 },
                 {
-                    "ChildTarget": "ANY_NONMARKED",
+                    "ChildTarget": "N_BLANK_ROOM",
                     "Action": "TEMPLATE",
-                    "Chance": 0.9,
+                    "RoomDecorationPercent": 0.25,
+                    "Tag": "Classroom"
+                },
+                {
+                    "ChildTarget": "N_BLANK_ROOM",
+                    "Action": "TEMPLATE",
+                    "RoomDecorationPercent": 0.25,
                     "Tag": "Lab"
+                },
+                {
+                    "ChildTarget": "N_BLANK_ROOM",
+                    "Action": "TEMPLATE",
+                    "RoomDecorationPercent": 0.25,
+                    "Tag": "Dining Room"
+                },
+                {
+                    "ChildTarget": "ALL_BLANK_ROOMS",
+                    "Action": "TEMPLATE",
+                    "Tag": "Messy Lab"
                 }
             ]
         }

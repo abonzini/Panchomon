@@ -66,9 +66,9 @@ namespace GameSimulator
                 maxX = parameters.Bounds.EndX + 1;
                 maxY = parameters.Bounds.EndY + 1;
             }
-            int i = x + incX;
-            int j = y + incY;
-            int l = 0;
+            int i = x + (parameters.Stride * incX);
+            int j = y + (parameters.Stride * incY);
+            int l = parameters.Stride - 1;
             while (i >= minX && i < maxX && j >= minY && j < maxY && l < parameters.L) // Iterate all tiles in that direction until EOB or max len
             {
                 if (_grid[i, j] == null) break;

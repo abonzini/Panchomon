@@ -1,6 +1,6 @@
 {
-    "Paradox Chairs": {
-        "Note": "Paints Paradox Chairs diagonally around an object in shuffled order, for populating paradox venues.",
+    "Stools": {
+        "Note": "Paints Stools diagonally around an object in shuffled order, for populating paradox venues.",
         "Action": "PATH_FROM_PARTITION",
         "DirectionsToApply": [
             "N",
@@ -9,7 +9,7 @@
             "S"
         ],
         "Brush": {
-            "Occupier": "Paradox Chair"
+            "Occupier": "Stool"
         },
         "DimensionalParameters": [
             {
@@ -65,8 +65,7 @@
                 "DimensionalParameters": [
                     {
                         "Min": 0,
-                        "Max": 1,
-                        "Decay": 3
+                        "Max": 1
                     },
                     {}
                 ]
@@ -86,8 +85,7 @@
                 "DimensionalParameters": [
                     {
                         "Min": 0,
-                        "Max": 1,
-                        "Decay": 3
+                        "Max": 1
                     },
                     {}
                 ]
@@ -107,8 +105,7 @@
                 "DimensionalParameters": [
                     {
                         "Min": 0,
-                        "Max": 1,
-                        "Decay": 3
+                        "Max": 1
                     },
                     {}
                 ]
@@ -197,7 +194,9 @@
                 "Action": "PAINT_AT_EDGES",
                 "DirectionsToApply": [
                     "N",
-                    "W"
+                    "W",
+                    "E",
+                    "S"
                 ],
                 "Brush": {
                     "Occupier": "Piled Books"
@@ -216,7 +215,9 @@
                 "Action": "PAINT_AT_EDGES",
                 "DirectionsToApply": [
                     "N",
-                    "W"
+                    "W",
+                    "E",
+                    "S"
                 ],
                 "Brush": {
                     "Occupier": "Piled Boxes"
@@ -226,6 +227,390 @@
                         "Min": 0,
                         "Max": 2,
                         "Decay": 2.5
+                    },
+                    {}
+                ]
+            }
+        ]
+    },
+    "Dining Room": {
+        "Note": "Generates a dining room in a RSE interior. Creates blank room space, fills it and starts decorating",
+        "Action": "SPLIT_ROOM",
+        "DimensionalParameters": [
+            {
+                "Min": 0.99999,
+                "Max": 0.99999
+            },
+            {
+                "Min": 0.99999,
+                "Max": 0.99999
+            },
+            {},
+            {}
+        ],
+        "PartitionActions": [
+            {
+                "ChildTarget": "ALL",
+                "Action": "FILL",
+                "Brush": {
+                    "CliffFace": "STONE",
+                    "TileSurface": "Wood Floor"
+                }
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_CORNER",
+                "DirectionsToApply": [
+                    "NE",
+                    "NW",
+                    "SW",
+                    "SE"
+                ],
+                "Brush": {
+                    "Occupier": "Tall Plant"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 1,
+                        "Max": 2,
+                        "Decay": 3
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "DirectionsToApply": [
+                    "NE",
+                    "NW",
+                    "SW",
+                    "SE"
+                ],
+                "Brush": {
+                    "Occupier": "Tall Plant"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 2,
+                        "Decay": 3
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_CENTER",
+                "Brush": {
+                    "Occupier": "Table"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 1,
+                        "Max": 1
+                    },
+                    {}
+                ],
+                "PartitionActions": [
+                    {
+                        "Action": "TEMPLATE",
+                        "Tag": "Stools",
+                        "ChildTarget": "ALL_SHUFFLE"
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "DirectionsToApply": [
+                    "N"
+                ],
+                "Brush": {
+                    "Occupier": "Bookshelf"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 3,
+                        "Decay": 2
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "DirectionsToApply": [
+                    "W"
+                ],
+                "Brush": {
+                    "Occupier": "Tv"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 1,
+                        "Max": 1
+                    },
+                    {}
+                ]
+            }
+        ]
+    },
+    "Classroom": {
+        "Note": "Generates a classroom in a RSE interior. Creates blank room space, fills it and starts decorating",
+        "Action": "SPLIT_ROOM",
+        "DimensionalParameters": [
+            {
+                "Min": 0.99999,
+                "Max": 0.99999
+            },
+            {
+                "Min": 0.99999,
+                "Max": 0.99999
+            },
+            {},
+            {}
+        ],
+        "PartitionActions": [
+            {
+                "ChildTarget": "ALL",
+                "Action": "FILL",
+                "Brush": {
+                    "CliffFace": "STONE",
+                    "TileSurface": "Wood Floor"
+                }
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "DirectionsToApply": [
+                    "N"
+                ],
+                "Brush": {
+                    "Occupier": "Whiteboard"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 99,
+                        "Max": 99
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "DirectionsToApply": [
+                    "N"
+                ],
+                "Brush": {
+                    "Occupier": "Student Desk"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 1,
+                        "Max": 1
+                    },
+                    {
+                        "Min": 2,
+                        "Max": 2
+                    }
+                ],
+                "PartitionActions": [
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "PATH_FROM_PARTITION",
+                        "DirectionsToApply": [
+                            "E",
+                            "W"
+                        ],
+                        "Brush": {
+                            "Occupier": "Student Desk"
+                        },
+                        "DimensionalParameters": [
+                            {
+                                "Min": 0.9,
+                                "Max": 0.9
+                            },
+                            {
+                                "Min": 2,
+                                "Max": 2
+                            },
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            }
+                        ],
+                        "PartitionActions": [
+                            {
+                                "ChildTarget": "ALL",
+                                "Action": "PATH_FROM_PARTITION",
+                                "DirectionsToApply": [
+                                    "S"
+                                ],
+                                "Brush": {
+                                    "Occupier": "Student Desk"
+                                },
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 0.9,
+                                        "Max": 0.9
+                                    },
+                                    {
+                                        "Min": 2,
+                                        "Max": 2
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "PATH_FROM_PARTITION",
+                        "DirectionsToApply": [
+                            "S"
+                        ],
+                        "Brush": {
+                            "Occupier": "Student Desk"
+                        },
+                        "DimensionalParameters": [
+                            {
+                                "Min": 0.9,
+                                "Max": 0.9
+                            },
+                            {
+                                "Min": 2,
+                                "Max": 2
+                            },
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "Messy Lab": {
+        "Note": "Generates a messy room based on Lanette's boxes and books lab. Creates blank room space, fills it and starts decorating",
+        "Action": "SPLIT_ROOM",
+        "DimensionalParameters": [
+            {
+                "Min": 0.99999,
+                "Max": 0.99999
+            },
+            {
+                "Min": 0.99999,
+                "Max": 0.99999
+            },
+            {},
+            {}
+        ],
+        "PartitionActions": [
+            {
+                "ChildTarget": "ALL",
+                "Action": "FILL",
+                "Brush": {
+                    "CliffFace": "STONE",
+                    "TileSurface": "Wood Floor"
+                }
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_CORNER",
+                "DirectionsToApply": [
+                    "NE",
+                    "NW",
+                    "SW",
+                    "SE"
+                ],
+                "Brush": {
+                    "Occupier": "Piled Books"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.5,
+                        "Max": 0.5
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_CORNER",
+                "DirectionsToApply": [
+                    "NE",
+                    "NW",
+                    "SW",
+                    "SE"
+                ],
+                "Brush": {
+                    "Occupier": "Piled Boxes"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.9999,
+                        "Max": 0.9999
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "DirectionsToApply": [
+                    "N",
+                    "W",
+                    "S",
+                    "E"
+                ],
+                "Brush": {
+                    "Occupier": "Piled Books"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.5,
+                        "Max": 0.5
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "DirectionsToApply": [
+                    "N",
+                    "W",
+                    "S",
+                    "E"
+                ],
+                "Brush": {
+                    "Occupier": "Piled Boxes"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.9999,
+                        "Max": 0.9999
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_EVERYWHERE",
+                "Brush": {
+                    "Occupier": "Piled Boxes"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.9999,
+                        "Max": 0.9999
                     },
                     {}
                 ]

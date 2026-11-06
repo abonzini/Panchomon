@@ -74,8 +74,8 @@ namespace Gameplay.GameEngine
     public enum PropagationTarget
     {
         ALL_LAUNCHPAD = -7, /// Operation applies to tiles that have the id of valid launchpads for this game
-        ALL_NONMARKED = -6, /// Nonmarked applies to non-launchpad partitions that are tagged so an any/all nonmarked action won't apply to them again. Used for decorating unique rooms
-        ANY_NONMARKED = -5,
+        ALL_BLANK_ROOMS = -6, /// Room applies to non-launchpad partitions of size > 1 (i.e. non hallway) that are tagged so an any/all nonmarked action won't apply to them again. Used for decorating unique rooms
+        N_BLANK_ROOM = -5,
         ALL_SIMULTANEOUSLY = -4, /// Op applies to all targets at the same time so it only needs to be ran once with whatever target
         ALL_SHUFFLE = -3, /// All the partitions but a bit of a shufflerino beforehand
         INSETS = -2, /// Operation applies to inset squares, 1-9
@@ -96,7 +96,7 @@ namespace Gameplay.GameEngine
     {
         public PropagationTarget ChildTarget { get; set; } = PropagationTarget.ALL; // Children of partition are numbered, in base one they equal TOP/BOTTOM/ETC. -1 indicates the action to be done in all child partitions
         public string Tag { get; set; } = ""; // Tag string, if nonempty, needs to be present in terrain gen params
-        public double Chance { get; set; } = 1; // Chance for this step to be executed or skipped. If more than one, chance to do it again
+        public double RoomDecorationPercent { get; set; } = 0; // For room decoration (room-based targets), which percent of them will have this one
         public TileBrush Brush { get; set; } = new TileBrush();
         public List<TilePropagatorAction> PartitionActions { get; set; } = null; // Further actions, e.g. if after a partition is made, what to do inside (can allow for other sub-partitions, etc)
         // What action to actually perform

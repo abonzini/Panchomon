@@ -22,15 +22,21 @@
             };
             yield return new PhysicalObject()
             {
-                Name = "Paradox Chair",
+                Name = "Stool",
                 _description = "Chair seen in Paradox venue.",
-                DebugChar = 'p'
+                DebugChar = ','
             };
             yield return new PhysicalObject()
             {
                 Name = "Short Plant",
-                _description = "Small plant/fern in an office.",
+                _description = "Small plant/fern.",
                 DebugChar = 'y'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Tall Plant",
+                _description = "Tall plant.",
+                DebugChar = 'Y'
             };
             yield return new PhysicalObject()
             {
@@ -67,6 +73,30 @@
                 Name = "Lab Tank",
                 _description = "Futuristic looking lab tank.",
                 DebugChar = 'Ü'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Table",
+                _description = "Table for dinner.",
+                DebugChar = '╤'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Tv",
+                _description = "Tv.",
+                DebugChar = '▣'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Whiteboard",
+                _description = "A classroom whiteboard.",
+                DebugChar = '▰'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Student Desk",
+                _description = "Desk + Chair combo for students.",
+                DebugChar = '╤'
             };
         }
     }

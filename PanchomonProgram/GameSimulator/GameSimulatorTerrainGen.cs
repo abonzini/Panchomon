@@ -172,78 +172,74 @@ namespace GameSimulator
         {
             if (actions == null) return; // Nothing to do here...
             Debug.DebugAction(DebugLevel.BATTLE_STATE, () => DrawGrid($"About to start next level of propagation"));
-            List<Partition> donePartitions = [];
+            List<Partition> decoratedRooms = [];
             foreach (TilePropagatorAction action in actions)
             {
-                // Will perform this a certain amount of chances
-                double chance = action.Chance;
+                List<Partition> identifiedRooms = [.. currentPartitions.GetPartitions().Where(p => p.Width > 1 && p.Height > 1 && !_parameters.SidesPresent.Contains((Side)p.Id))];
                 // Check which action to actually perform. Normally, it's the action itself but if it is templated, fetch the action instead from template db
                 TilePropagatorAction nextAction = (action.Action == PropagationAction.TEMPLATE) ? GameplayElementsContainer.GlobalData.TemplatePropagationActions[action.Tag] : action;
                 if (!string.IsNullOrEmpty(nextAction.Tag) && !_parameters.TerrainGenerator.TagsToApply.Contains(nextAction.Tag)) continue; // Skip action if has a tag that is not present in this context
-                while (GeneralUtilities.GetRandomBool(chance, _rng)) // Roll to check if action applied
+                // Execute action
+                List<Partition> targets = action.ChildTarget switch // Get all the partitions I'm going to work with
                 {
-                    // Execute action
-                    List<Partition> targets = action.ChildTarget switch // Get all the partitions I'm going to work with
+                    PropagationTarget.ALL_SHUFFLE => GeneralUtilities.ShuffleList([.. currentPartitions.GetPartitions()], _rng),
+                    PropagationTarget.ALL_BLANK_ROOMS => [.. identifiedRooms.Where(p => !decoratedRooms.Contains(p))], // Get all that haven't been marked yet
+                    PropagationTarget.N_BLANK_ROOM => [.. GeneralUtilities.ShuffleList([.. identifiedRooms.Where(p => !decoratedRooms.Contains(p))], _rng).Take((int)Math.Round(action.RoomDecorationPercent * identifiedRooms.Count))], // Get the first n random rooms that haven't been marked yet
+                    PropagationTarget.ALL_SIMULTANEOUSLY => [currentPartitions.GetPartitions().First()], // It doesn't matter which one, just apply all
+                    PropagationTarget.ALL_LAUNCHPAD => [.. currentPartitions.GetPartitions().Where(p => _parameters.SidesPresent.Contains((Side)p.Id))],
+                    PropagationTarget.INSETS => [.. currentPartitions.GetPartitions().Where(p => p.Id >= 1 && p.Id <= 9)], // The inset pair
+                    PropagationTarget.ALL => [.. currentPartitions.GetPartitions()], // All
+                    _ => [currentPartitions.GetPartition((int)nextAction.ChildTarget)], // Otherwise try to cast and fuck it
+                };
+                // Party space can now be modified freely from this point onwards since targets was isolated. However user will need to be careful with op order as further tasks will also operate on generated partitions
+                foreach (Partition target in targets) // About to perform the action on each part
+                {
+                    if (target == null) continue;
+                    PartitionSpace newSpace = new PartitionSpace();
+                    bool partitionStillExists = nextAction.Action switch
                     {
-                        PropagationTarget.ALL_SHUFFLE => GeneralUtilities.ShuffleList([.. currentPartitions.GetPartitions()], _rng),
-                        PropagationTarget.ALL_NONMARKED => [.. currentPartitions.GetPartitions().Where(p => !_parameters.SidesPresent.Contains((Side)p.Id) && !donePartitions.Contains(p))], // Get all that haven't been marked yet
-                        PropagationTarget.ANY_NONMARKED => [GeneralUtilities.GetRandomPick([.. currentPartitions.GetPartitions().Where(p => !_parameters.SidesPresent.Contains((Side)p.Id) && !donePartitions.Contains(p))], _rng)], // Get all that haven't been marked yet
-                        PropagationTarget.ALL_SIMULTANEOUSLY => [currentPartitions.GetPartitions().First()], // It doesn't matter which one, just apply all
-                        PropagationTarget.ALL_LAUNCHPAD => [.. currentPartitions.GetPartitions().Where(p => _parameters.SidesPresent.Contains((Side)p.Id))],
-                        PropagationTarget.INSETS => [.. currentPartitions.GetPartitions().Where(p => p.Id >= 1 && p.Id <= 9)], // The inset pair
-                        PropagationTarget.ALL => [.. currentPartitions.GetPartitions()], // All
-                        _ => [currentPartitions.GetPartition((int)nextAction.ChildTarget)], // Otherwise try to cast and fuck it
+                        PropagationAction.SPLIT_LINE => LineDivide(target, nextAction, newSpace),
+                        PropagationAction.SPLIT_ROOM => RectangularDivide(target, nextAction, newSpace),
+                        PropagationAction.SPLIT_LINES => MultiLineDivide(target, nextAction, newSpace),
+                        PropagationAction.FILL => FillPartition(target, nextAction), // A fill never generates more things so
+                        PropagationAction.JOIN_PARTITIONS => JoinPartitionsInSpace(currentPartitions, nextAction), // Works to merge all current partitions
+                        PropagationAction.PAINT_EVERYWHERE or PropagationAction.PAINT_AT_CENTER or PropagationAction.PAINT_AT_CORNER or PropagationAction.PAINT_AT_EDGES or PropagationAction.PAINT_MID_EDGES => Paint(target, nextAction, newSpace),
+                        PropagationAction.PATH_FROM_PARTITION => DrawPath(target, nextAction, parent, newSpace),
+                        PropagationAction.FLOOD_OFFTSET => FloodExpand(target, nextAction), // Flood expansion
+                        PropagationAction.FLOOD_DRY => FloodDry(target, nextAction),
+                        _ => throw new Exception($"Unsupported partition action {nextAction.Action}")
                     };
-                    // Party space can now be modified freely from this point onwards since targets was isolated. However user will need to be careful with op order as further tasks will also operate on generated partitions
-                    foreach (Partition target in targets) // About to perform the action on each part
+                    if (newSpace.GetPartitionCount() > 0) // If the op caused more sub-partitions (childs) need to apply axtra actions and decide who remains
                     {
-                        PartitionSpace newSpace = new PartitionSpace();
-                        bool partitionStillExists = nextAction.Action switch
+                        Partition newParent = nextAction.Action switch // Parent will actually depend on whether the action is a partition action or not
                         {
-                            PropagationAction.SPLIT_LINE => LineDivide(target, nextAction, newSpace),
-                            PropagationAction.SPLIT_ROOM => RectangularDivide(target, nextAction, newSpace),
-                            PropagationAction.SPLIT_LINES => MultiLineDivide(target, nextAction, newSpace),
-                            PropagationAction.FILL => FillPartition(target, nextAction), // A fill never generates more things so
-                            PropagationAction.JOIN_PARTITIONS => JoinPartitionsInSpace(currentPartitions, nextAction), // Works to merge all current partitions
-                            PropagationAction.PAINT_EVERYWHERE or PropagationAction.PAINT_AT_CENTER or PropagationAction.PAINT_AT_CORNER or PropagationAction.PAINT_AT_EDGES or PropagationAction.PAINT_MID_EDGES => Paint(target, nextAction, newSpace),
-                            PropagationAction.PATH_FROM_PARTITION => DrawPath(target, nextAction, parent, newSpace),
-                            PropagationAction.FLOOD_OFFTSET => FloodExpand(target, nextAction), // Flood expansion
-                            PropagationAction.FLOOD_DRY => FloodDry(target, nextAction),
+                            PropagationAction.SPLIT_LINE or
+                            PropagationAction.SPLIT_ROOM or
+                            PropagationAction.SPLIT_LINES => target, // These truly are subdivisions where they become the new parent
+                            PropagationAction.FILL or
+                            PropagationAction.JOIN_PARTITIONS or
+                            PropagationAction.PAINT_EVERYWHERE or
+                            PropagationAction.PAINT_AT_CENTER or
+                            PropagationAction.PAINT_AT_CORNER or
+                            PropagationAction.PAINT_AT_EDGES or
+                            PropagationAction.PAINT_MID_EDGES or
+                            PropagationAction.PATH_FROM_PARTITION or
+                            PropagationAction.FLOOD_OFFTSET or
+                            PropagationAction.FLOOD_DRY => parent, // These don't, bound parent is the same, useful for raycasting
                             _ => throw new Exception($"Unsupported partition action {nextAction.Action}")
                         };
-                        if (newSpace.GetPartitionCount() > 0) // If the op caused more sub-partitions (childs) need to apply axtra actions and decide who remains
+                        PropagateActions(nextAction.PartitionActions, newSpace, newParent); // Apply further actions to the new spaces that were created
+                        if (!partitionStillExists) // If this action caused this partition to be split or removed
                         {
-                            Partition newParent = nextAction.Action switch // Parent will actually depend on whether the action is a partition action or not
-                            {
-                                PropagationAction.SPLIT_LINE or
-                                PropagationAction.SPLIT_ROOM or
-                                PropagationAction.SPLIT_LINES => target, // These truly are subdivisions where they become the new parent
-                                PropagationAction.FILL or
-                                PropagationAction.JOIN_PARTITIONS or
-                                PropagationAction.PAINT_EVERYWHERE or
-                                PropagationAction.PAINT_AT_CENTER or
-                                PropagationAction.PAINT_AT_CORNER or
-                                PropagationAction.PAINT_AT_EDGES or
-                                PropagationAction.PAINT_MID_EDGES or
-                                PropagationAction.PATH_FROM_PARTITION or
-                                PropagationAction.FLOOD_OFFTSET or
-                                PropagationAction.FLOOD_DRY => parent, // These don't, bound parent is the same, useful for raycasting
-                                _ => throw new Exception($"Unsupported partition action {nextAction.Action}")
-                            };
-                            PropagateActions(nextAction.PartitionActions, newSpace, newParent); // Apply further actions to the new spaces that were created
-                            if (!partitionStillExists) // If this action caused this partition to be split or removed
-                            {
-                                currentPartitions.RemovePartition(target); // Then, removes parent since it was subdivided
-                                currentPartitions.MergeSpace(newSpace); // Apply the new space to the merge space
-                            }
-                        }
-                        Debug.DebugAction(DebugLevel.BATTLE_STATE, () => DrawGrid($"After {nextAction.Action} on partition {target.Id}"));
-                        if (action.ChildTarget == PropagationTarget.ALL_NONMARKED || action.ChildTarget == PropagationTarget.ANY_NONMARKED)
-                        {
-                            donePartitions.Add(target);
+                            currentPartitions.RemovePartition(target); // Then, removes parent since it was subdivided
+                            currentPartitions.MergeSpace(newSpace); // Apply the new space to the merge space
                         }
                     }
-                    chance--; // If >1, has a chance of going again. This is risky if the action involves sub-partitioning as this will sub partition everything
+                    Debug.DebugAction(DebugLevel.BATTLE_STATE, () => DrawGrid($"After {nextAction.Action} on partition {target.Id}"));
+                    if (action.ChildTarget == PropagationTarget.ALL_BLANK_ROOMS || action.ChildTarget == PropagationTarget.N_BLANK_ROOM)
+                    {
+                        decoratedRooms.Add(target);
+                    }
                 }
             }
         }
@@ -736,7 +732,7 @@ namespace GameSimulator
                 case PropagationAction.PAINT_AT_EDGES:
                     allPaintableCoords = [];
                     // Add all the parts from the side too, no corners
-                    for (int i = partition.BegX + 1 + offset; i < partition.EndX - offset; i++)
+                    for (int i = partition.BegX + 1; i < partition.EndX; i++)
                     {
                         if (parameters.DirectionsToApply.Contains(Direction.N))
                         {
@@ -747,7 +743,7 @@ namespace GameSimulator
                             allPaintableCoords.Add((i, partition.EndY - offset));
                         }
                     }
-                    for (int i = partition.BegY + 1 + offset; i < partition.EndY - offset; i++)
+                    for (int i = partition.BegY + 1; i < partition.EndY; i++)
                     {
                         if (parameters.DirectionsToApply.Contains(Direction.E))
                         {
@@ -804,22 +800,27 @@ namespace GameSimulator
                 default:
                     throw new Exception("Invalid parameter to decide where to paint");
             }
+            // Now that points are defined, need to do a second cleanup stage of only the points I can actually legally add. Also make sure they're still within bounds
+            allPaintableCoords = [.. allPaintableCoords.Where(c => c.Item1 >= partition.BegX && c.Item2 >= partition.BegY && c.Item1 <= partition.EndX && c.Item2 <= partition.EndY)];
+            allPaintableCoords = [.. allPaintableCoords.Where(c => _grid[c.Item1, c.Item2].IsWalkable() && (parameters.Aggressive || (!IsBrushBlockingWay(parameters.Brush, c.Item1, c.Item2))))];
+            GeneralUtilities.ShuffleList(allPaintableCoords, _rng); // Shufflerino to be random
+            // Check the rest of params
             dim = parameters.DimensionalParameters[0];
             int n = (dim.Max < 1) ? // Check how much i need to paint in this partition
                 GeneralUtilities.GetRandomDecayingInt(allPaintableCoords.Count * dim.Min, allPaintableCoords.Count * dim.Max, dim.Decay, _rng) :
                 GeneralUtilities.GetRandomDecayingInt(dim.Min, dim.Max, dim.Decay, _rng);
             n = Math.Clamp(n, 0, allPaintableCoords.Count); // Absolutely max amount of things that can be painted are @ the perimeter
-            // Now that points are defined, need to do a second cleanup stage of only the points I can actually legally add
-            allPaintableCoords = [.. allPaintableCoords.Where(c => _grid[c.Item1, c.Item2].IsWalkable() && (parameters.Aggressive || (!IsBrushBlockingWay(parameters.Brush, c.Item1, c.Item2))))];
-            GeneralUtilities.ShuffleList(allPaintableCoords, _rng); // Shufflerino to be random
             // Finally, paint. I've determined that since I don't paint illegal things, there's no case where a prev illegal tile becomes legal, so can just paint in order
             int numberPainted = 0;
             for (int i = 0; numberPainted < n && i < allPaintableCoords.Count; i++)
             {
                 (int x, int y) = allPaintableCoords[i];
-                ApplyBrushToTile(parameters.Brush, x, y);
-                AddPartitionIfValid(x, x, y, y, newPartitions); // Also, add this small 1x1 square to the list of stuff I did, to be used in future propagations
-                numberPainted++;
+                if (parameters.Aggressive || (!IsBrushBlockingWay(parameters.Brush, x, y))) // To avoid successive brush applications to block the path, check again before attempting
+                {
+                    ApplyBrushToTile(parameters.Brush, x, y);
+                    AddPartitionIfValid(x, x, y, y, newPartitions); // Also, add this small 1x1 square to the list of stuff I did, to be used in future propagations
+                    numberPainted++;
+                }
             }
             return true;
         }
@@ -876,7 +877,7 @@ namespace GameSimulator
                 int maxLength = 0;
                 foreach (Tile nextTile in RaycastDirection(anchorX, anchorY, dir, auxParams))
                 {
-                    if (nextTile.IsWalkable() && (parameters.Aggressive || !IsBrushBlockingWay(parameters.Brush, nextTile.X, nextTile.Y))) // If valid tile to continue walk
+                    if (nextTile.IsWalkable()) // If valid tile to continue walk
                     {
                         maxLength++;
                     }
@@ -897,7 +898,6 @@ namespace GameSimulator
                 int stride = (dim.Min < 1) ? // Absolute stride vs relative to len
                     GeneralUtilities.GetRandomDecayingInt(length * dim.Min, length * dim.Max, dim.Decay, _rng) :
                     GeneralUtilities.GetRandomDecayingInt(dim.Min, dim.Max, dim.Decay, _rng);
-                if (stride > length) stride = length;
                 if (stride < 1) stride = 1;
                 // Finally, the anchored stride, which determines every how many steps there'll be a new anchor
                 dim = parameters.DimensionalParameters[2];
@@ -905,21 +905,24 @@ namespace GameSimulator
                 int anchorStride = (dim.Min < 1) ?
                     GeneralUtilities.GetRandomDecayingInt(estimatedNumSteps * dim.Min, estimatedNumSteps * dim.Max, dim.Decay, _rng) :
                     GeneralUtilities.GetRandomDecayingInt(dim.Min, dim.Max, dim.Decay, _rng);
-                if (anchorStride > estimatedNumSteps) stride = estimatedNumSteps; // Worst case, if you didn't want anchor, just ignore and don't use it
-                if (anchorStride < 1) stride = 1;
+                if (anchorStride > estimatedNumSteps) anchorStride = estimatedNumSteps; // Worst case, if you didn't want anchor, just ignore and don't use it
+                if (anchorStride < 1) anchorStride = 1;
                 // Ok! now do the raycast, and apply
                 int stepCount = 0;
                 auxParams.L = length;
                 auxParams.Stride = stride;
                 foreach (Tile nextTile in RaycastDirection(anchorX, anchorY, dir, auxParams)) // The actual raycast
                 {
-                    stepCount++;
-                    (int x, int y) = (nextTile.X, nextTile.Y); // Get tile coords 
-                    ApplyBrushToTile(parameters.Brush, x, y);
-                    if (stepCount >= anchorStride) // Time to involve the next anchor!
+                    if (parameters.Aggressive || !IsBrushBlockingWay(parameters.Brush, nextTile.X, nextTile.Y))
                     {
-                        AddPartitionIfValid(x, x, y, y, newPartitions);
-                        stepCount = 0;
+                        stepCount++;
+                        (int x, int y) = (nextTile.X, nextTile.Y); // Get tile coords
+                        ApplyBrushToTile(parameters.Brush, x, y);
+                        if (stepCount >= anchorStride) // Time to involve the next anchor!
+                        {
+                            AddPartitionIfValid(x, x, y, y, newPartitions);
+                            stepCount = 0;
+                        }
                     }
                 }
             }

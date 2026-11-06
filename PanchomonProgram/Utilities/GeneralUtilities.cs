@@ -158,6 +158,7 @@ namespace Utilities
         /// <returns>Element, not removed from list</returns>
         public static T GetRandomPick<T>(List<T> list, Random rng)
         {
+            if (list.Count == 0) return default;
             if (list.Count == 1) return list[0];
             return list[GetRandomNumber(list.Count, rng)];
         }
