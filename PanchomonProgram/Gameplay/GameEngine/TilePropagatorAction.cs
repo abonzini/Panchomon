@@ -43,10 +43,15 @@ namespace Gameplay.GameEngine
         SW,
         W,
         NW,
+        END_CARDINAL,
         CENTER_HORIZONTAL,
         CENTER_VERTICAL,
         CENTER_LINEAR,
-        CENTER_DIAGONAL
+        CENTER_DIAGONAL,
+        CENTER_HORIZONTAL_ABS,
+        CENTER_VERTICAL_ABS,
+        CENTER_LINEAR_ABS,
+        CENTER_DIAGONAL_ABS
     }
     /// <summary>
     /// The actions that can actually be performed

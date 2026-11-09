@@ -64,7 +64,7 @@
             };
             yield return new PhysicalObject()
             {
-                Name = "Computer Desk (E)",
+                Name = "Computer Desk (W)",
                 _description = "Inverted computer to do back to back computer desks.",
                 DebugChar = '▣'
             };
@@ -112,7 +112,7 @@
             };
             yield return new PhysicalObject()
             {
-                Name = "Powerplant Barrel",
+                Name = "Power Plant Barrel",
                 _description = "Barrel found in power plant inspired by FRLG power plant's barrel.",
                 DebugChar = '◉'
             };

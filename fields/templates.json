@@ -676,5 +676,65 @@
                 ]
             }
         ]
+    },
+    "Reactor Pools": {
+        "Note": "Generates an APP reactor pool pattern, subdivides a room vertically with 1-8 pools of water with conductive strips on the side",
+        "Action": "SPLIT_LINES",
+        "SplitOrientation": "VERTICAL",
+        "Brush": {
+            "TileSurface": "Clean Tile"
+        },
+        "DimensionalParameters": [
+            {
+                "Min": 1,
+                "Max": 8
+            },
+            {}
+        ],
+        "PartitionActions": [
+            {
+                "ChildTarget": "ALL",
+                "Brush": {
+                    "TileSurface": "Conductive Grid"
+                },
+                "Action": "SPLIT_LINE",
+                "SplitOrientation": "VERTICAL",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.5,
+                        "Max": 0.5
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "SPLIT_ROOM",
+                "SplitOrientation": "HORIZONTAL",
+                "DimensionalParameters": [
+                    {
+                        "Min": -2,
+                        "Max": -2
+                    },
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {
+                        "Min": 0.5,
+                        "Max": 0.5
+                    },
+                    {}
+                ],
+                "PartitionActions": [
+                    {
+                        "Action": "FILL",
+                        "ChildTarget": "CENTER",
+                        "Brush": {
+                            "TileSurface": "Water"
+                        }
+                    }
+                ]
+            }
+        ]
     }
 }

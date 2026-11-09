@@ -6,6 +6,20 @@ namespace GameSimulator
 {
     public partial class GameSimulator
     {
+        /// <summary>
+        /// Gets a representation of the master partition in order to know more about life
+        /// </summary>
+        /// <returns></returns>
+        Partition GetMasterPartition()
+        {
+            return new Partition(0, 0, _grid.GetLength(0) - 1, _grid.GetLength(1) - 1);
+        }
+        /// <summary>
+        /// Gets a tile of grid, null if tile doesn't exist or OOB
+        /// </summary>
+        /// <param name="x">Coord</param>
+        /// <param name="y">Coord</param>
+        /// <returns>Tile (if valid) or null</returns>
         Tile GetTileIfValid(int x, int y)
         {
             Tile theTile = null;
@@ -182,7 +196,18 @@ namespace GameSimulator
                 List<Partition> identifiedRooms = [.. currentPartitions.GetPartitions().Where(p => p.Width > 1 && p.Height > 1 && !Launchpads.ContainsValue(p))];
                 // Check which action to actually perform. Normally, it's the action itself but if it is templated, fetch the action instead from template db
                 TilePropagatorAction nextAction = (action.Action == PropagationAction.TEMPLATE) ? GameplayElementsContainer.GlobalData.TemplatePropagationActions[action.Tag] : action;
-                if (!string.IsNullOrEmpty(nextAction.Tag) && !_parameters.BattleTags.Contains(nextAction.Tag)) continue; // Skip action if has a tag that is not present in this context
+                if (!string.IsNullOrEmpty(nextAction.Tag))
+                {
+                    if (nextAction.Tag.Contains('¬'))
+                    {
+                        string negatedTag = nextAction.Tag.Replace("¬", "");
+                        if (_parameters.BattleTags.Contains(negatedTag)) continue; // Skip if action contains a tag that is explicitly negated
+                    }
+                    else
+                    {
+                        if (!_parameters.BattleTags.Contains(nextAction.Tag)) continue; // Skip action if action has a tag that is not present in this context
+                    }
+                }
                 // Execute action
                 List<Partition> targets = action.ChildTarget switch // Get all the partitions I'm going to work with
                 {
@@ -193,7 +218,7 @@ namespace GameSimulator
                     PropagationTarget.ALL_LAUNCHPAD => [.. Launchpads.Values],
                     PropagationTarget.INSETS => [.. currentPartitions.GetPartitions().Where(p => p.Id >= 1 && p.Id <= 9)], // The inset pair
                     PropagationTarget.ALL => [.. currentPartitions.GetPartitions()], // All
-                    _ => [currentPartitions.GetPartition((int)nextAction.ChildTarget)], // Otherwise try to cast and fuck it
+                    _ => [currentPartitions.GetPartition((int)action.ChildTarget)], // Otherwise try to cast and fuck it
                 };
                 // Party space can now be modified freely from this point onwards since targets was isolated. However user will need to be careful with op order as further tasks will also operate on generated partitions
                 foreach (Partition target in targets) // About to perform the action on each part
@@ -849,20 +874,22 @@ namespace GameSimulator
             {
                 // Need to define where is the direction. As some are relative, need to check which way they'll result in
                 Direction dir = nextDirection;
-                if (dir == Direction.CENTER_HORIZONTAL || dir == Direction.CENTER_VERTICAL || dir == Direction.CENTER_LINEAR || dir == Direction.CENTER_DIAGONAL)
+                if (dir >= Direction.END_CARDINAL)
                 {
-                    int parentMidpointX = parent.GetAbsoluteOffset(0.5, SplitOrientation.HORIZONTAL, 1);
-                    int parentMidpointY = parent.GetAbsoluteOffset(0.5, SplitOrientation.VERTICAL, 1);
+                    bool absoluteRef = (dir == Direction.CENTER_HORIZONTAL_ABS || dir == Direction.CENTER_DIAGONAL_ABS || dir == Direction.CENTER_LINEAR_ABS || dir == Direction.CENTER_VERTICAL_ABS);
+                    Partition partRef = absoluteRef ? GetMasterPartition() : parent;
+                    int parentMidpointX = partRef.GetAbsoluteOffset(0.5, SplitOrientation.HORIZONTAL, 1);
+                    int parentMidpointY = partRef.GetAbsoluteOffset(0.5, SplitOrientation.VERTICAL, 1);
                     int horizDistance = midpointX - parentMidpointX;
                     int vertDistance = midpointY - parentMidpointY;
                     bool isLeft = horizDistance < 0;
                     bool isAbove = vertDistance < 0;
                     dir = dir switch
                     {
-                        Direction.CENTER_HORIZONTAL => isLeft ? Direction.E : Direction.W,
-                        Direction.CENTER_VERTICAL => isAbove ? Direction.S : Direction.N,
-                        Direction.CENTER_LINEAR => (Math.Abs(horizDistance) > Math.Abs(vertDistance)) ? (isLeft ? Direction.E : Direction.W) : (isAbove ? Direction.S : Direction.N),
-                        Direction.CENTER_DIAGONAL => (isLeft) ? (isAbove ? Direction.SE : Direction.NE) : (isAbove ? Direction.SW : Direction.NW),
+                        Direction.CENTER_HORIZONTAL or Direction.CENTER_HORIZONTAL_ABS => isLeft ? Direction.E : Direction.W,
+                        Direction.CENTER_VERTICAL or Direction.CENTER_VERTICAL_ABS => isAbove ? Direction.S : Direction.N,
+                        Direction.CENTER_LINEAR or Direction.CENTER_LINEAR_ABS => (Math.Abs(horizDistance) > Math.Abs(vertDistance)) ? (isLeft ? Direction.E : Direction.W) : (isAbove ? Direction.S : Direction.N),
+                        Direction.CENTER_DIAGONAL or Direction.CENTER_DIAGONAL_ABS => (isLeft) ? (isAbove ? Direction.SE : Direction.NE) : (isAbove ? Direction.SW : Direction.NW),
                         _ => dir // This wouldn't happen
                     };
                 }

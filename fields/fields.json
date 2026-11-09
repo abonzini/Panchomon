@@ -1121,7 +1121,7 @@
                             "E"
                         ],
                         "Brush": {
-                            "Occupier": "Powerplant Barrel"
+                            "Occupier": "Power Plant Barrel"
                         },
                         "DimensionalParameters": [
                             {
@@ -1290,64 +1290,8 @@
                                     },
                                     {
                                         "ChildTarget": "FIRST",
-                                        "Action": "SPLIT_LINES",
-                                        "SplitOrientation": "VERTICAL",
-                                        "Brush": {
-                                            "TileSurface": "Clean Tile"
-                                        },
-                                        "DimensionalParameters": [
-                                            {
-                                                "Min": 1,
-                                                "Max": 8,
-                                                "Decay": 1.5
-                                            },
-                                            {}
-                                        ],
-                                        "PartitionActions": [
-                                            {
-                                                "ChildTarget": "ALL",
-                                                "Brush": {
-                                                    "TileSurface": "Conductive Grid"
-                                                },
-                                                "Action": "SPLIT_LINE",
-                                                "SplitOrientation": "VERTICAL",
-                                                "DimensionalParameters": [
-                                                    {
-                                                        "Min": 0.5,
-                                                        "Max": 0.5
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                "ChildTarget": "ALL",
-                                                "Action": "SPLIT_ROOM",
-                                                "SplitOrientation": "HORIZONTAL",
-                                                "DimensionalParameters": [
-                                                    {
-                                                        "Min": -2,
-                                                        "Max": -2
-                                                    },
-                                                    {
-                                                        "Min": 0.99999,
-                                                        "Max": 0.99999
-                                                    },
-                                                    {
-                                                        "Min": 0.5,
-                                                        "Max": 0.5
-                                                    },
-                                                    {}
-                                                ],
-                                                "PartitionActions": [
-                                                    {
-                                                        "Action": "FILL",
-                                                        "ChildTarget": "CENTER",
-                                                        "Brush": {
-                                                            "TileSurface": "Water"
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        ]
+                                        "Action": "TEMPLATE",
+                                        "Tag": "Reactor Pools"
                                     }
                                 ]
                             }
@@ -1461,6 +1405,303 @@
                         "Min": 0,
                         "Max": 2,
                         "Decay": 0.4
+                    }
+                ]
+            }
+        ]
+    },
+    "Reactor Test": {
+        "BasicBrush": {
+            "CliffFace": "CLEAN_TILE",
+            "TileSurface": "Clean Tile"
+        },
+        "PropagatorActions": [
+            {
+                "ChildTarget": "ALL_LAUNCHPAD",
+                "Brush": {
+                    "TileSurface": "Paradox Tile"
+                },
+                "Action": "SPLIT_ROOM",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {},
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "FIELD",
+                "Action": "SPLIT_ROOM",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {},
+                    {}
+                ],
+                "PartitionActions": [
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "SPLIT_LINE",
+                        "Brush": {
+                            "TileSurface": "Conductive Grid"
+                        },
+                        "SplitOrientation": "HORIZONTAL",
+                        "DimensionalParameters": [
+                            {
+                                "Min": 0.4,
+                                "Max": 0.6
+                            }
+                        ],
+                        "PartitionActions": [
+                            {
+                                "ChildTarget": "N_BLANK_ROOM",
+                                "RoomDecorationPercent": 0.5,
+                                "Action": "TEMPLATE",
+                                "Tag": "Reactor Pools"
+                            },
+                            {
+                                "ChildTarget": "ALL_BLANK_ROOMS",
+                                "Action": "SPLIT_ROOM",
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 0.99999,
+                                        "Max": 0.99999
+                                    },
+                                    {
+                                        "Min": 0.99999,
+                                        "Max": 0.99999
+                                    },
+                                    {},
+                                    {}
+                                ],
+                                "PartitionActions": [
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PAINT_MID_EDGES",
+                                        "DirectionsToApply": [
+                                            "S"
+                                        ],
+                                        "Brush": {
+                                            "Occupier": "Lighting Rod",
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 2,
+                                                "Max": 2
+                                            },
+                                            {}
+                                        ],
+                                        "PartitionActions": [
+                                            {
+                                                "ChildTarget": "ALL",
+                                                "Action": "PATH_FROM_PARTITION",
+                                                "DirectionsToApply": [
+                                                    "CENTER_HORIZONTAL_ABS"
+                                                ],
+                                                "Brush": {
+                                                    "TileSurface": "Conductive Grid"
+                                                },
+                                                "DimensionalParameters": [
+                                                    {
+                                                        "Min": 0.99999,
+                                                        "Max": 0.99999
+                                                    },
+                                                    {
+                                                        "Min": 1,
+                                                        "Max": 1
+                                                    },
+                                                    {}
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PAINT_MID_EDGES",
+                                        "DirectionsToApply": [
+                                            "N"
+                                        ],
+                                        "Brush": {
+                                            "Occupier": "Lighting Rod",
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 2,
+                                                "Max": 2
+                                            },
+                                            {}
+                                        ],
+                                        "PartitionActions": [
+                                            {
+                                                "ChildTarget": "ALL",
+                                                "Action": "PATH_FROM_PARTITION",
+                                                "DirectionsToApply": [
+                                                    "CENTER_HORIZONTAL_ABS"
+                                                ],
+                                                "Brush": {
+                                                    "TileSurface": "Conductive Grid"
+                                                },
+                                                "DimensionalParameters": [
+                                                    {
+                                                        "Min": 0.99999,
+                                                        "Max": 0.99999
+                                                    },
+                                                    {
+                                                        "Min": 1,
+                                                        "Max": 1
+                                                    },
+                                                    {}
+                                                ]
+                                            },
+                                            {
+                                                "ChildTarget": "ALL",
+                                                "Action": "PATH_FROM_PARTITION",
+                                                "DirectionsToApply": [
+                                                    "S"
+                                                ],
+                                                "Brush": {
+                                                    "Occupier": "Computer Desk"
+                                                },
+                                                "DimensionalParameters": [
+                                                    {
+                                                        "Min": 0.99999,
+                                                        "Max": 0.99999
+                                                    },
+                                                    {
+                                                        "Min": 2,
+                                                        "Max": 2
+                                                    },
+                                                    {}
+                                                ],
+                                                "PartitionActions": [
+                                                    {
+                                                        "ChildTarget": "ALL",
+                                                        "Action": "PATH_FROM_PARTITION",
+                                                        "DirectionsToApply": [
+                                                            "W"
+                                                        ],
+                                                        "Brush": {
+                                                            "Occupier": "Computer Desk (W)"
+                                                        },
+                                                        "DimensionalParameters": [
+                                                            {
+                                                                "Min": 1,
+                                                                "Max": 1
+                                                            },
+                                                            {
+                                                                "Min": 1,
+                                                                "Max": 1
+                                                            },
+                                                            {}
+                                                        ],
+                                                        "PartitionActions": [
+                                                            {
+                                                                "ChildTarget": "ALL",
+                                                                "Action": "PATH_FROM_PARTITION",
+                                                                "DirectionsToApply": [
+                                                                    "W"
+                                                                ],
+                                                                "Brush": {
+                                                                    "Occupier": "Office Chair"
+                                                                },
+                                                                "DimensionalParameters": [
+                                                                    {
+                                                                        "Min": 1,
+                                                                        "Max": 1
+                                                                    },
+                                                                    {
+                                                                        "Min": 1,
+                                                                        "Max": 1
+                                                                    },
+                                                                    {}
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        "ChildTarget": "ALL",
+                                                        "Action": "PATH_FROM_PARTITION",
+                                                        "DirectionsToApply": [
+                                                            "E"
+                                                        ],
+                                                        "Brush": {
+                                                            "Occupier": "Office Chair"
+                                                        },
+                                                        "DimensionalParameters": [
+                                                            {
+                                                                "Min": 1,
+                                                                "Max": 1
+                                                            },
+                                                            {
+                                                                "Min": 1,
+                                                                "Max": 1
+                                                            },
+                                                            {}
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PAINT_EVERYWHERE",
+                                        "Brush": {
+                                            "Occupier": "Trash Can"
+                                        },
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 3
+                                            },
+                                            {}
+                                        ]
+                                    },
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PAINT_EVERYWHERE",
+                                        "Brush": {
+                                            "Occupier": "Power Plant Barrel"
+                                        },
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 3
+                                            },
+                                            {}
+                                        ]
+                                    },
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PAINT_EVERYWHERE",
+                                        "Brush": {
+                                            "Occupier": "Piled Boxes"
+                                        },
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 3
+                                            },
+                                            {}
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
                     }
                 ]
             }
