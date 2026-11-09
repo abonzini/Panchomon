@@ -210,7 +210,7 @@
                         "PartitionActions": [
                             {
                                 "Action": "TEMPLATE",
-                                "Tag": "Stools",
+                                "Tags": "Stools",
                                 "ChildTarget": "ALL_SHUFFLE"
                             }
                         ]
@@ -294,14 +294,14 @@
                         "PartitionActions": [
                             {
                                 "Action": "TEMPLATE",
-                                "Tag": "Stools",
+                                "Tags": "Stools",
                                 "ChildTarget": "ALL_SHUFFLE"
                             }
                         ]
                     },
                     {
                         "Action": "TEMPLATE",
-                        "Tag": "Stools",
+                        "Tags": "Stools",
                         "ChildTarget": "ALL_SHUFFLE"
                     }
                 ]
@@ -438,24 +438,24 @@
                 "ChildTarget": "N_BLANK_ROOM",
                 "Action": "TEMPLATE",
                 "RoomDecorationPercent": 0.25,
-                "Tag": "Classroom"
+                "Tags": "Classroom"
             },
             {
                 "ChildTarget": "N_BLANK_ROOM",
                 "Action": "TEMPLATE",
                 "RoomDecorationPercent": 0.25,
-                "Tag": "Lab"
+                "Tags": "Lab"
             },
             {
                 "ChildTarget": "N_BLANK_ROOM",
                 "Action": "TEMPLATE",
                 "RoomDecorationPercent": 0.25,
-                "Tag": "Dining Room"
+                "Tags": "Dining Room"
             },
             {
                 "ChildTarget": "ALL_BLANK_ROOMS",
                 "Action": "TEMPLATE",
-                "Tag": "Messy Lab"
+                "Tags": "Messy Lab"
             }
         ]
     },
@@ -1291,7 +1291,7 @@
                                     {
                                         "ChildTarget": "FIRST",
                                         "Action": "TEMPLATE",
-                                        "Tag": "Reactor Pools"
+                                        "Tags": "Reactor Pools"
                                     }
                                 ]
                             }
@@ -1469,7 +1469,7 @@
                                 "ChildTarget": "N_BLANK_ROOM",
                                 "RoomDecorationPercent": 0.5,
                                 "Action": "TEMPLATE",
-                                "Tag": "Reactor Pools"
+                                "Tags": "Reactor Pools"
                             },
                             {
                                 "ChildTarget": "ALL_BLANK_ROOMS",
@@ -1665,8 +1665,8 @@
                                         },
                                         "DimensionalParameters": [
                                             {
-                                                "Min": 1,
-                                                "Max": 3
+                                                "Min": 0.05,
+                                                "Max": 0.15
                                             },
                                             {}
                                         ]
@@ -1679,8 +1679,8 @@
                                         },
                                         "DimensionalParameters": [
                                             {
-                                                "Min": 1,
-                                                "Max": 3
+                                                "Min": 0.05,
+                                                "Max": 0.1764
                                             },
                                             {}
                                         ]
@@ -1693,8 +1693,8 @@
                                         },
                                         "DimensionalParameters": [
                                             {
-                                                "Min": 1,
-                                                "Max": 3
+                                                "Min": 0.07,
+                                                "Max": 0.2142
                                             },
                                             {}
                                         ]

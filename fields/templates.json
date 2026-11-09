@@ -335,7 +335,7 @@
                 "PartitionActions": [
                     {
                         "Action": "TEMPLATE",
-                        "Tag": "Stools",
+                        "Tags": "Stools",
                         "ChildTarget": "ALL_SHUFFLE"
                     }
                 ]

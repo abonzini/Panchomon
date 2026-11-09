@@ -100,7 +100,7 @@ namespace Gameplay.GameEngine
     public class TilePropagatorAction
     {
         public PropagationTarget ChildTarget { get; set; } = PropagationTarget.ALL; // Children of partition are numbered, in base one they equal TOP/BOTTOM/ETC. -1 indicates the action to be done in all child partitions
-        public string Tag { get; set; } = ""; // Tag string, if nonempty, needs to be present in terrain gen params
+        public string Tags { get; set; } = ""; // Tag string, if nonempty, needs to be present in terrain gen params
         public double RoomDecorationPercent { get; set; } = 0; // For room decoration (room-based targets), which percent of them will have this one
         public TileBrush Brush { get; set; } = new TileBrush();
         public List<TilePropagatorAction> PartitionActions { get; set; } = null; // Further actions, e.g. if after a partition is made, what to do inside (can allow for other sub-partitions, etc)

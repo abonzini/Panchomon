@@ -195,18 +195,15 @@ namespace GameSimulator
             {
                 List<Partition> identifiedRooms = [.. currentPartitions.GetPartitions().Where(p => p.Width > 1 && p.Height > 1 && !Launchpads.ContainsValue(p))];
                 // Check which action to actually perform. Normally, it's the action itself but if it is templated, fetch the action instead from template db
-                TilePropagatorAction nextAction = (action.Action == PropagationAction.TEMPLATE) ? GameplayElementsContainer.GlobalData.TemplatePropagationActions[action.Tag] : action;
-                if (!string.IsNullOrEmpty(nextAction.Tag))
+                TilePropagatorAction nextAction = (action.Action == PropagationAction.TEMPLATE) ? GameplayElementsContainer.GlobalData.TemplatePropagationActions[action.Tags] : action;
+                if (!string.IsNullOrEmpty(nextAction.Tags))
                 {
-                    if (nextAction.Tag.Contains('¬'))
-                    {
-                        string negatedTag = nextAction.Tag.Replace("¬", "");
-                        if (_parameters.BattleTags.Contains(negatedTag)) continue; // Skip if action contains a tag that is explicitly negated
-                    }
-                    else
-                    {
-                        if (!_parameters.BattleTags.Contains(nextAction.Tag)) continue; // Skip action if action has a tag that is not present in this context
-                    }
+                    string[] tags = [.. nextAction.Tags.Split(',').Select(t => t.Trim())];
+                    if (tags.Any(t =>
+                            (nextAction.Tags.Contains('¬') && _parameters.BattleTags.Contains(nextAction.Tags.Replace("¬", ""))) || // Tags with ¬ SHOULD NOT be here
+                            (!nextAction.Tags.Contains('¬') && !_parameters.BattleTags.Contains(nextAction.Tags)) // Tags without ¬ NEED to be here
+                        ))
+                        continue; // Skip if tags conditions not satisfied
                 }
                 // Execute action
                 List<Partition> targets = action.ChildTarget switch // Get all the partitions I'm going to work with
