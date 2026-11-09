@@ -721,10 +721,14 @@ namespace GameSimulator
             int midpointY = partition.GetAbsoluteOffset(0.5, SplitOrientation.VERTICAL, 1);
             int maxOffset = Math.Min(partition.Width / 2, partition.Height / 2); // Offset is to avoid overlapping stuff
             // Get params
-            PropagationDimension dim = parameters.DimensionalParameters[1];
-            int offset = (dim.Max < 1) ? // Check how much offsets the draw gets
-                GeneralUtilities.GetRandomDecayingInt(maxOffset * dim.Min, maxOffset * dim.Max, dim.Decay, _rng) :
-                GeneralUtilities.GetRandomDecayingInt(dim.Min, dim.Max, dim.Decay, _rng);
+            int offset = 0;
+            if (parameters.DimensionalParameters.Count > 1)
+            {
+                PropagationDimension offsetDim = parameters.DimensionalParameters[1];
+                offset = (offsetDim.Max < 1) ? // Check how much offsets the draw gets
+                    GeneralUtilities.GetRandomDecayingInt(maxOffset * offsetDim.Min, maxOffset * offsetDim.Max, offsetDim.Decay, _rng) :
+                    GeneralUtilities.GetRandomDecayingInt(offsetDim.Min, offsetDim.Max, offsetDim.Decay, _rng);
+            }
             // Now see which points are paintable and how many needed
             List<(int, int)> allPaintableCoords;
             switch (parameters.Action)
@@ -809,7 +813,7 @@ namespace GameSimulator
             allPaintableCoords = [.. allPaintableCoords.Where(c => _grid[c.Item1, c.Item2].IsWalkable() && (parameters.Aggressive || (!IsBrushBlockingWay(parameters.Brush, c.Item1, c.Item2))))];
             GeneralUtilities.ShuffleList(allPaintableCoords, _rng); // Shufflerino to be random
             // Check the rest of params
-            dim = parameters.DimensionalParameters[0];
+            PropagationDimension dim = parameters.DimensionalParameters[0];
             int n = (dim.Max < 1) ? // Check how much i need to paint in this partition
                 GeneralUtilities.GetRandomDecayingInt(allPaintableCoords.Count * dim.Min, allPaintableCoords.Count * dim.Max, dim.Decay, _rng) :
                 GeneralUtilities.GetRandomDecayingInt(dim.Min, dim.Max, dim.Decay, _rng);
@@ -962,7 +966,7 @@ namespace GameSimulator
             int minDepth = (int)Math.Round(parameters.DimensionalParameters[0].Min < 1 ? Math.Sqrt(bounds.Surface) * parameters.DimensionalParameters[0].Min : parameters.DimensionalParameters[0].Min);
             int maxDepth = (int)Math.Round(parameters.DimensionalParameters[0].Max < 1 ? Math.Sqrt(bounds.Surface) * parameters.DimensionalParameters[0].Max : parameters.DimensionalParameters[0].Max);
             double decay = parameters.DimensionalParameters[0].Decay;
-            for (int depth = 0; depth <= maxDepth; depth++) // Do all depths until max
+            for (int depth = 1; depth <= maxDepth; depth++) // Do all depths until max
             {
                 double floodChance = Math.Pow(decay, depth - minDepth); // Decay makes more layers less frequent exponentially. Chances for lesser will always be >1 in theory...
                 foreach ((int x, int y) in allFloodedCoords)
@@ -1011,27 +1015,25 @@ namespace GameSimulator
             int minDepth = (int)Math.Round(parameters.DimensionalParameters[0].Min < 1 ? Math.Sqrt(bounds.Surface) * parameters.DimensionalParameters[0].Min : parameters.DimensionalParameters[0].Min);
             int maxDepth = (int)Math.Round(parameters.DimensionalParameters[0].Max < 1 ? Math.Sqrt(bounds.Surface) * parameters.DimensionalParameters[0].Max : parameters.DimensionalParameters[0].Max);
             double decay = parameters.DimensionalParameters[0].Decay;
-            for (int depth = 0; depth <= maxDepth; depth++) // Do all depths until max
+            for (int depth = 1; depth <= maxDepth; depth++) // Do all depths until max
             {
                 double dryChance = Math.Pow(decay, depth - minDepth); // Decay makes more layers less frequent exponentially. Chances for lesser will always be >1 in theory...
                 foreach ((int x, int y) in coordsToDry)
                 {
-                    List<(int, int)> coordsToCheck = [(x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)]; // Only pure adjacents are checked for drying, not diagonals
+                    HashSet<(int, int)> coordsToCheck = [(x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)]; // Only pure adjacents are checked for drying, not diagonals
                     List<Tile> overrideCandidates = [];
-                    int nNeighbors = 0;
                     foreach ((int i, int j) in coordsToCheck)
                     {
-                        Tile tile = GetTileIfValid(i, j);
-                        if (tile == null || coordsToDry.Contains((i, j)))
+                        if (i >= bounds.BegX && i <= bounds.EndX && j >= bounds.BegY && j <= bounds.EndY) // Only check cells within the bounds desired (e.g. not dry stealing from launchpads!)
                         {
-                            nNeighbors++;
-                        }
-                        else
-                        {
-                            overrideCandidates.Add(tile);
+                            Tile tile = GetTileIfValid(i, j);
+                            if (tile != null && !coordsToDry.Contains((i, j))) // If tile is "different" (and valid)
+                            {
+                                overrideCandidates.Add(tile);
+                            }
                         }
                     }
-                    if (nNeighbors < 4) // If the tile has 4 dryable neighbors and/or invalid tiles, this one can't be dried in this stage
+                    if (overrideCandidates.Count > 0) // If the tile has any dryable neighbors, can try apply dry
                     {
                         if (GeneralUtilities.GetRandomBool(dryChance, _rng)) // ok, if dryable, check if the statistics lets us do it
                         {

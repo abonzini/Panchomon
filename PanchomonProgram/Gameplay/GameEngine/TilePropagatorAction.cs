@@ -61,7 +61,7 @@ namespace Gameplay.GameEngine
         SPLIT_LINES, /// Like draw line, but is based on splitting the space in the desired direction into N pieces (firs dim). The second dim is an offset allows to move the walls a bit proportional to the original part's dimension but do be careful as they may flip.
         FILL, /// Fills a partition, marked as invalid too depending on fill
         JOIN_PARTITIONS, /// Joins all partitions with a hallway brush. If multiple partitions, there's a modified Kruskal algo what does it. First dim's DECAY controls the sorting power, with 0 making the sorting completely random, 1 being distance-weighted and N++ making the sorting absolute. Next param sets a min value of room connections to avoid many dead end rooms, 1 for dead ends but 2+ will attempt to force to connect to more; Values >=1 forces a min of those connections per node, as values <1 are probabilities
-        PAINT_EVERYWHERE, /// Paints randomly. Has a param where >=1 means an absolute number of tiles painted. Values <1 means as a percentage of the tile surface of desired partition
+        PAINT_EVERYWHERE, /// Paints randomly. Has a param where >=1 means an absolute number of tiles painted. Values <1 means as a percentage of the tile surface of desired partition. There's also an optional offset param as n tiles offset
         PAINT_AT_CENTER, /// Same as above, but paints in the center of the room
         PAINT_AT_CORNER, /// Same as above, but paints in the corners. Uses directions to see which ones to add
         PAINT_AT_EDGES, /// Same as above, but paints in the edges of the room, uses directions to see which ones to add. Doesnt use corners
