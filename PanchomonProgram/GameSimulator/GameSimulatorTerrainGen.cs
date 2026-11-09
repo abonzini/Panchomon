@@ -135,8 +135,8 @@ namespace GameSimulator
         void InitBattlefield()
         {
             PartitionSpace CurrentPartitionSpace = new PartitionSpace(); // Generate the macro level of child partitions
-            List<Side> sidesToAdd = [Side.FIELD, Side.BOTTOM, Side.TOP, Side.LEFT, Side.RIGHT];
-            foreach (Side side in sidesToAdd)
+            List<Side> allSides = [Side.FIELD, Side.BOTTOM, Side.TOP, Side.LEFT, Side.RIGHT];
+            foreach (Side side in allSides)
             {
                 if (side == Side.FIELD || _parameters.SidesPresent.Contains(side)) // Only initialize field and launchpads for valid players
                 {
@@ -151,6 +151,10 @@ namespace GameSimulator
                         _ => throw new Exception($"The side {side} is not a valid trainer side, something happened"),
                     };
                     CurrentPartitionSpace.AddNewPartition(nextParty);
+                    if (side != Side.FIELD)
+                    {
+                        Launchpads.Add(side, nextParty); // The launchpads are added for additional launchpad-based ops
+                    }
                     foreach ((int x, int y) in nextParty.GetAllTileCoords()) // Paint this square with the basic brush
                     {
                         _grid[x, y] = new Tile(x, y); // Instance tile
@@ -175,7 +179,7 @@ namespace GameSimulator
             List<Partition> decoratedRooms = [];
             foreach (TilePropagatorAction action in actions)
             {
-                List<Partition> identifiedRooms = [.. currentPartitions.GetPartitions().Where(p => p.Width > 1 && p.Height > 1 && !_parameters.SidesPresent.Contains((Side)p.Id))];
+                List<Partition> identifiedRooms = [.. currentPartitions.GetPartitions().Where(p => p.Width > 1 && p.Height > 1 && !Launchpads.ContainsValue(p))];
                 // Check which action to actually perform. Normally, it's the action itself but if it is templated, fetch the action instead from template db
                 TilePropagatorAction nextAction = (action.Action == PropagationAction.TEMPLATE) ? GameplayElementsContainer.GlobalData.TemplatePropagationActions[action.Tag] : action;
                 if (!string.IsNullOrEmpty(nextAction.Tag) && !_parameters.TerrainGenerator.TagsToApply.Contains(nextAction.Tag)) continue; // Skip action if has a tag that is not present in this context
@@ -186,7 +190,7 @@ namespace GameSimulator
                     PropagationTarget.ALL_BLANK_ROOMS => [.. identifiedRooms.Where(p => !decoratedRooms.Contains(p))], // Get all that haven't been marked yet
                     PropagationTarget.N_BLANK_ROOM => [.. GeneralUtilities.ShuffleList([.. identifiedRooms.Where(p => !decoratedRooms.Contains(p))], _rng).Take((int)Math.Round(action.RoomDecorationPercent * identifiedRooms.Count))], // Get the first n random rooms that haven't been marked yet
                     PropagationTarget.ALL_SIMULTANEOUSLY => [currentPartitions.GetPartitions().First()], // It doesn't matter which one, just apply all
-                    PropagationTarget.ALL_LAUNCHPAD => [.. currentPartitions.GetPartitions().Where(p => _parameters.SidesPresent.Contains((Side)p.Id))],
+                    PropagationTarget.ALL_LAUNCHPAD => [.. Launchpads.Values],
                     PropagationTarget.INSETS => [.. currentPartitions.GetPartitions().Where(p => p.Id >= 1 && p.Id <= 9)], // The inset pair
                     PropagationTarget.ALL => [.. currentPartitions.GetPartitions()], // All
                     _ => [currentPartitions.GetPartition((int)nextAction.ChildTarget)], // Otherwise try to cast and fuck it

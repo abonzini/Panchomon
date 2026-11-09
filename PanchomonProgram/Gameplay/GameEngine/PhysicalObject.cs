@@ -64,6 +64,12 @@
             };
             yield return new PhysicalObject()
             {
+                Name = "Computer Desk (E)",
+                _description = "Inverted computer to do back to back computer desks.",
+                DebugChar = '▣'
+            };
+            yield return new PhysicalObject()
+            {
                 Name = "Office Chair",
                 _description = "An office chair to be paired with a pc.",
                 DebugChar = '▪'
@@ -97,6 +103,54 @@
                 Name = "Student Desk",
                 _description = "Desk + Chair combo for students.",
                 DebugChar = '╤'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Trash Can",
+                _description = "Typical Pokemon trash can.",
+                DebugChar = '◎'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Powerplant Barrel",
+                _description = "Barrel found in power plant inspired by FRLG power plant's barrel.",
+                DebugChar = '◉'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Electric Panel",
+                _description = "Decorative electric panel for APP walls in certain rooms.",
+                DebugChar = '▥'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Lighting Rod",
+                _description = "Lighting rod that contains lighting and redirects.",
+                DebugChar = 'A'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Big Generator (L)",
+                _description = "Big generator for boss room, left side.",
+                DebugChar = '◍'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Big Generator (R)",
+                _description = "Big generator for boss room, right side.",
+                DebugChar = '◍'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Big Generator (C)",
+                _description = "Big generator for boss room, center side.",
+                DebugChar = '◍'
+            };
+            yield return new PhysicalObject()
+            {
+                Name = "Small Generator",
+                _description = "Small generator, same effect but only 1 tile.",
+                DebugChar = '◍'
             };
         }
     }

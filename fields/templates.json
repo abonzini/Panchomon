@@ -1,6 +1,6 @@
 {
     "Stools": {
-        "Note": "Paints Stools diagonally around an object in shuffled order, for populating paradox venues.",
+        "Note": "Paints Stools diagonally around an object in shuffled order, for populating paradox and other dining-inspired venues.",
         "Action": "PATH_FROM_PARTITION",
         "DirectionsToApply": [
             "N",
@@ -280,6 +280,26 @@
             },
             {
                 "ChildTarget": "ALL",
+                "Action": "PAINT_AT_CORNER",
+                "DirectionsToApply": [
+                    "NE",
+                    "NW",
+                    "SW",
+                    "SE"
+                ],
+                "Brush": {
+                    "Occupier": "Trash Can"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 1
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
                 "Action": "PAINT_AT_EDGES",
                 "DirectionsToApply": [
                     "NE",
@@ -380,6 +400,26 @@
                     "CliffFace": "STONE",
                     "TileSurface": "Wood Floor"
                 }
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_CORNER",
+                "DirectionsToApply": [
+                    "NE",
+                    "NW",
+                    "SW",
+                    "SE"
+                ],
+                "Brush": {
+                    "Occupier": "Trash Can"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 1,
+                        "Max": 2
+                    },
+                    {}
+                ]
             },
             {
                 "ChildTarget": "ALL",
@@ -555,8 +595,28 @@
                 },
                 "DimensionalParameters": [
                     {
-                        "Min": 0.9999,
-                        "Max": 0.9999
+                        "Min": 0.5,
+                        "Max": 0.5
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_CORNER",
+                "DirectionsToApply": [
+                    "NE",
+                    "NW",
+                    "SW",
+                    "SE"
+                ],
+                "Brush": {
+                    "Occupier": "Trash Can"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 1,
+                        "Max": 1
                     },
                     {}
                 ]
