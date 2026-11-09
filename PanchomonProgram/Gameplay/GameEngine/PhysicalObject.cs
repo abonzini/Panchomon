@@ -132,25 +132,25 @@
             {
                 Name = "Big Generator (L)",
                 _description = "Big generator for boss room, left side.",
-                DebugChar = '◍'
+                DebugChar = '╭'
             };
             yield return new PhysicalObject()
             {
                 Name = "Big Generator (R)",
                 _description = "Big generator for boss room, right side.",
-                DebugChar = '◍'
+                DebugChar = '╮'
             };
             yield return new PhysicalObject()
             {
                 Name = "Big Generator (C)",
                 _description = "Big generator for boss room, center side.",
-                DebugChar = '◍'
+                DebugChar = '─'
             };
             yield return new PhysicalObject()
             {
                 Name = "Small Generator",
                 _description = "Small generator, same effect but only 1 tile.",
-                DebugChar = '◍'
+                DebugChar = '▟'
             };
         }
     }

@@ -94,6 +94,7 @@ namespace Gameplay.GameplayElementsContainer
         public Dictionary<string, Surface> Surfaces = new Dictionary<string, Surface>();
         public Dictionary<string, PhysicalInstance> PhysicalObjects = new Dictionary<string, PhysicalInstance>();
         public Dictionary<string, TileEffect> TileEffects = new Dictionary<string, TileEffect>();
+        public Dictionary<string, TerrainGenerator> FieldTerrainGenerators = new Dictionary<string, TerrainGenerator>();
         public Dictionary<string, TilePropagatorAction> TemplatePropagationActions = new Dictionary<string, TilePropagatorAction>();
     }
 }

@@ -182,7 +182,7 @@ namespace GameSimulator
                 List<Partition> identifiedRooms = [.. currentPartitions.GetPartitions().Where(p => p.Width > 1 && p.Height > 1 && !Launchpads.ContainsValue(p))];
                 // Check which action to actually perform. Normally, it's the action itself but if it is templated, fetch the action instead from template db
                 TilePropagatorAction nextAction = (action.Action == PropagationAction.TEMPLATE) ? GameplayElementsContainer.GlobalData.TemplatePropagationActions[action.Tag] : action;
-                if (!string.IsNullOrEmpty(nextAction.Tag) && !_parameters.TerrainGenerator.TagsToApply.Contains(nextAction.Tag)) continue; // Skip action if has a tag that is not present in this context
+                if (!string.IsNullOrEmpty(nextAction.Tag) && !_parameters.BattleTags.Contains(nextAction.Tag)) continue; // Skip action if has a tag that is not present in this context
                 // Execute action
                 List<Partition> targets = action.ChildTarget switch // Get all the partitions I'm going to work with
                 {

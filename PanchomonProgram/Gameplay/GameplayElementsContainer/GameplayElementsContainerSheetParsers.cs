@@ -516,9 +516,11 @@ namespace Gameplay.GameplayElementsContainer
         void ParseDungeonData(string directory, string sheetId, string sheetTab)
         {
             // Extract additional Json templates
-            Console.WriteLine("Extracting propagation templates");
+            Console.WriteLine("Extracting mapgen templates");
             string folder = Path.Combine(directory, "fields", "templates.json");
             TemplatePropagationActions = JsonConvert.DeserializeObject<Dictionary<string, TilePropagatorAction>>(File.ReadAllText(folder));
+            folder = Path.Combine(directory, "fields", "fields.json");
+            FieldTerrainGenerators = JsonConvert.DeserializeObject<Dictionary<string, TerrainGenerator>>(File.ReadAllText(folder));
             Console.WriteLine("Extracting dungeon mechanics data");
             Dungeons.Clear();
             // Extract all jsons

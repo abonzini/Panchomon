@@ -169,7 +169,7 @@ namespace PanchomonBackend
         public string FirstPrizeStr { get; set; } = "";
         public string SecondPrizeStr { get; set; } = "";
         public string ConsolationPrizeStr { get; set; } = "";
-        public string BattlefieldId { get; set; } = "";
+        public string Field { get; set; } = "";
         // Privates
         protected Random _rng;
         readonly List<TrainerEntity> _participants = new List<TrainerEntity>();
@@ -380,7 +380,7 @@ namespace PanchomonBackend
                 };
                 // Execute battle now
                 Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Pre {player1.Name} vs {player2.Name}"));
-                TerrainGenerator fightTerrainGen = BattlefieldGetter.GetTerrainGenerator(BattlefieldId, DirectoryPath);
+                TerrainGenerator fightTerrainGen = GameplayElementsContainer.GlobalData.FieldTerrainGenerators[Field];
                 GameParameters gameParams = new GameParameters() // These will be the game params for this tournament
                 {
                     TerrainGenerator = fightTerrainGen,
@@ -444,7 +444,8 @@ namespace PanchomonBackend
         /// </summary>
         protected void AskLocation()
         {
-            BattlefieldId = BattlefieldGetter.GetBattlefieldIdString(DirectoryPath);
+            Console.WriteLine($"Which battlefield? {string.Join(", ", GameplayElementsContainer.GlobalData.FieldTerrainGenerators.Keys)}");
+            Field = Console.ReadLine();
         }
     }
     /// <summary>

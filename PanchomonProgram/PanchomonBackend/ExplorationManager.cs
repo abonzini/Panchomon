@@ -1031,15 +1031,15 @@ namespace PanchomonBackend
             {
                 fieldModStrings = [_context.DungeonData.CurrentWeather.Name];
             }
-            TerrainGenerator generator = battlefieldUsed.TerrainGenerator;
-            generator.TagsToApply.UnionWith(fieldModStrings); // Add weather tags to ones done by field generator
-            generator.TagsToApply.Add(_context.DungeonData.Name); // Add dungeon name to this too
+            TerrainGenerator generator = GameplayElementsContainer.GlobalData.FieldTerrainGenerators[battlefieldUsed.Name];
             // Now instance it
             GameParameters parameters = new GameParameters()
             {
                 TerrainGenerator = generator,
                 FocusedSide = Side.BOTTOM // Player is the star here
             };
+            parameters.BattleTags.UnionWith(fieldModStrings); // Add weather tags to ones done by field generator
+            parameters.BattleTags.Add(_context.DungeonData.Name); // Add dungeon name to this too
             return parameters;
         }
         /// <summary>

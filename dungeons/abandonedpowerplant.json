@@ -20,7 +20,7 @@
         },
         {
             "Name": "Ion Deluge",
-            "Description":  "The air is Ionized and smells funny. All Normal-type attacks become Electric-type.",
+            "Description": "The air is Ionized and smells funny. All Normal-type attacks become Electric-type.",
             "Chance": 0.1
         }
     ],
@@ -506,6 +506,7 @@
                 "Chance": 0.5
             }
         ],
+        "BattlefieldOverride": "Generator Room",
         "PrizeType": "SPECIFIC_ITEM"
     },
     "BossEncounters": [
@@ -580,7 +581,8 @@
                     "EquipType": "NONE",
                     "MaxSimultaneousMons": 1,
                     "Number": 1,
-                    "Catchable": false
+                    "Catchable": false,
+                    "BattlefieldOverride": "Generator Room"
                 }
             ],
             "PrizeType": "ENEMIES",
@@ -638,6 +640,11 @@
                 }
             ],
             "PrizeType": "NONE"
+        }
+    ],
+    "PossibleBattlefields": [
+        {
+            "Name": "Generator Room"
         }
     ]
 }

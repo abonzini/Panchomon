@@ -37,6 +37,5 @@
     {
         public TileBrush BasicBrush { get; set; }
         public List<TilePropagatorAction> PropagatorActions { get; set; } = null; /// Propagators (in order of appearance) to generate terrain procedurally. Initially will target all the proper battleSides but afterwards can continue iterating
-        public HashSet<string> TagsToApply { get; set; } = [];
     }
 }

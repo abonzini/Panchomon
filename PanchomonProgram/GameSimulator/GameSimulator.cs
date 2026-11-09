@@ -27,7 +27,7 @@ namespace GameSimulator
             _parameters = parameters;
             if (!_newSim) throw new Exception("Game was already simulated. Can't redo.");
             // First, assemble the battlefield
-            AssembleBattlefield([.. _trainers.Select(t => t.Team).Distinct()], parameters.TerrainGenerator);
+            AssembleBattlefield([.. _trainers.Select(t => t.Team).Distinct()], parameters.TerrainGenerator, parameters.BattleTags);
             // Random winner for now idc
             HashSet<Side> participatingTeams = [.. _trainers.Select(t => t.Team)];
             Side winningTeam = GeneralUtilities.GetRandomPick([.. participatingTeams], _rng);
@@ -45,12 +45,13 @@ namespace GameSimulator
         /// <param name="sides">Which sides will be included (to create launchpad)</param>
         /// <param name="terrainGen">Which terrain generator to use</param>
         /// <param name="rng">Rng to use</param>
-        public void AssembleBattlefield(List<Side> sides, TerrainGenerator terrainGen, Random rng = null)
+        public void AssembleBattlefield(HashSet<Side> sides, TerrainGenerator terrainGen, HashSet<string> tags, Random rng = null)
         {
             if (rng != null) _rng = rng; // Use default one if none yet
             // Override the ones in params (wouldn't matter if it's the whole flow, but does allow for some SICK DEBUG)
             _parameters.TerrainGenerator = terrainGen;
             _parameters.SidesPresent = sides;
+            _parameters.BattleTags = tags;
             InitBattlefield();
         }
     }

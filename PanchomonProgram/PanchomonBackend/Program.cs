@@ -156,9 +156,12 @@ namespace PanchomonBackend
                         break;
                     case "7":
                         // Try fetch a battlefield and draw it for debug
-                        TerrainGenerator terrainGen = BattlefieldGetter.GetTerrainGenerator(BattlefieldGetter.GetBattlefieldIdString(directoryPath), directoryPath);
+                        Console.WriteLine($"Which battlefield? {string.Join(", ", GameplayElementsContainer.GlobalData.FieldTerrainGenerators.Keys)}");
+                        TerrainGenerator terrainGen = GameplayElementsContainer.GlobalData.FieldTerrainGenerators[Console.ReadLine()];
+                        Console.WriteLine($"Any tags?");
+                        HashSet<string> tags = [.. Console.ReadLine().Split(",").Select(s => s.Trim())];
                         Console.WriteLine($"Which sides to include? {string.Join(", ", Enum.GetNames<Side>())}");
-                        List<Side> sides = [.. Console.ReadLine().Split(',').Select(s => Enum.Parse<Side>(s.Trim())).Distinct()]; // Get CSV sides
+                        HashSet<Side> sides = [.. Console.ReadLine().Split(',').Select(s => Enum.Parse<Side>(s.Trim())).Distinct()]; // Get CSV sides
                         Console.WriteLine("Which key? Leave empty if random");
                         if (!int.TryParse(Console.ReadLine(), out int seed))
                         {
@@ -168,7 +171,7 @@ namespace PanchomonBackend
                         try
                         {
                             GameSimulator.GameSimulator testSim = new GameSimulator.GameSimulator();
-                            testSim.AssembleBattlefield(sides, terrainGen, rng);
+                            testSim.AssembleBattlefield(sides, terrainGen, tags, rng);
                         }
                         catch (Exception e)
                         {

@@ -1,0 +1,1138 @@
+{
+    "Standard Dirt Stadium": {
+        "BasicBrush": {
+            "CliffFace": "STONE",
+            "TileSurface": "Dirt"
+        },
+        "PropagatorActions": [
+            {
+                "ChildTarget": "FIELD",
+                "Brush": {
+                    "CliffFace": "STONE",
+                    "TileSurface": "White Paint"
+                },
+                "Action": "SPLIT_LINE",
+                "SplitOrientation": "VERTICAL",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 0
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "FIELD",
+                "Brush": {
+                    "CliffFace": "STONE",
+                    "TileSurface": "White Paint"
+                },
+                "Action": "SPLIT_LINE",
+                "SplitOrientation": "VERTICAL",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "FIELD",
+                "Brush": {
+                    "CliffFace": "STONE",
+                    "TileSurface": "White Paint"
+                },
+                "Action": "SPLIT_LINE",
+                "SplitOrientation": "VERTICAL",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.5,
+                        "Max": 0.5
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "BOTTOM",
+                "Brush": {
+                    "CliffFace": "STONE",
+                    "TileSurface": "White Paint"
+                },
+                "Action": "SPLIT_LINE",
+                "SplitOrientation": "VERTICAL",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "TOP",
+                "Brush": {
+                    "CliffFace": "STONE",
+                    "TileSurface": "White Paint"
+                },
+                "Action": "SPLIT_LINE",
+                "SplitOrientation": "VERTICAL",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 0
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Brush": {
+                    "CliffFace": "STONE",
+                    "TileSurface": "White Paint"
+                },
+                "Action": "SPLIT_LINE",
+                "SplitOrientation": "HORIZONTAL",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 0
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Brush": {
+                    "CliffFace": "STONE",
+                    "TileSurface": "White Paint"
+                },
+                "Action": "SPLIT_LINE",
+                "SplitOrientation": "HORIZONTAL",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "FIELD",
+                "Brush": {
+                    "CliffFace": "STONE",
+                    "TileSurface": "White Paint"
+                },
+                "Action": "SPLIT_ROOM",
+                "SplitOrientation": "ANY",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.34,
+                        "Max": 0.34
+                    },
+                    {
+                        "Min": 0.34,
+                        "Max": 0.34
+                    },
+                    {
+                        "Min": 0.5,
+                        "Max": 0.5
+                    },
+                    {
+                        "Min": 0.5,
+                        "Max": 0.5
+                    }
+                ],
+                "PartitionActions": [
+                    {
+                        "ChildTarget": "CENTER",
+                        "Brush": {
+                            "CliffFace": "STONE",
+                            "TileSurface": "Dirt"
+                        },
+                        "Action": "FILL"
+                    }
+                ]
+            }
+        ]
+    },
+    "Paradox 2-Side": {
+        "BasicBrush": {
+            "CliffFace": "PARADOX_TILE",
+            "TileSurface": "Paradox Tile"
+        },
+        "PropagatorActions": [
+            {
+                "ChildTarget": "ALL_LAUNCHPAD",
+                "Brush": {
+                    "CliffFace": "PARADOX_TILE",
+                    "TileSurface": "White Paint"
+                },
+                "Action": "SPLIT_ROOM",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {},
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "CENTER",
+                "Action": "SPLIT_LINES",
+                "SplitOrientation": "VERTICAL",
+                "DimensionalParameters": [
+                    {
+                        "Min": 2,
+                        "Max": 5
+                    },
+                    {}
+                ],
+                "PartitionActions": [
+                    {
+                        "ChildTarget": "ALL_SHUFFLE",
+                        "Action": "PAINT_MID_EDGES",
+                        "DirectionsToApply": [
+                            "E",
+                            "W"
+                        ],
+                        "Brush": {
+                            "Occupier": "Paradox Table"
+                        },
+                        "DimensionalParameters": [
+                            {
+                                "Min": 2,
+                                "Max": 2
+                            },
+                            {
+                                "Min": 2,
+                                "Max": 5
+                            }
+                        ],
+                        "PartitionActions": [
+                            {
+                                "Action": "TEMPLATE",
+                                "Tag": "Stools",
+                                "ChildTarget": "ALL_SHUFFLE"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "Paradox 4-Side": {
+        "BasicBrush": {
+            "CliffFace": "PARADOX_TILE",
+            "TileSurface": "Paradox Tile"
+        },
+        "PropagatorActions": [
+            {
+                "ChildTarget": "ALL_LAUNCHPAD",
+                "Brush": {
+                    "CliffFace": "PARADOX_TILE",
+                    "TileSurface": "White Paint"
+                },
+                "Action": "SPLIT_ROOM",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {},
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "CENTER",
+                "Action": "PAINT_AT_CORNER",
+                "DirectionsToApply": [
+                    "NE",
+                    "NW",
+                    "SE",
+                    "SW"
+                ],
+                "Brush": {
+                    "Occupier": "Paradox Table"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 4,
+                        "Max": 4
+                    },
+                    {
+                        "Min": 1,
+                        "Max": 2
+                    }
+                ],
+                "PartitionActions": [
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "PATH_FROM_PARTITION",
+                        "DirectionsToApply": [
+                            "CENTER_DIAGONAL"
+                        ],
+                        "Brush": {
+                            "Occupier": "Paradox Table"
+                        },
+                        "DimensionalParameters": [
+                            {
+                                "Min": 2,
+                                "Max": 3
+                            },
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            },
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            }
+                        ],
+                        "PartitionActions": [
+                            {
+                                "Action": "TEMPLATE",
+                                "Tag": "Stools",
+                                "ChildTarget": "ALL_SHUFFLE"
+                            }
+                        ]
+                    },
+                    {
+                        "Action": "TEMPLATE",
+                        "Tag": "Stools",
+                        "ChildTarget": "ALL_SHUFFLE"
+                    }
+                ]
+            }
+        ]
+    },
+    "Research Building": {
+        "BasicBrush": {
+            "CliffFace": "STONE",
+            "TileSurface": "Grass"
+        },
+        "PropagatorActions": [
+            {
+                "ChildTarget": "ALL_LAUNCHPAD",
+                "Brush": {
+                    "CliffFace": "STONE",
+                    "TileSurface": "White Paint"
+                },
+                "Action": "SPLIT_ROOM",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {},
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "CENTER",
+                "Action": "FILL",
+                "Brush": {
+                    "CliffFace": "CLEAN_TILE",
+                    "TileSurface": "Clean Tile"
+                }
+            },
+            {
+                "ChildTarget": "CENTER",
+                "Brush": {
+                    "Occupier": "Dark Painted Wall"
+                },
+                "Action": "SPLIT_ROOM",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {},
+                    {}
+                ],
+                "PartitionActions": [
+                    {
+                        "ChildTarget": "ALL_SHUFFLE",
+                        "Action": "SPLIT_LINES",
+                        "SplitOrientation": "HORIZONTAL",
+                        "Brush": {
+                            "Occupier": "Dark Painted Wall"
+                        },
+                        "DimensionalParameters": [
+                            {
+                                "Min": 2,
+                                "Max": 3
+                            },
+                            {
+                                "Min": 0,
+                                "Max": 0.9
+                            }
+                        ],
+                        "PartitionActions": [
+                            {
+                                "ChildTarget": "ALL_SHUFFLE",
+                                "Action": "SPLIT_LINES",
+                                "SplitOrientation": "VERTICAL",
+                                "Brush": {
+                                    "Occupier": "Dark Painted Wall"
+                                },
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 2,
+                                        "Max": 3
+                                    },
+                                    {
+                                        "Min": 0,
+                                        "Max": 0.9
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "ChildTarget": "ALL_SIMULTANEOUSLY",
+                        "Action": "JOIN_PARTITIONS",
+                        "Brush": {
+                            "Occupier": ""
+                        },
+                        "DimensionalParameters": [
+                            {
+                                "Decay": 0
+                            },
+                            {
+                                "Min": 0.5,
+                                "Max": 0.5
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "ALL_SIMULTANEOUSLY",
+                "Action": "JOIN_PARTITIONS",
+                "Brush": {
+                    "Occupier": ""
+                },
+                "DimensionalParameters": [
+                    {
+                        "Decay": 0
+                    },
+                    {
+                        "Min": 2,
+                        "Max": 4,
+                        "Decay": 2
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "N_BLANK_ROOM",
+                "Action": "TEMPLATE",
+                "RoomDecorationPercent": 0.25,
+                "Tag": "Classroom"
+            },
+            {
+                "ChildTarget": "N_BLANK_ROOM",
+                "Action": "TEMPLATE",
+                "RoomDecorationPercent": 0.25,
+                "Tag": "Lab"
+            },
+            {
+                "ChildTarget": "N_BLANK_ROOM",
+                "Action": "TEMPLATE",
+                "RoomDecorationPercent": 0.25,
+                "Tag": "Dining Room"
+            },
+            {
+                "ChildTarget": "ALL_BLANK_ROOMS",
+                "Action": "TEMPLATE",
+                "Tag": "Messy Lab"
+            }
+        ]
+    },
+    "Generator Room": {
+        "BasicBrush": {
+            "CliffFace": "CLEAN_TILE",
+            "TileSurface": "Clean Tile"
+        },
+        "PropagatorActions": [
+            {
+                "ChildTarget": "ALL_LAUNCHPAD",
+                "Brush": {
+                    "TileSurface": "Paradox Tile"
+                },
+                "Action": "SPLIT_ROOM",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {},
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "FIELD",
+                "Action": "SPLIT_ROOM",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {},
+                    {}
+                ],
+                "PartitionActions": [
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "PAINT_AT_CORNER",
+                        "DirectionsToApply": [
+                            "NW"
+                        ],
+                        "Brush": {
+                            "Occupier": "Big Generator (C)",
+                            "TileSurface": "Conductive Grid"
+                        },
+                        "Aggressive": true,
+                        "DimensionalParameters": [
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            },
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            }
+                        ],
+                        "PartitionActions": [
+                            {
+                                "ChildTarget": "ALL",
+                                "Action": "PATH_FROM_PARTITION",
+                                "DirectionsToApply": [
+                                    "W"
+                                ],
+                                "Brush": {
+                                    "Occupier": "Big Generator (L)",
+                                    "TileSurface": "Conductive Grid"
+                                },
+                                "Aggressive": true,
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    }
+                                ]
+                            },
+                            {
+                                "ChildTarget": "ALL",
+                                "Action": "PATH_FROM_PARTITION",
+                                "DirectionsToApply": [
+                                    "E"
+                                ],
+                                "Brush": {
+                                    "Occupier": "Big Generator (R)",
+                                    "TileSurface": "Conductive Grid"
+                                },
+                                "Aggressive": true,
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    }
+                                ]
+                            },
+                            {
+                                "ChildTarget": "ALL",
+                                "Action": "PATH_FROM_PARTITION",
+                                "DirectionsToApply": [
+                                    "N"
+                                ],
+                                "Brush": {
+                                    "Occupier": "Big Generator (C)",
+                                    "TileSurface": "Conductive Grid"
+                                },
+                                "Aggressive": true,
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    }
+                                ],
+                                "PartitionActions": [
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PATH_FROM_PARTITION",
+                                        "DirectionsToApply": [
+                                            "W"
+                                        ],
+                                        "Brush": {
+                                            "Occupier": "Big Generator (L)",
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "Aggressive": true,
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PATH_FROM_PARTITION",
+                                        "DirectionsToApply": [
+                                            "E"
+                                        ],
+                                        "Brush": {
+                                            "Occupier": "Big Generator (R)",
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "Aggressive": true,
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "ChildTarget": "ALL",
+                                "Action": "PATH_FROM_PARTITION",
+                                "DirectionsToApply": [
+                                    "S"
+                                ],
+                                "Brush": {
+                                    "Occupier": "Big Generator (C)",
+                                    "TileSurface": "Conductive Grid"
+                                },
+                                "Aggressive": true,
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    }
+                                ],
+                                "PartitionActions": [
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PATH_FROM_PARTITION",
+                                        "DirectionsToApply": [
+                                            "W"
+                                        ],
+                                        "Brush": {
+                                            "Occupier": "Big Generator (L)",
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "Aggressive": true,
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PATH_FROM_PARTITION",
+                                        "DirectionsToApply": [
+                                            "E"
+                                        ],
+                                        "Brush": {
+                                            "Occupier": "Big Generator (R)",
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "Aggressive": true,
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PATH_FROM_PARTITION",
+                                        "DirectionsToApply": [
+                                            "S"
+                                        ],
+                                        "Brush": {
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 0.99999,
+                                                "Max": 0.99999
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 4,
+                                                "Max": 4
+                                            }
+                                        ],
+                                        "PartitionActions": [
+                                            {
+                                                "ChildTarget": "ALL",
+                                                "Action": "PATH_FROM_PARTITION",
+                                                "DirectionsToApply": [
+                                                    "CENTER_HORIZONTAL"
+                                                ],
+                                                "Brush": {
+                                                    "TileSurface": "Conductive Grid"
+                                                },
+                                                "DimensionalParameters": [
+                                                    {
+                                                        "Min": 5,
+                                                        "Max": 9
+                                                    },
+                                                    {
+                                                        "Min": 1,
+                                                        "Max": 1
+                                                    },
+                                                    {}
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "PAINT_AT_CORNER",
+                        "DirectionsToApply": [
+                            "NE"
+                        ],
+                        "Brush": {
+                            "Occupier": "Big Generator (C)",
+                            "TileSurface": "Conductive Grid"
+                        },
+                        "Aggressive": true,
+                        "DimensionalParameters": [
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            },
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            }
+                        ],
+                        "PartitionActions": [
+                            {
+                                "ChildTarget": "ALL",
+                                "Action": "PATH_FROM_PARTITION",
+                                "DirectionsToApply": [
+                                    "W"
+                                ],
+                                "Brush": {
+                                    "Occupier": "Big Generator (L)",
+                                    "TileSurface": "Conductive Grid"
+                                },
+                                "Aggressive": true,
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    }
+                                ]
+                            },
+                            {
+                                "ChildTarget": "ALL",
+                                "Action": "PATH_FROM_PARTITION",
+                                "DirectionsToApply": [
+                                    "E"
+                                ],
+                                "Brush": {
+                                    "Occupier": "Big Generator (R)",
+                                    "TileSurface": "Conductive Grid"
+                                },
+                                "Aggressive": true,
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    }
+                                ]
+                            },
+                            {
+                                "ChildTarget": "ALL",
+                                "Action": "PATH_FROM_PARTITION",
+                                "DirectionsToApply": [
+                                    "N"
+                                ],
+                                "Brush": {
+                                    "Occupier": "Big Generator (C)",
+                                    "TileSurface": "Conductive Grid"
+                                },
+                                "Aggressive": true,
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    }
+                                ],
+                                "PartitionActions": [
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PATH_FROM_PARTITION",
+                                        "DirectionsToApply": [
+                                            "W"
+                                        ],
+                                        "Brush": {
+                                            "Occupier": "Big Generator (L)",
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "Aggressive": true,
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PATH_FROM_PARTITION",
+                                        "DirectionsToApply": [
+                                            "E"
+                                        ],
+                                        "Brush": {
+                                            "Occupier": "Big Generator (R)",
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "Aggressive": true,
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "ChildTarget": "ALL",
+                                "Action": "PATH_FROM_PARTITION",
+                                "DirectionsToApply": [
+                                    "S"
+                                ],
+                                "Brush": {
+                                    "Occupier": "Big Generator (C)",
+                                    "TileSurface": "Conductive Grid"
+                                },
+                                "Aggressive": true,
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    }
+                                ],
+                                "PartitionActions": [
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PATH_FROM_PARTITION",
+                                        "DirectionsToApply": [
+                                            "W"
+                                        ],
+                                        "Brush": {
+                                            "Occupier": "Big Generator (L)",
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "Aggressive": true,
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PATH_FROM_PARTITION",
+                                        "DirectionsToApply": [
+                                            "E"
+                                        ],
+                                        "Brush": {
+                                            "Occupier": "Big Generator (R)",
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "Aggressive": true,
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PATH_FROM_PARTITION",
+                                        "DirectionsToApply": [
+                                            "S"
+                                        ],
+                                        "Brush": {
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 2,
+                                                "Max": 2
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 2,
+                                                "Max": 2
+                                            }
+                                        ],
+                                        "PartitionActions": [
+                                            {
+                                                "ChildTarget": "ALL",
+                                                "Action": "PATH_FROM_PARTITION",
+                                                "DirectionsToApply": [
+                                                    "CENTER_HORIZONTAL"
+                                                ],
+                                                "Brush": {
+                                                    "TileSurface": "Conductive Grid"
+                                                },
+                                                "DimensionalParameters": [
+                                                    {
+                                                        "Min": 5,
+                                                        "Max": 9
+                                                    },
+                                                    {
+                                                        "Min": 1,
+                                                        "Max": 1
+                                                    },
+                                                    {}
+                                                ]
+                                            },
+                                            {
+                                                "ChildTarget": "ALL",
+                                                "Action": "PATH_FROM_PARTITION",
+                                                "DirectionsToApply": [
+                                                    "S"
+                                                ],
+                                                "Brush": {
+                                                    "TileSurface": "Conductive Grid"
+                                                },
+                                                "DimensionalParameters": [
+                                                    {
+                                                        "Min": 0.99999,
+                                                        "Max": 0.9999
+                                                    },
+                                                    {
+                                                        "Min": 1,
+                                                        "Max": 1
+                                                    },
+                                                    {
+                                                        "Min": 4,
+                                                        "Max": 4
+                                                    }
+                                                ],
+                                                "PartitionActions": [
+                                                    {
+                                                        "ChildTarget": "ALL",
+                                                        "Action": "PATH_FROM_PARTITION",
+                                                        "DirectionsToApply": [
+                                                            "CENTER_HORIZONTAL"
+                                                        ],
+                                                        "Brush": {
+                                                            "TileSurface": "Conductive Grid"
+                                                        },
+                                                        "DimensionalParameters": [
+                                                            {
+                                                                "Min": 5,
+                                                                "Max": 9
+                                                            },
+                                                            {
+                                                                "Min": 1,
+                                                                "Max": 1
+                                                            },
+                                                            {}
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "PAINT_AT_EDGES",
+                        "DirectionsToApply": [
+                            "W",
+                            "E"
+                        ],
+                        "Brush": {
+                            "Occupier": "Powerplant Barrel"
+                        },
+                        "DimensionalParameters": [
+                            {
+                                "Min": 3,
+                                "Max": 6
+                            },
+                            {}
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
