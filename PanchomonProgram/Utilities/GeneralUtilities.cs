@@ -89,6 +89,7 @@ namespace Utilities
         /// <returns>The generated random number</returns>
         public static int GetRandomDecayingInt(double min, double max, double decay, Random rng)
         {
+            if (min == max) return (int)Math.Round(min);
             double amplitude = max - min;
             return (int)Math.Round(min) + (int)Math.Round(Math.Pow(rng.NextDouble(), decay) * amplitude);
         }
@@ -102,6 +103,7 @@ namespace Utilities
         /// <returns>The generated random number</returns>
         public static double GetRandomDecayingFloat(double min, double max, double decay, Random rng)
         {
+            if (min == max) return min;
             double amplitude = max - min;
             return min + (Math.Pow(rng.NextDouble(), decay) * amplitude);
         }

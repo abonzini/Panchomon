@@ -88,19 +88,25 @@ namespace GameSimulator
         public int GetAbsoluteDimension(double dim, SplitOrientation orientation)
         {
             int ret;
-            if (dim < 1)
+            int max = orientation switch
             {
-                int max = orientation switch
-                {
-                    SplitOrientation.HORIZONTAL => Width,
-                    SplitOrientation.VERTICAL => Height,
-                    _ => throw new Exception("Horizontal or Vertical are the only valid options here"),
-                };
+                SplitOrientation.HORIZONTAL => Width,
+                SplitOrientation.VERTICAL => Height,
+                _ => throw new Exception("Horizontal or Vertical are the only valid options here"),
+            };
+            if (dim < 0)
+            {
+                ret = max + (int)Math.Round(dim);
+                ret = Math.Clamp(ret, 0, max);
+            }
+            else if (dim < 1)
+            {
                 ret = (int)Math.Round(dim * max);
             }
             else
             {
                 ret = (int)Math.Round(dim);
+                ret = Math.Clamp(ret, 0, max);
             }
             return ret;
         }
@@ -109,20 +115,23 @@ namespace GameSimulator
         /// </summary>
         /// <param name="relOffset">Value to use</param>
         /// <param name="orientation">Which orientation (only supports horizontal, vertical)</param>
-        /// <param name="brushSize">The brush size to adjust the offset amount (max/min) relative to this orientation</param>
+        /// <param name="elementSize">The brush size to adjust the offset amount (max/min) relative to this orientation</param>
         /// <returns></returns>
-        public int GetAbsoluteOffset(double relOffset, SplitOrientation orientation, int brushSize)
+        public int GetAbsoluteOffset(double relOffset, SplitOrientation orientation, int elementSize)
         {
             int ret;
             (int dim, int offset) = orientation switch
             {
-                SplitOrientation.HORIZONTAL => (Width, BegX),
-                SplitOrientation.VERTICAL => (Height, BegY),
+                SplitOrientation.HORIZONTAL => (Width, relOffset >= 0 ? BegX : EndX),
+                SplitOrientation.VERTICAL => (Height, relOffset >= 0 ? BegY : EndY),
                 _ => throw new Exception("Horizontal or Vertical are the only valid options here"),
             };
-            if (relOffset < 1)
+            if (Math.Abs(relOffset) < 1)
             {
-                dim -= brushSize - 1; // If brush bigger, it's relative dimension shrinks (less of them fit)
+                if (elementSize > 1)
+                {
+                    dim -= elementSize - 1; // If element is bigger, it's relative dimension shrinks (less of them fit)
+                }
                 ret = (int)(dim * relOffset) + offset;
             }
             else

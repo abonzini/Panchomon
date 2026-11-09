@@ -342,8 +342,8 @@ namespace GameSimulator
             (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (partition.BegY, dimension - brushSize);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 0);
             // Partition 1, from line until end (right/down)
-            (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (dimension + brushSize, partition.EndX);
-            (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (dimension + brushSize, partition.EndY);
+            (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (dimension + 1, partition.EndX);
+            (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (dimension + 1, partition.EndY);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 1);
             // Finally, returns whether this part should be removed
             return !brush.BlocksTheWay;
@@ -474,7 +474,7 @@ namespace GameSimulator
                 GeneralUtilities.GetRandomDecayingInt((int)Math.Round(dim.Min), (int)Math.Round(dim.Max), dim.Decay, _rng) :
                 GeneralUtilities.GetRandomDecayingInt(dim.Min * offsetMax, dim.Max * offsetMax, dim.Decay, _rng);
                 offsetNoise = Math.Clamp(offsetNoise, 0, offsetMax); // Clamp it to avoid excessive overlapping and stuff
-                wallIndex += GeneralUtilities.GetRandomBool(0.5, _rng) ? offsetNoise : -offsetNoise; // Add or remove this offset. This can work terribly bad if user is not extremely careful with offsets
+                wallIndex += GeneralUtilities.GetRandomBool(0.5, _rng) ? offsetNoise : -offsetNoise; // Add or remove this offset
                 // Apply the next draw
                 (minX, maxX) = (orientation == SplitOrientation.VERTICAL) ? (partition.BegX, partition.EndX) : (wallIndex, wallIndex); // Determine how x and y move
                 (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (wallIndex, wallIndex);
@@ -497,7 +497,7 @@ namespace GameSimulator
         /// </summary>
         /// <param name="partition">Which partition to fill</param>
         /// <param name="parameters">Params</param>
-        /// <returns>Whether the element operated on still exists</returns>
+        /// <returns>Whether the element operated on exists as a valid partition</returns>
         bool FillPartition(Partition partition, TilePropagatorAction parameters)
         {
             bool partitionKill = parameters.Brush.BlocksTheWay; // A brush that serves as a wall would kill the partition if it fills it
@@ -893,9 +893,16 @@ namespace GameSimulator
                 // Now that we know len, we can actually perform the draw, get the missing params
                 // This will control the length
                 PropagationDimension dim = parameters.DimensionalParameters[0];
-                int length = (dim.Min < 1) ?
-                    GeneralUtilities.GetRandomDecayingInt(maxLength * dim.Min, maxLength * dim.Max, dim.Decay, _rng) :
-                    GeneralUtilities.GetRandomDecayingInt(dim.Min, dim.Max, dim.Decay, _rng);
+                int length;
+                if (Math.Abs(dim.Min) < 1)
+                {
+                    length = GeneralUtilities.GetRandomDecayingInt(maxLength * Math.Abs(dim.Min), maxLength * Math.Abs(dim.Max), dim.Decay, _rng);
+
+                }
+                else // Either positive or negative
+                {
+                    length = GeneralUtilities.GetRandomDecayingInt(dim.Min < 0 ? maxLength - dim.Min : dim.Min, dim.Max < 0 ? maxLength - dim.Max : dim.Max, dim.Decay, _rng);
+                }
                 length = Math.Clamp(length, 0, maxLength);
                 // Now the stride, as in the distance
                 dim = parameters.DimensionalParameters[1];

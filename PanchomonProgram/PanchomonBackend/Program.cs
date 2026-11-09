@@ -160,8 +160,10 @@ namespace PanchomonBackend
                         TerrainGenerator terrainGen = GameplayElementsContainer.GlobalData.FieldTerrainGenerators[Console.ReadLine()];
                         Console.WriteLine($"Any tags?");
                         HashSet<string> tags = [.. Console.ReadLine().Split(",").Select(s => s.Trim())];
-                        Console.WriteLine($"Which sides to include? {string.Join(", ", Enum.GetNames<Side>())}");
-                        HashSet<Side> sides = [.. Console.ReadLine().Split(',').Select(s => Enum.Parse<Side>(s.Trim())).Distinct()]; // Get CSV sides
+                        Console.WriteLine($"Which sides to include? {string.Join(", ", Enum.GetNames<Side>())}. DEFAULT WILL BE BOTTOM, TOP");
+                        string sidesStrings = Console.ReadLine();
+                        if (sidesStrings == "") sidesStrings = "BOTTOM, TOP";
+                        HashSet<Side> sides = [.. sidesStrings.Split(',').Select(s => Enum.Parse<Side>(s.Trim())).Distinct()]; // Get CSV sides
                         Console.WriteLine("Which key? Leave empty if random");
                         if (!int.TryParse(Console.ReadLine(), out int seed))
                         {

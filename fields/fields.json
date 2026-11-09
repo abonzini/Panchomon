@@ -1134,5 +1134,227 @@
                 ]
             }
         ]
+    },
+    "Reactor Tanks": {
+        "BasicBrush": {
+            "CliffFace": "CLEAN_TILE",
+            "TileSurface": "Clean Tile"
+        },
+        "PropagatorActions": [
+            {
+                "ChildTarget": "ALL_LAUNCHPAD",
+                "Brush": {
+                    "TileSurface": "Paradox Tile"
+                },
+                "Action": "SPLIT_ROOM",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {},
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "FIELD",
+                "Action": "SPLIT_ROOM",
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {
+                        "Min": 0.99999,
+                        "Max": 0.99999
+                    },
+                    {},
+                    {}
+                ],
+                "PartitionActions": [
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "SPLIT_LINE",
+                        "SplitOrientation": "HORIZONTAL",
+                        "DimensionalParameters": [
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            }
+                        ],
+                        "PartitionActions": [
+                            {
+                                "ChildTarget": "FIRST",
+                                "Action": "PAINT_AT_CORNER",
+                                "DirectionsToApply": [
+                                    "NE",
+                                    "SE"
+                                ],
+                                "Brush": {
+                                    "Occupier": "Small Generator",
+                                    "TileSurface": "Conductive Grid"
+                                },
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 2,
+                                        "Max": 2
+                                    },
+                                    {}
+                                ],
+                                "PartitionActions": [
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PATH_FROM_PARTITION",
+                                        "DirectionsToApply": [
+                                            "S"
+                                        ],
+                                        "Brush": {
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 0.99999,
+                                                "Max": 0.99999
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "ChildTarget": "SECOND",
+                                "Action": "SPLIT_LINE",
+                                "SplitOrientation": "HORIZONTAL",
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": -2,
+                                        "Max": -2
+                                    }
+                                ],
+                                "PartitionActions": [
+                                    {
+                                        "ChildTarget": "SECOND",
+                                        "Action": "PAINT_AT_CORNER",
+                                        "DirectionsToApply": [
+                                            "NW",
+                                            "SW"
+                                        ],
+                                        "Brush": {
+                                            "Occupier": "Small Generator",
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 2,
+                                                "Max": 2
+                                            },
+                                            {}
+                                        ],
+                                        "PartitionActions": [
+                                            {
+                                                "ChildTarget": "ALL",
+                                                "Action": "PATH_FROM_PARTITION",
+                                                "DirectionsToApply": [
+                                                    "S"
+                                                ],
+                                                "Brush": {
+                                                    "TileSurface": "Conductive Grid"
+                                                },
+                                                "DimensionalParameters": [
+                                                    {
+                                                        "Min": 0.99999,
+                                                        "Max": 0.99999
+                                                    },
+                                                    {
+                                                        "Min": 1,
+                                                        "Max": 1
+                                                    },
+                                                    {
+                                                        "Min": 1,
+                                                        "Max": 1
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "ChildTarget": "FIRST",
+                                        "Action": "SPLIT_LINES",
+                                        "SplitOrientation": "VERTICAL",
+                                        "Brush": {
+                                            "TileSurface": "Clean Tile"
+                                        },
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 8,
+                                                "Decay": 1.5
+                                            },
+                                            {}
+                                        ],
+                                        "PartitionActions": [
+                                            {
+                                                "ChildTarget": "ALL",
+                                                "Brush": {
+                                                    "TileSurface": "Conductive Grid"
+                                                },
+                                                "Action": "SPLIT_LINE",
+                                                "SplitOrientation": "VERTICAL",
+                                                "DimensionalParameters": [
+                                                    {
+                                                        "Min": 0.5,
+                                                        "Max": 0.5
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "ChildTarget": "ALL",
+                                                "Action": "SPLIT_ROOM",
+                                                "SplitOrientation": "HORIZONTAL",
+                                                "DimensionalParameters": [
+                                                    {
+                                                        "Min": -2,
+                                                        "Max": -2
+                                                    },
+                                                    {
+                                                        "Min": 0.99999,
+                                                        "Max": 0.99999
+                                                    },
+                                                    {
+                                                        "Min": 0.5,
+                                                        "Max": 0.5
+                                                    },
+                                                    {}
+                                                ],
+                                                "PartitionActions": [
+                                                    {
+                                                        "Action": "FILL",
+                                                        "ChildTarget": "CENTER",
+                                                        "Brush": {
+                                                            "TileSurface": "Water"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
     }
 }
