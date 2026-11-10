@@ -1298,6 +1298,22 @@
                         ]
                     }
                 ]
+            },
+            {
+                "Tags": "Flood",
+                "ChildTarget": "EVERYWHERE",
+                "Action": "FLOOD_OFFSET",
+                "Brush": {
+                    "TileSurface": "Water"
+                },
+                "Aggressive": true,
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 3,
+                        "Decay": 0.33
+                    }
+                ]
             }
         ]
     },
@@ -1376,6 +1392,20 @@
                                 ],
                                 "PartitionActions": [
                                     {
+                                        "ChildTarget": "RANDOM_ONE",
+                                        "Action": "PAINT_AT_CENTER",
+                                        "Brush": {
+                                            "Occupier": "Lighting Rod",
+                                            "TileSurface": "Conductive Grid"
+                                        },
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            }
+                                        ]
+                                    },
+                                    {
                                         "ChildTarget": "ALL",
                                         "Action": "PAINT_AT_CENTER",
                                         "Brush": {
@@ -1396,7 +1426,54 @@
             },
             {
                 "ChildTarget": "FIELD",
+                "Action": "PAINT_EVERYWHERE",
+                "Tags": "Flood",
+                "Aggressive": true,
+                "Brush": {
+                    "TileSurface": "Water"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.1,
+                        "Max": 0.1
+                    }
+                ]
+            },
+            {
+                "Tags": "Flood",
+                "ChildTarget": "EVERYWHERE",
+                "Action": "FLOOD_OFFSET",
+                "Brush": {
+                    "TileSurface": "Water"
+                },
+                "Aggressive": true,
+                "DimensionalParameters": [
+                    {
+                        "Min": 1,
+                        "Max": 2,
+                        "Decay": 0.3
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "FIELD",
                 "Action": "FLOOD_DRY",
+                "Tags": "Flood",
+                "Brush": {
+                    "TileSurface": "Conductive Grid"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 2,
+                        "Decay": 0.2
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "FIELD",
+                "Action": "FLOOD_DRY",
+                "Tags": "¬Flood",
                 "Brush": {
                     "TileSurface": "Conductive Grid"
                 },
@@ -1698,10 +1775,41 @@
                                             },
                                             {}
                                         ]
+                                    },
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PAINT_EVERYWHERE",
+                                        "Tags": "Flood",
+                                        "Aggressive": true,
+                                        "Brush": {
+                                            "TileSurface": "Water"
+                                        },
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 0.1,
+                                                "Max": 0.1
+                                            }
+                                        ]
                                     }
                                 ]
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "Tags": "Flood",
+                "ChildTarget": "EVERYWHERE",
+                "Action": "FLOOD_OFFSET",
+                "Brush": {
+                    "TileSurface": "Water"
+                },
+                "Aggressive": true,
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 2,
+                        "Decay": 0.5
                     }
                 ]
             }

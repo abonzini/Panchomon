@@ -72,12 +72,15 @@ namespace Gameplay.GameEngine
         PAINT_AT_EDGES, /// Same as above, but paints in the edges of the room, uses directions to see which ones to add. Doesnt use corners
         PAINT_MID_EDGES, /// Same as above, but paints in the middle of the edges of the room only, uses directions to see which ones to add
         PATH_FROM_PARTITION, /// From a partition, extends a path within parent partition, for aesthetics that require a line somewhere. First param is the length, either % of max or absolute (capped). Then stride, as tile step or proportion of total steps. Finally the anchor stride, which is either an absolute count ot a relative count depending on l/stride. Extension stops if this breaks pathing
-        FLOOD_OFFTSET, /// Expands the desired brush outwards. This one doesn't block existing paths. Param is the min outwards offset, then max, and then the decaying chance between these
+        FLOOD_OFFSET, /// Expands the desired brush outwards. This one doesn't block existing paths. Param is the min outwards offset, then max, and then the decaying chance between these
         FLOOD_DRY, /// Flood Drting has a similar algo than flood filling but the other way around. Finds tiles of a surface and erases them, filling them with an adjacent surf instead
     }
     [JsonConverter(typeof(StringEnumConverter))]
     public enum PropagationTarget
     {
+        EVERYWHERE = -10, /// The whole grid at once
+        ALL_NON_LAUNCHPAD = -9, /// Any room that's not launchpad
+        RANDOM_ONE = -8, /// A single room, random one
         ALL_LAUNCHPAD = -7, /// Operation applies to tiles that have the id of valid launchpads for this game
         ALL_BLANK_ROOMS = -6, /// Room applies to non-launchpad partitions of size > 1 (i.e. non hallway) that are tagged so an any/all nonmarked action won't apply to them again. Used for decorating unique rooms
         N_BLANK_ROOM = -5,

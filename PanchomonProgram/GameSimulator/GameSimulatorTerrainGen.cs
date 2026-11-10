@@ -208,6 +208,9 @@ namespace GameSimulator
                 // Execute action
                 List<Partition> targets = action.ChildTarget switch // Get all the partitions I'm going to work with
                 {
+                    PropagationTarget.EVERYWHERE => [GetMasterPartition()],
+                    PropagationTarget.ALL_NON_LAUNCHPAD => [.. currentPartitions.GetPartitions().Where(p => !Launchpads.ContainsValue(p))],
+                    PropagationTarget.RANDOM_ONE => [GeneralUtilities.GetRandomPick([.. currentPartitions.GetPartitions()], _rng)],
                     PropagationTarget.ALL_SHUFFLE => GeneralUtilities.ShuffleList([.. currentPartitions.GetPartitions()], _rng),
                     PropagationTarget.ALL_BLANK_ROOMS => [.. identifiedRooms.Where(p => !decoratedRooms.Contains(p))], // Get all that haven't been marked yet
                     PropagationTarget.N_BLANK_ROOM => [.. GeneralUtilities.ShuffleList([.. identifiedRooms.Where(p => !decoratedRooms.Contains(p))], _rng).Take((int)Math.Round(action.RoomDecorationPercent * identifiedRooms.Count))], // Get the first n random rooms that haven't been marked yet
@@ -231,7 +234,7 @@ namespace GameSimulator
                         PropagationAction.JOIN_PARTITIONS => JoinPartitionsInSpace(currentPartitions, nextAction), // Works to merge all current partitions
                         PropagationAction.PAINT_EVERYWHERE or PropagationAction.PAINT_AT_CENTER or PropagationAction.PAINT_AT_CORNER or PropagationAction.PAINT_AT_EDGES or PropagationAction.PAINT_MID_EDGES => Paint(target, nextAction, newSpace),
                         PropagationAction.PATH_FROM_PARTITION => DrawPath(target, nextAction, parent, newSpace),
-                        PropagationAction.FLOOD_OFFTSET => FloodExpand(target, nextAction), // Flood expansion
+                        PropagationAction.FLOOD_OFFSET => FloodExpand(target, nextAction), // Flood expansion
                         PropagationAction.FLOOD_DRY => FloodDry(target, nextAction),
                         _ => throw new Exception($"Unsupported partition action {nextAction.Action}")
                     };
@@ -250,7 +253,7 @@ namespace GameSimulator
                             PropagationAction.PAINT_AT_EDGES or
                             PropagationAction.PAINT_MID_EDGES or
                             PropagationAction.PATH_FROM_PARTITION or
-                            PropagationAction.FLOOD_OFFTSET or
+                            PropagationAction.FLOOD_OFFSET or
                             PropagationAction.FLOOD_DRY => parent, // These don't, bound parent is the same, useful for raycasting
                             _ => throw new Exception($"Unsupported partition action {nextAction.Action}")
                         };
@@ -981,7 +984,8 @@ namespace GameSimulator
             HashSet<(int, int)> allFloodedCoords = [];
             foreach ((int x, int y) in bounds.GetAllTileCoords())
             {
-                if (_grid[x, y].Surface == brushSurface) // If there's a surface match, will be valid candidate for flood fill
+                Tile nextTile = GetTileIfValid(x, y);
+                if (nextTile != null && nextTile.Surface == brushSurface) // If there's a surface match, will be valid candidate for flood fill
                 {
                     allFloodedCoords.Add((x, y));
                 }
@@ -993,14 +997,14 @@ namespace GameSimulator
             for (int depth = 1; depth <= maxDepth; depth++) // Do all depths until max
             {
                 double floodChance = Math.Pow(decay, depth - minDepth); // Decay makes more layers less frequent exponentially. Chances for lesser will always be >1 in theory...
-                foreach ((int x, int y) in allFloodedCoords)
+                HashSet<(int, int)> floodedCoordsAtDepth = [.. allFloodedCoords]; // Copy since otherwise it'd fill infinitely
+                foreach ((int x, int y) in floodedCoordsAtDepth)
                 {
-                    for (int i = x - 1; i <= x + 1; i++)
+                    HashSet<(int, int)> coordsToCheck = [(x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)]; // Only pure adjacents are checked for filling, not diagonals
+                    foreach ((int i, int j) in coordsToCheck)
                     {
-                        if (bounds.BegX < i && i > bounds.EndX) continue; // Skip coords out of bounds
-                        for (int j = y - 1; i <= y + 1; i++)
+                        if (i >= bounds.BegX && i <= bounds.EndX && j >= bounds.BegY && j <= bounds.EndY) // Only check cells within the bounds desired (e.g. not dry stealing from launchpads!)
                         {
-                            if (bounds.BegY < j && j > bounds.EndY) continue; // Skip coords out of bounds
                             Tile nextTile = GetTileIfValid(i, j);
                             if (nextTile != null && nextTile.Surface != brushSurface && nextTile.IsWalkable() && (parameters.Aggressive || !IsBrushBlockingWay(brush, i, j))) // Candidate for painting only if tile extists, has diff surface, is walkable, and, in non-aggresive floods, there's no blocked path
                             {
@@ -1030,7 +1034,8 @@ namespace GameSimulator
             HashSet<(int, int)> coordsToDry = [];
             foreach ((int x, int y) in bounds.GetAllTileCoords())
             {
-                if (_grid[x, y].Surface == brushSurface) // If there's a surface match, will be valid candidate for flood fill
+                Tile nextTile = GetTileIfValid(x, y);
+                if (nextTile != null && nextTile.Surface == brushSurface) // If there's a surface match, will be valid candidate for flood fill
                 {
                     coordsToDry.Add((x, y));
                 }
