@@ -178,6 +178,11 @@ namespace Gameplay.GameplayElementsContainer
                 }
                 pokemonToCalculateStill.Remove(pokemonName);
             }
+            // Megas don't need movesets as they're not obtained or instantiated in the same ways as other mons
+            foreach (string mega in pokemonToCalculateStill.Keys.Where(n=>n.Contains("-Mega")))
+            {
+                pokemonToCalculateStill.Remove(mega);
+            }
             // Check who I forgor
             if (pokemonToCalculateStill.Count > 0)
             {
