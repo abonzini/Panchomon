@@ -39,7 +39,7 @@ namespace PanchomonBackend
             // Put current dungeon weathers
             foreach (Dungeon dung in GameplayElementsContainer.GlobalData.Dungeons.Values)
             {
-                WeatherForecast dungWeather = dung.CurrentWeather;
+                WeatherForecast dungWeather = dung.WeatherForecasts.Where(w => w.Name == dung.CurrentWeather).First();
                 glossary[dungWeather.Name] = dungWeather.Description;
             }
             // File complete, save
@@ -111,10 +111,10 @@ namespace PanchomonBackend
                 nextDungeon.Difficulty = difficulties[i];
                 // Roll the weather by chance
                 int weatherIdx = GeneralUtilities.GetRandomWeightedIndex([.. nextDungeon.WeatherForecasts.Select(w => w.Chance)], GameplayElementsContainer.GlobalData.CommonRng);
-                nextDungeon.CurrentWeather = nextDungeon.WeatherForecasts[weatherIdx];
+                nextDungeon.CurrentWeather = nextDungeon.WeatherForecasts[weatherIdx].Name;
                 // Now create + append the csv string
                 string dangerLevelString = new string('★', nextDungeon.Difficulty);
-                fileBuilder.AppendLine($"{nextDungeon.Name},,,,,Danger Level,{dangerLevelString},Weather Report,{nextDungeon.CurrentWeather.Name}");
+                fileBuilder.AppendLine($"{nextDungeon.Name},,,,,Danger Level,{dangerLevelString},Weather Report,{nextDungeon.CurrentWeather}");
                 fileBuilder.AppendLine(nextDungeon.Description1);
                 fileBuilder.AppendLine(nextDungeon.Description2);
                 HashSet<string> nextElements = [.. nextDungeon.CommonDrops.Select(c => c.Name)];
@@ -123,7 +123,7 @@ namespace PanchomonBackend
                 fileBuilder.AppendLine($"Rare Items,{string.Join(",", nextElements.ToList().Order())}");
                 // Then check pokemon, considering weather is important
                 nextElements = [.. nextDungeon.WeatherMons["ALL"]];
-                nextElements.UnionWith([.. nextDungeon.WeatherMons[nextDungeon.CurrentWeather.Name]]);
+                nextElements.UnionWith([.. nextDungeon.WeatherMons[nextDungeon.CurrentWeather]]);
                 for (int f = 0; f < GameplayElementsContainer.DUNGEON_NUM_FLOORS; f++)
                 {
                     // This floor will only have mons of its corresponding rank

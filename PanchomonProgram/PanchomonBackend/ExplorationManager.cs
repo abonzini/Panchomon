@@ -266,7 +266,7 @@ namespace PanchomonBackend
                 }
             }
             // Get the mon table for this dungeon (weather and ALL), need to also use the wild alternatives!
-            HashSet<string> allWeatherMons = [.. _context.DungeonData.WeatherMons[_context.DungeonData.CurrentWeather.Name], .. _context.DungeonData.WeatherMons["ALL"]];
+            HashSet<string> allWeatherMons = [.. _context.DungeonData.WeatherMons[_context.DungeonData.CurrentWeather], .. _context.DungeonData.WeatherMons["ALL"]];
             foreach (string weatherMon in allWeatherMons)
             {
                 PokemonSpecies monSpecies = GameplayElementsContainer.GlobalData.Dex[weatherMon];
@@ -1029,7 +1029,7 @@ namespace PanchomonBackend
             }
             else
             {
-                fieldModStrings = [_context.DungeonData.CurrentWeather.Name];
+                fieldModStrings = [_context.DungeonData.CurrentWeather];
             }
             TerrainGenerator generator = GameplayElementsContainer.GlobalData.FieldTerrainGenerators[battlefieldUsed.Name];
             // Now instance it

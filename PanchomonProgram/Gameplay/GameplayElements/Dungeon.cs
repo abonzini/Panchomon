@@ -146,7 +146,7 @@ namespace Gameplay.GameplayElements
         public int Difficulty { get; set; }
         public List<WeatherForecast> WeatherForecasts { get; set; }
         public List<Battlefield> PossibleBattlefields { get; set; }
-        public WeatherForecast CurrentWeather { get; set; }
+        public string CurrentWeather { get; set; }
         public double GeneralItemDropChance { get; set; }
         public List<ItemDrop> CommonDrops { get; set; }
         public List<ItemDrop> RareDrops { get; set; }

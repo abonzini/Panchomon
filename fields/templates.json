@@ -53,6 +53,7 @@
             {
                 "ChildTarget": "ALL",
                 "Action": "PAINT_AT_CORNER",
+                "Tags": "¬Abandoned Power Plant",
                 "DirectionsToApply": [
                     "NE",
                     "NW",
@@ -73,6 +74,7 @@
             {
                 "ChildTarget": "ALL",
                 "Action": "PAINT_AT_CORNER",
+                "Tags": "¬Abandoned Power Plant",
                 "DirectionsToApply": [
                     "NE",
                     "NW",
@@ -81,6 +83,48 @@
                 ],
                 "Brush": {
                     "Occupier": "Piled Books"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 1
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_CORNER",
+                "Tags": "Abandoned Power Plant",
+                "DirectionsToApply": [
+                    "NE",
+                    "NW",
+                    "SW",
+                    "SE"
+                ],
+                "Brush": {
+                    "Occupier": "Trash Can"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 1
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_CORNER",
+                "Tags": "Abandoned Power Plant",
+                "DirectionsToApply": [
+                    "NE",
+                    "NW",
+                    "SW",
+                    "SE"
+                ],
+                "Brush": {
+                    "Occupier": "Power Plant Barrel"
                 },
                 "DimensionalParameters": [
                     {
@@ -122,7 +166,8 @@
                 "DimensionalParameters": [
                     {
                         "Min": 1,
-                        "Max": 1
+                        "Max": 3,
+                        "Decay": 2
                     },
                     {}
                 ],
@@ -174,6 +219,7 @@
             {
                 "ChildTarget": "ALL",
                 "Action": "PAINT_AT_EDGES",
+                "Tags": "¬Abandoned Power Plant",
                 "DirectionsToApply": [
                     "N"
                 ],
@@ -192,6 +238,26 @@
             {
                 "ChildTarget": "ALL",
                 "Action": "PAINT_AT_EDGES",
+                "Tags": "Abandoned Power Plant",
+                "DirectionsToApply": [
+                    "N"
+                ],
+                "Brush": {
+                    "Occupier": "Electric Panel"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 2,
+                        "Max": 5,
+                        "Decay": 2
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "Tags": "¬Abandoned Power Plant",
                 "DirectionsToApply": [
                     "N",
                     "W",
@@ -205,7 +271,29 @@
                     {
                         "Min": 0,
                         "Max": 2,
-                        "Decay": 2.5
+                        "Decay": 1.5
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "Tags": "Abandoned Power Plant",
+                "DirectionsToApply": [
+                    "N",
+                    "W",
+                    "E",
+                    "S"
+                ],
+                "Brush": {
+                    "Occupier": "Power Plant Barrel"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0,
+                        "Max": 2,
+                        "Decay": 1.5
                     },
                     {}
                 ]
@@ -226,7 +314,7 @@
                     {
                         "Min": 0,
                         "Max": 2,
-                        "Decay": 2.5
+                        "Decay": 1.5
                     },
                     {}
                 ]
@@ -273,7 +361,7 @@
                     {
                         "Min": 1,
                         "Max": 2,
-                        "Decay": 3
+                        "Decay": 2
                     },
                     {}
                 ]
@@ -314,7 +402,7 @@
                     {
                         "Min": 0,
                         "Max": 2,
-                        "Decay": 3
+                        "Decay": 2
                     },
                     {}
                 ]
@@ -563,6 +651,49 @@
             },
             {
                 "ChildTarget": "ALL",
+                "Action": "PAINT_AT_EDGES",
+                "DirectionsToApply": [
+                    "W"
+                ],
+                "Brush": {
+                    "Occupier": "Computer Desk"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 1,
+                        "Max": 1
+                    },
+                    {}
+                ],
+                "PartitionActions": [
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "PATH_FROM_PARTITION",
+                        "DirectionsToApply": [
+                            "E"
+                        ],
+                        "Brush": {
+                            "Occupier": "Office Chair"
+                        },
+                        "DimensionalParameters": [
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            },
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            },
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
                 "Action": "PAINT_AT_CORNER",
                 "DirectionsToApply": [
                     "NE",
@@ -733,6 +864,327 @@
                             "TileSurface": "Water"
                         }
                     }
+                ]
+            }
+        ]
+    },
+    "Control Room": {
+        "Note": "Generates an APP Control Room pattern. Essentially a grid of desks with lighting rods on the top and bottom",
+        "Action": "SPLIT_ROOM",
+        "DimensionalParameters": [
+            {
+                "Min": 0.99999,
+                "Max": 0.99999
+            },
+            {
+                "Min": 0.99999,
+                "Max": 0.99999
+            },
+            {},
+            {}
+        ],
+        "PartitionActions": [
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_MID_EDGES",
+                "DirectionsToApply": [
+                    "N",
+                    "S"
+                ],
+                "Brush": {
+                    "Occupier": "Lighting Rod",
+                    "TileSurface": "Conductive Grid"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 2,
+                        "Max": 2
+                    },
+                    {}
+                ],
+                "PartitionActions": [
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "PATH_FROM_PARTITION",
+                        "DirectionsToApply": [
+                            "CENTER_HORIZONTAL_ABS"
+                        ],
+                        "Brush": {
+                            "TileSurface": "Conductive Grid"
+                        },
+                        "DimensionalParameters": [
+                            {
+                                "Min": 0.99999,
+                                "Max": 0.99999
+                            },
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            },
+                            {}
+                        ]
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_AT_CENTER",
+                "Brush": {
+                    "Occupier": "Computer Desk"
+                },
+                "Aggressive": true,
+                "DimensionalParameters": [
+                    {
+                        "Min": 1,
+                        "Max": 1
+                    },
+                    {}
+                ],
+                "PartitionActions": [
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "PATH_FROM_PARTITION",
+                        "DirectionsToApply": [
+                            "N",
+                            "S"
+                        ],
+                        "Brush": {
+                            "Occupier": "Computer Desk"
+                        },
+                        "Aggressive": true,
+                        "DimensionalParameters": [
+                            {
+                                "Min": 0.99999,
+                                "Max": 0.99999
+                            },
+                            {
+                                "Min": 2,
+                                "Max": 2
+                            },
+                            {}
+                        ],
+                        "PartitionActions": [
+                            {
+                                "ChildTarget": "ALL",
+                                "Action": "PATH_FROM_PARTITION",
+                                "DirectionsToApply": [
+                                    "W"
+                                ],
+                                "Brush": {
+                                    "Occupier": "Computer Desk (W)"
+                                },
+                                "Aggressive": true,
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {}
+                                ],
+                                "PartitionActions": [
+                                    {
+                                        "ChildTarget": "ALL",
+                                        "Action": "PATH_FROM_PARTITION",
+                                        "DirectionsToApply": [
+                                            "W"
+                                        ],
+                                        "Brush": {
+                                            "Occupier": "Office Chair"
+                                        },
+                                        "DimensionalParameters": [
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {
+                                                "Min": 1,
+                                                "Max": 1
+                                            },
+                                            {}
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "ChildTarget": "ALL",
+                                "Action": "PATH_FROM_PARTITION",
+                                "DirectionsToApply": [
+                                    "E"
+                                ],
+                                "Brush": {
+                                    "Occupier": "Office Chair"
+                                },
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {}
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "PATH_FROM_PARTITION",
+                        "DirectionsToApply": [
+                            "W"
+                        ],
+                        "Brush": {
+                            "Occupier": "Computer Desk (W)"
+                        },
+                        "DimensionalParameters": [
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            },
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            },
+                            {}
+                        ],
+                        "PartitionActions": [
+                            {
+                                "ChildTarget": "ALL",
+                                "Action": "PATH_FROM_PARTITION",
+                                "DirectionsToApply": [
+                                    "W"
+                                ],
+                                "Brush": {
+                                    "Occupier": "Office Chair"
+                                },
+                                "DimensionalParameters": [
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {
+                                        "Min": 1,
+                                        "Max": 1
+                                    },
+                                    {}
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "ChildTarget": "ALL",
+                        "Action": "PATH_FROM_PARTITION",
+                        "DirectionsToApply": [
+                            "E"
+                        ],
+                        "Brush": {
+                            "Occupier": "Office Chair"
+                        },
+                        "DimensionalParameters": [
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            },
+                            {
+                                "Min": 1,
+                                "Max": 1
+                            },
+                            {}
+                        ]
+                    }
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_EVERYWHERE",
+                "Brush": {
+                    "Occupier": "Trash Can"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.05,
+                        "Max": 0.15
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_EVERYWHERE",
+                "Brush": {
+                    "Occupier": "Power Plant Barrel"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.05,
+                        "Max": 0.1764
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_EVERYWHERE",
+                "Brush": {
+                    "Occupier": "Piled Boxes"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.07,
+                        "Max": 0.2142
+                    },
+                    {}
+                ]
+            }
+        ]
+    },
+    "Power Plant Warehouse": {
+        "Note": "Fills a APP warehouse with APP items everywhere like a maze",
+        "Action": "SPLIT_ROOM",
+        "DimensionalParameters": [
+            {
+                "Min": 0.99999,
+                "Max": 0.99999
+            },
+            {
+                "Min": 0.99999,
+                "Max": 0.99999
+            },
+            {},
+            {}
+        ],
+        "PartitionActions": [
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_EVERYWHERE",
+                "Brush": {
+                    "Occupier": "Power Plant Barrel"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.2,
+                        "Max": 0.3
+                    },
+                    {}
+                ]
+            },
+            {
+                "ChildTarget": "ALL",
+                "Action": "PAINT_EVERYWHERE",
+                "Brush": {
+                    "Occupier": "Piled Boxes"
+                },
+                "DimensionalParameters": [
+                    {
+                        "Min": 0.9999,
+                        "Max": 0.9999
+                    },
+                    {}
                 ]
             }
         ]

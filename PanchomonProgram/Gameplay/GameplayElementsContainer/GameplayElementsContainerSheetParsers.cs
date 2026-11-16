@@ -179,7 +179,7 @@ namespace Gameplay.GameplayElementsContainer
                 pokemonToCalculateStill.Remove(pokemonName);
             }
             // Megas don't need movesets as they're not obtained or instantiated in the same ways as other mons
-            foreach (string mega in pokemonToCalculateStill.Keys.Where(n=>n.Contains("-Mega")))
+            foreach (string mega in pokemonToCalculateStill.Keys.Where(n => n.Contains("-Mega")))
             {
                 pokemonToCalculateStill.Remove(mega);
             }
@@ -545,8 +545,7 @@ namespace Gameplay.GameplayElementsContainer
                 string[] fields = lines[i].Split(',');
                 Dungeon foundDungeon = Dungeons[fields[1]]; // Get dungeon by name
                 foundDungeon.Difficulty = fields[7].Length; // Number of stars (or any characters) is the diff
-                string weatherString = fields[9].Trim();
-                foundDungeon.CurrentWeather = foundDungeon.WeatherForecasts.Where(w => w.Name == weatherString).FirstOrDefault();
+                foundDungeon.CurrentWeather = fields[9].Trim(); // Current weather
             }
         }
     }

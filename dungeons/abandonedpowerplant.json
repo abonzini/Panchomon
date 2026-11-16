@@ -644,7 +644,48 @@
     ],
     "PossibleBattlefields": [
         {
-            "Name": "Generator Room"
+            "Name": "Generator Room",
+            "Weight": 0.1,
+            "Floors": [
+                1,
+                2
+            ]
+        },
+        {
+            "Name": "Reactor Tanks",
+            "Weight": 1,
+            "Floors": [
+                0,
+                1,
+                2
+            ]
+        },
+        {
+            "Name": "Lt. Surge",
+            "Weight": 1,
+            "Floors": [
+                0,
+                1,
+                2
+            ]
+        },
+        {
+            "Name": "Reactor And Control Room",
+            "Weight": 1,
+            "Floors": [
+                0,
+                1,
+                2
+            ]
+        },
+        {
+            "Name": "Power Plant Offices",
+            "Weight": 1,
+            "Floors": [
+                0,
+                1,
+                2
+            ]
         }
     ]
 }

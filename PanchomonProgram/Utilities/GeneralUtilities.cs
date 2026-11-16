@@ -91,7 +91,7 @@ namespace Utilities
         {
             if (min == max) return (int)Math.Round(min);
             double amplitude = max - min;
-            return (int)Math.Round(min) + (int)Math.Round(Math.Pow(rng.NextDouble(), decay) * amplitude);
+            return (int)Math.Round(min) + (int)(Math.Round(Math.Pow(rng.NextDouble(), decay)) * amplitude);
         }
         /// <summary>
         /// Generates a double between min-max that decays exponentially
@@ -171,6 +171,8 @@ namespace Utilities
         /// <returns>A random index within the list</returns>
         public static int GetRandomWeightedIndex(List<double> weights, Random rng)
         {
+            if (weights.Count == 0) return -1;
+            if (weights.Count == 1) return 0;
             // Calculate picks now
             double totalSum = weights.Sum();
             // Once processed, I'll get a random number, uniform within sum

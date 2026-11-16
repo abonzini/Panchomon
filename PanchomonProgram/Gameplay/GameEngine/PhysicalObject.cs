@@ -120,7 +120,7 @@
             {
                 Name = "Electric Panel",
                 _description = "Decorative electric panel for APP walls in certain rooms.",
-                DebugChar = '▥'
+                DebugChar = '▩'
             };
             yield return new PhysicalObject()
             {
