@@ -57,7 +57,7 @@ namespace Gameplay.GameEngine
             };
             yield return new Surface()
             {
-                Name = "Paradox Tile",
+                Name = "Purple Tile",
                 _description = "Paradox tile floor used for the paradox venue.",
                 HindersMovement = false,
                 DebugColor = ConsoleColor.DarkMagenta

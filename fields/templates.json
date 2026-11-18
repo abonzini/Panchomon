@@ -46,7 +46,7 @@
                 "ChildTarget": "ALL",
                 "Action": "FILL",
                 "Brush": {
-                    "CliffFace": "CLEAN_TILE",
+                    "CliffFace": "TILE",
                     "TileSurface": "Clean Tile"
                 }
             },

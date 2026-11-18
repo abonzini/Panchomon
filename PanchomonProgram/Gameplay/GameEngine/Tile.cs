@@ -13,8 +13,7 @@ namespace Gameplay.GameEngine
         NONE, // Non-rendered
         STONE,
         WATERFALL,
-        PARADOX_TILE,
-        CLEAN_TILE
+        TILE
     }
     public class Tile : SimulationElement
     {

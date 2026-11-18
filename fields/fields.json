@@ -151,14 +151,14 @@
     },
     "Paradox 2-Side": {
         "BasicBrush": {
-            "CliffFace": "PARADOX_TILE",
-            "TileSurface": "Paradox Tile"
+            "CliffFace": "TILE",
+            "TileSurface": "Purple Tile"
         },
         "PropagatorActions": [
             {
                 "ChildTarget": "ALL_LAUNCHPAD",
                 "Brush": {
-                    "CliffFace": "PARADOX_TILE",
+                    "CliffFace": "TILE",
                     "TileSurface": "White Paint"
                 },
                 "Action": "SPLIT_ROOM",
@@ -221,14 +221,14 @@
     },
     "Paradox 4-Side": {
         "BasicBrush": {
-            "CliffFace": "PARADOX_TILE",
-            "TileSurface": "Paradox Tile"
+            "CliffFace": "TILE",
+            "TileSurface": "Purple Tile"
         },
         "PropagatorActions": [
             {
                 "ChildTarget": "ALL_LAUNCHPAD",
                 "Brush": {
-                    "CliffFace": "PARADOX_TILE",
+                    "CliffFace": "TILE",
                     "TileSurface": "White Paint"
                 },
                 "Action": "SPLIT_ROOM",
@@ -338,7 +338,7 @@
                 "ChildTarget": "CENTER",
                 "Action": "FILL",
                 "Brush": {
-                    "CliffFace": "CLEAN_TILE",
+                    "CliffFace": "TILE",
                     "TileSurface": "Clean Tile"
                 }
             },
@@ -461,14 +461,14 @@
     },
     "Generator Room": {
         "BasicBrush": {
-            "CliffFace": "CLEAN_TILE",
+            "CliffFace": "TILE",
             "TileSurface": "Clean Tile"
         },
         "PropagatorActions": [
             {
                 "ChildTarget": "ALL_LAUNCHPAD",
                 "Brush": {
-                    "TileSurface": "Paradox Tile"
+                    "TileSurface": "Purple Tile"
                 },
                 "Action": "SPLIT_ROOM",
                 "DimensionalParameters": [
@@ -1137,14 +1137,14 @@
     },
     "Reactor Tanks": {
         "BasicBrush": {
-            "CliffFace": "CLEAN_TILE",
+            "CliffFace": "TILE",
             "TileSurface": "Clean Tile"
         },
         "PropagatorActions": [
             {
                 "ChildTarget": "ALL_LAUNCHPAD",
                 "Brush": {
-                    "TileSurface": "Paradox Tile"
+                    "TileSurface": "Purple Tile"
                 },
                 "Action": "SPLIT_ROOM",
                 "DimensionalParameters": [
@@ -1319,14 +1319,14 @@
     },
     "Lt. Surge": {
         "BasicBrush": {
-            "CliffFace": "CLEAN_TILE",
+            "CliffFace": "TILE",
             "TileSurface": "Clean Tile"
         },
         "PropagatorActions": [
             {
                 "ChildTarget": "ALL_LAUNCHPAD",
                 "Brush": {
-                    "TileSurface": "Paradox Tile"
+                    "TileSurface": "Purple Tile"
                 },
                 "Action": "SPLIT_ROOM",
                 "DimensionalParameters": [
@@ -1489,14 +1489,14 @@
     },
     "Reactor And Control Room": {
         "BasicBrush": {
-            "CliffFace": "CLEAN_TILE",
+            "CliffFace": "TILE",
             "TileSurface": "Clean Tile"
         },
         "PropagatorActions": [
             {
                 "ChildTarget": "ALL_LAUNCHPAD",
                 "Brush": {
-                    "TileSurface": "Paradox Tile"
+                    "TileSurface": "Purple Tile"
                 },
                 "Action": "SPLIT_ROOM",
                 "DimensionalParameters": [
@@ -1592,15 +1592,15 @@
     },
     "Power Plant Offices": {
         "BasicBrush": {
-            "CliffFace": "CLEAN_TILE",
+            "CliffFace": "TILE",
             "TileSurface": "Clean Tile"
         },
         "PropagatorActions": [
             {
                 "ChildTarget": "ALL_LAUNCHPAD",
                 "Brush": {
-                    "CliffFace": "CLEAN_TILE",
-                    "TileSurface": "Paradox Tile"
+                    "CliffFace": "TILE",
+                    "TileSurface": "Purple Tile"
                 },
                 "Action": "SPLIT_ROOM",
                 "DimensionalParameters": [
