@@ -1728,6 +1728,21 @@
                 "Tags": "Power Plant Warehouse"
             },
             {
+                "ChildTarget": "BATTLE_FIELD",
+                "Action": "FLOOD_OFFSET",
+                "Brush": {
+                    "TileSurface": "Conductive Grid"
+                },
+                "Aggressive": true,
+                "DimensionalParameters": [
+                    {
+                        "Min": 2,
+                        "Max": 6,
+                        "Decay": 0.7
+                    }
+                ]
+            },
+            {
                 "Action": "PAINT_EVERYWHERE",
                 "ChildTarget": "ALL_NON_LAUNCHPAD",
                 "Tags": "Flood",

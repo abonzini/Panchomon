@@ -4,15 +4,6 @@ using Newtonsoft.Json.Converters;
 
 namespace Gameplay.GameEngine
 {
-    /// <summary>
-    /// Whtether mon can participate in battle
-    /// </summary>
-    public enum BattleAvailability
-    {
-        READY,
-        BUSY,
-        FAINT,
-    }
     [JsonConverter(typeof(StringEnumConverter))]
     public enum AdditionalPokemonParameter
     {
@@ -28,14 +19,12 @@ namespace Gameplay.GameEngine
         public double HpPercent = 1;
         public List<NonVolatileStatus> NonVolatileStatusConditions = [];
         public HashSet<AdditionalPokemonParameter> AdditionalParameters = [];
-        public BattleAvailability Availability = BattleAvailability.READY;
         public double[] BaseStatMult = [1, 1, 1, 1, 1, 1];
-        public double[] VolatileStatMult = [1, 1, 1, 1, 1, 1];
         public override string ToString()
         {
             return $"{AssociatedEntity} ({HpPercent * 100}%)";
         }
-        public override string Name { get => AssociatedEntity.Name; set => base.Name = value; } // Use associated entitiy's name
+        public override string Name { get => AssociatedEntity.Name; set => base.Name = value; } // Use associated entity's name
         public override char DebugChar { get => AssociatedEntity.Name[0]; set => base.DebugChar = value; } // Use associated entitiy's name first char
 
         /// <summary>

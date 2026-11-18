@@ -59,7 +59,6 @@ namespace Utilities
         /// <returns>The (shuffled) list (not a copy)</returns>
         public static List<T> ShuffleList<T>(List<T> list, int offset, int number, Random rng)
         {
-            rng ??= new Random(); // New rng if passed a null one
             int n = number;
             while (n > 1) // Fischer yates
             {
@@ -77,6 +76,7 @@ namespace Utilities
         /// <returns>The (shuffled) list (not a copy)</returns>
         public static List<T> ShuffleList<T>(List<T> list, Random rng)
         {
+            if (list.Count <= 1) return list;
             return ShuffleList(list, 0, list.Count, rng);
         }
         /// <summary>

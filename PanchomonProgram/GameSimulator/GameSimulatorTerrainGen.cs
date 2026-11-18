@@ -169,6 +169,10 @@ namespace GameSimulator
                     {
                         Launchpads.Add(side, nextParty); // The launchpads are added for additional launchpad-based ops
                     }
+                    else
+                    {
+                        Field = nextParty;
+                    }
                     foreach ((int x, int y) in nextParty.GetAllTileCoords()) // Paint this square with the basic brush
                     {
                         _grid[x, y] = new Tile(x, y); // Instance tile
@@ -208,6 +212,7 @@ namespace GameSimulator
                 // Execute action
                 List<Partition> targets = action.ChildTarget switch // Get all the partitions I'm going to work with
                 {
+                    PropagationTarget.BATTLE_FIELD => [Field],
                     PropagationTarget.EVERYWHERE => [GetMasterPartition()],
                     PropagationTarget.ALL_NON_LAUNCHPAD => [.. currentPartitions.GetPartitions().Where(p => !Launchpads.ContainsValue(p))],
                     PropagationTarget.RANDOM_ONE => [GeneralUtilities.GetRandomPick([.. currentPartitions.GetPartitions()], _rng)],

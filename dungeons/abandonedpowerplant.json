@@ -27,17 +27,17 @@
     "GeneralItemDropChance": 0.3,
     "CommonDrops": [
         {
-            "Name": "Electric Gummy",
+            "Name": "Yellow Gummy",
             "Min": 2,
             "Max": 3
         },
         {
-            "Name": "Steel Gummy",
+            "Name": "Silver Gummy",
             "Min": 2,
             "Max": 3
         },
         {
-            "Name": "Poison Gummy",
+            "Name": "Pink Gummy",
             "Min": 2,
             "Max": 3
         },

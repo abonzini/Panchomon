@@ -9,7 +9,8 @@ namespace GameSimulator
         const int LAUNCHPAD_DEPTH = 3; // Add 3 extra for launchpad
         const int BOARD_DIM = 15; // Board is 15x15 (plus launchpads)
         readonly Tile[,] _grid = new Tile[2 * LAUNCHPAD_DEPTH + BOARD_DIM, 2 * LAUNCHPAD_DEPTH + BOARD_DIM]; // All tiles are null but will be init
-        readonly Dictionary<Side, Partition> Launchpads = new Dictionary<Side, Partition>();
+        readonly Dictionary<Side, Partition> Launchpads = new Dictionary<Side, Partition>(); // This will contain launchpads and also, specifically separated by side
+        Partition Field; // This partition corresponds to everything that isn't a launchpad
         List<TrainerInstance> _trainers;
         GameParameters _parameters = new GameParameters();
         // State machine for simulation

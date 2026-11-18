@@ -12,13 +12,30 @@ namespace Gameplay.GameplayElementsContainer
         /// <returns></returns>
         PokemonEntity GenerateBlankPokemon(string Species)
         {
-            PokemonEntity newPokemon = new PokemonEntity();
+            bool isShiny = false;
+            PokemonSpecies species;
             if (Species.Contains('★'))
             {
-                newPokemon.IsShiny = true;
+                isShiny = true;
                 Species = Species.Split('★')[0].Trim(); // Get the actual species then
             }
-            newPokemon.Species = Dex[Species];
+            species = Dex[Species];
+            return GenerateBlankPokemon(species, isShiny);
+        }
+        /// <summary>
+        /// Generates a blank Pokemon template given a species and if it's shiny
+        /// </summary>
+        /// <param name="species">Species</param>
+        /// <param name="isShiny">If shiny</param>
+        /// <returns>A generated Pokemon Entity</returns>
+        PokemonEntity GenerateBlankPokemon(PokemonSpecies species, bool isShiny)
+        {
+            PokemonEntity newPokemon = new PokemonEntity()
+            {
+                IsShiny = isShiny,
+                Species = species,
+                PokeBall = PokeBalls["Poke Ball"] // Use a default ball to avoid trouble
+            };
             return newPokemon;
         }
         /// <summary>
@@ -44,27 +61,6 @@ namespace Gameplay.GameplayElementsContainer
             for (int i = 0; i < mon.Abilities.Length && i < availableAbilities.Count; i++) // Add as many as possible
             {
                 mon.Abilities[i] = availableAbilities[i];
-            }
-        }
-        /// <summary>
-        /// Equips a gummy to the desired pokemon. Slot will be used for a tiebreaker, otherwise ignored
-        /// </summary>
-        /// <param name="mon">Which mon to give gummy</param>
-        /// <param name="gummy">Which gummy to give</param>
-        /// <param name="slot">In case of monotype, which slot (1 or 2) to give, unused otherwise</param>
-        public static void EquipGummyToPokemon(PokemonEntity mon, Gummy gummy, int slot)
-        {
-            if (slot == 0) throw new Exception("Cant equip a gummy in slot 0, it's always active!");
-            if (mon.Species.Types.Count == 1) // Monotype pokemon detected, then use the slot
-            {
-                if (mon.Species.Types[0] == gummy.Type) // If gummy is of correct type, activate the desired ability
-                {
-                    mon.AbilityActive[slot] = true;
-                }
-            }
-            else // Then just check which slot the activation goes
-            {
-                mon.AbilityActive[slot] = (mon.Species.Types[slot - 1] == gummy.Type); // Activate slot if gummy type matches
             }
         }
         /// <summary>

@@ -19,7 +19,6 @@ namespace PanchomonBackend
         public MessageLogger ExplorationMessage = new MessageLogger();
         public ExplorationPrizeList Prizes = new ExplorationPrizeList();
         public Dungeon DungeonData;
-        public TrainerEntity TrainerEntity;
         public TrainerInstance TrainerInstance;
         public TrainerInstance FollowerInstance = null; // Follower if any
         public Random Rng;
@@ -216,52 +215,54 @@ namespace PanchomonBackend
             Console.Clear();
             // Initialize from beginning
             _context.DungeonData = GameplayElementsContainer.GlobalData.Dungeons[Dungeon];
-            _context.TrainerEntity = GameplayElementsContainer.GlobalData.Trainers[TrainerAndSeeds.Item1]; // Find the trainer data
+            TrainerEntity trainerEntity = GameplayElementsContainer.GlobalData.Trainers[TrainerAndSeeds.Item1]; // Find the trainer data
             // Initialize all trainer/mon instances. Will be stored in context
-            if (_context.TrainerEntity.AutoTeam)
+            if (trainerEntity.AutoTeam)
             {
                 Random trainerRng = new Random(TrainerAndSeeds.Item2); // Only case where this is used really. Shuffles the Pokemon around, only remaining RNG stuff
-                GeneralUtilities.ShuffleList(_context.TrainerEntity.Pokemon, trainerRng);
+                GeneralUtilities.ShuffleList(trainerEntity.Pokemon, trainerRng);
             }
             int monSeed = TrainerAndSeeds.Item3;
             Random pokemonRng = new Random(monSeed);
             _context.TrainerInstance = new TrainerInstance()
             {
-                Name = _context.TrainerEntity.Name,
+                Name = trainerEntity.Name,
                 Team = Side.BOTTOM,
+                AssociatedEntity = trainerEntity,
                 MaxMonsInField = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
-                // No limit for max mon used, will start with 3-10 and then who knows
-                ActiveJewelry = _context.TrainerEntity.EquippedJewelry,
-                PokemonInTeam = [.. _context.TrainerEntity.Pokemon.Select(p => new PokemonInstance(p, new Random(pokemonRng.Next())))]
+                PokemonInTeam = [.. trainerEntity.Pokemon.Select(p => new PokemonInstance(p, new Random(pokemonRng.Next()))).Take(GameplayElementsContainer.DEFAULT_BATTLE_NMONS)]
             };
             // Check expl ticket
             if (UseExplorationTicket) // Remove ticket and also different message
             {
                 KeyItem explTicketItem = GameplayElementsContainer.GlobalData.KeyItems["Exploration Ticket"];
-                GeneralUtilities.AddtemToCountDictionary(_context.TrainerEntity.KeyItems, explTicketItem, -1); // Remove a ticket
-                _context.ExplorationMessage.EventTitle = $"<@{_context.TrainerEntity.DiscordId}> Meanwhile, {_context.TrainerEntity.Name} used their Exploration Ticket for a free trip to {Dungeon}.";
+                GeneralUtilities.AddtemToCountDictionary(trainerEntity.KeyItems, explTicketItem, -1); // Remove a ticket
+                _context.ExplorationMessage.EventTitle = $"<@{trainerEntity.DiscordId}> Meanwhile, {trainerEntity.Name} used their Exploration Ticket for a free trip to {Dungeon}.";
             }
             else
             {
-                _context.ExplorationMessage.EventTitle = $"<@{_context.TrainerEntity.DiscordId}> Meanwhile, {_context.TrainerEntity.Name} went on to explore the {Dungeon}.";
+                _context.ExplorationMessage.EventTitle = $"<@{trainerEntity.DiscordId}> Meanwhile, {trainerEntity.Name} went on to explore the {Dungeon}.";
             }
             // Check if trainer will use an exploration assistance favour
-            if (_context.TrainerEntity.Favours.Count > 0)
+            if (trainerEntity.Favours.Count > 0)
             {
-                NpcTrainer favourTrainer = _context.TrainerEntity.Favours.Keys.Where(t => t.Name == ExplFavour).FirstOrDefault();
+                NpcTrainer favourTrainer = trainerEntity.Favours.Keys.Where(t => t.Name == ExplFavour).FirstOrDefault();
                 if (favourTrainer != null)
                 {
                     Console.WriteLine($"{favourTrainer.Name} selected");
-                    GeneralUtilities.AddtemToCountDictionary(_context.TrainerEntity.Favours, favourTrainer, -1); // Take favour
-                    TrainerEntity followerEntity = GameplayElementsContainer.GlobalData.CreateNpcEntity(favourTrainer, _context.TrainerEntity.Pokemon.Count, _context.Rng.Next(), 1, GameplayElementsContainer.SHINY_CHANCE, []);
+                    GeneralUtilities.AddtemToCountDictionary(trainerEntity.Favours, favourTrainer, -1); // Take favour
+                    // Same workflow as tournament NPC init
+                    if (!favourTrainer.FullyLoadedData) throw new Exception($"{favourTrainer.Name} has no data yet. Will need to add it so that they can participate!");
+                    List<PokemonSpecies> npcMons = favourTrainer.AvailablePokemon;
+                    TrainerEntity favourEntity = GameplayElementsContainer.GlobalData.CreateNpcEntity(favourTrainer.Name, favourTrainer.PictureUrl, npcMons, int.MaxValue, GameplayElementsContainer.GetTrainerRankPowerLevel(favourTrainer.TrainerRank), GameplayElementsContainer.SHINY_CHANCE, favourTrainer.AvailableItems, _context.Rng);
+                    // Now instance it
                     _context.FollowerInstance = new TrainerInstance()
                     {
-                        Name = followerEntity.Name,
-                        Team = Side.BOTTOM, // Same team as player
-                        MaxMonsInField = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
-                        // No limit for max mon used, will start with 3-10 and then who knows
-                        ActiveJewelry = followerEntity.EquippedJewelry,
-                        PokemonInTeam = [.. followerEntity.Pokemon.Select(p => new PokemonInstance(p, new Random(_context.Rng.Next())))] // Instance the mons too
+                        Name = favourEntity.Name,
+                        AssociatedEntity = favourEntity,
+                        Team = Side.BOTTOM,
+                        MaxMonsInField = 1, // Otherwise this would be too strong
+                        PokemonInTeam = [.. favourEntity.Pokemon.Select(p => new PokemonInstance(p, new Random(pokemonRng.Next()))).Take(GameplayElementsContainer.DEFAULT_BATTLE_NMONS)]
                     };
                 }
             }
@@ -277,7 +278,7 @@ namespace PanchomonBackend
             _context.DropTable = [.. _context.DungeonData.CommonDrops, .. _context.DungeonData.RareDrops];
             // Exploration loop begin
             List<Encounter> pastEncounters = [];
-            Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine($"Beginning of {_context.TrainerEntity.Name}'s exploration in {Dungeon}"));
+            Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine($"Beginning of {trainerEntity.Name}'s exploration in {Dungeon}"));
             for (_context.CurrentFloor = 0; _context.CurrentFloor < GameplayElementsContainer.DUNGEON_NUM_FLOORS; _context.CurrentFloor++) // Begin the iteration of all floors
             {
                 bool isFinalFloor = (_context.CurrentFloor == GameplayElementsContainer.DUNGEON_NUM_FLOORS - 1);
@@ -331,9 +332,8 @@ namespace PanchomonBackend
                     // Now, attempt to do the room's encounter
                     ExecuteEncounter(roomEncounter);
                     pastEncounters.Add(roomEncounter); // This encounter happened
-                    // Checking for the case where trainer or their friend has no more usable Pokemon
-                    if (!_context.TrainerInstance.PokemonInTeam.Any(p => p.Availability == BattleAvailability.READY)
-                        && !_context.FollowerInstance.PokemonInTeam.Any(p => p.Availability == BattleAvailability.READY))
+                    // If trainer has no more usable mons, exploration is over
+                    if (!_context.TrainerInstance.PokemonInTeam.Any(p => p.HpPercent > 0))
                     {
                         Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine($"Trainer blacked out..."));
                         goto DungeonEnd; // Just go directly to end
@@ -344,9 +344,9 @@ namespace PanchomonBackend
             ;
             // Exploration end part
             Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine("Exploration end."));
-            GameplayElementsContainer.ConsumeTrainersItems(_context.TrainerEntity); // Consume all items for all mons
-            GameplayElementsContainer.ConsumeTrainersJewelry(_context.TrainerEntity); // Consume jew too
-            _context.TrainerEntity.SaveTrainerCsv(DirectoryPath);
+            GameplayElementsContainer.ConsumeTrainersItems(trainerEntity); // Consume all items for all mons
+            GameplayElementsContainer.ConsumeTrainersJewelry(trainerEntity); // Consume jew too
+            trainerEntity.SaveTrainerCsv(DirectoryPath);
             SaveExplorationOutcome(); // Replace with message stuff
         }
         /// <summary>
@@ -395,10 +395,10 @@ namespace PanchomonBackend
             switch (encounter.Type)
             {
                 case EncounterType.CAMPING:
-                    weight *= (_context.TrainerEntity.Sandwiches.Count > 0) ? 1.2 : 0.8; // Less chance of eating sandwich if there's not in the inventory
+                    weight *= (_context.TrainerInstance.AssociatedEntity.Sandwiches.Count > 0) ? 1.2 : 0.8; // Less chance of eating sandwich if there's not in the inventory
                     break;
                 case EncounterType.EVO:
-                    weight *= (_context.TrainerEntity.EvoPlates.Count > 0 && _context.TrainerEntity.Pokemon.Any(p => p.Species.Evos.Count > 0)) ? 1.2 : 0.8; // Less chance of eating evo event if no mon can use it (or no plates)
+                    weight *= (_context.TrainerInstance.AssociatedEntity.EvoPlates.Count > 0 && _context.TrainerInstance.AssociatedEntity.Pokemon.Any(p => p.Species.Evos.Count > 0)) ? 1.2 : 0.8; // Less chance of eating evo event if no mon can use it (or no plates)
                     break;
                 case EncounterType.HP_HEAL:
                     weight *= 1 + _context.TrainerInstance.PokemonInTeam.Count(p => p.HpPercent < 0.66) * 0.05; // Add a 5% for each mon below 66%
@@ -407,7 +407,7 @@ namespace PanchomonBackend
                     weight *= _context.TrainerInstance.PokemonInTeam.Any(p => p.HpPercent < 0.25) ? 1.2 : 0.8; // If mon heavily hurt there's more chance
                     break;
                 case EncounterType.REVIVE:
-                    weight *= _context.TrainerInstance.PokemonInTeam.Any(p => p.Availability == BattleAvailability.FAINT) ? 1.2 : 0.8; // If mon dead
+                    weight *= _context.TrainerInstance.PokemonInTeam.Any(p => p.HpPercent <= 0) ? 1.2 : 0.8; // If mon dead
                     break;
                 case EncounterType.STATUS_CURE:
                     weight *= _context.TrainerInstance.PokemonInTeam.Any(p => p.NonVolatileStatusConditions.Count > 0) ? 1.2 : 0.8; // If any mon status'd
@@ -444,12 +444,12 @@ namespace PanchomonBackend
                 case EncounterType.CAMPING:
                     {
                         Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(encounter.PreEncounterString)); // TODO: Also animation later on ig
-                        if (_context.TrainerEntity.Sandwiches.Count > 0) // Sandwich to be eaten
+                        if (_context.TrainerInstance.AssociatedEntity.Sandwiches.Count > 0) // Sandwich to be eaten
                         {
-                            string nextString = encounter.EncounterSuccessString.Replace("$1", _context.TrainerEntity.Sandwiches[0].Name); // Will eat first sando in list
-                            _context.AddSandwichEffect(_context.TrainerEntity.Sandwiches[0]);
+                            string nextString = encounter.EncounterSuccessString.Replace("$1", _context.TrainerInstance.AssociatedEntity.Sandwiches[0].Name); // Will eat first sando in list
+                            _context.AddSandwichEffect(_context.TrainerInstance.AssociatedEntity.Sandwiches[0]);
                             Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine(nextString)); // TODO: Also animation later on ig
-                            _context.TrainerEntity.Sandwiches.RemoveAt(0); // Consume sandwich
+                            _context.TrainerInstance.AssociatedEntity.Sandwiches.RemoveAt(0); // Consume sandwich
                         }
                         else // Otherwise, you fail to eat anything ig
                         {
@@ -465,14 +465,14 @@ namespace PanchomonBackend
                         foreach (PokemonInstance mon in targetMons)
                         {
                             // Bit of a long one but basically, get all the evos that can consume any plate from the trainer in order to evolve
-                            List<PokemonSpecies> validEvos = [.. mon.AssociatedEntity.Species.Evos.Where(e => _context.TrainerEntity.EvoPlates.Keys.Any(p => e.Types.Contains(p.Type)))];
+                            List<PokemonSpecies> validEvos = [.. mon.AssociatedEntity.Species.Evos.Where(e => _context.TrainerInstance.AssociatedEntity.EvoPlates.Keys.Any(p => e.Types.Contains(p.Type)))];
                             if (validEvos.Count > 0)
                             {
                                 // Mon has a valid evo! Will evolve...
                                 string preName = mon.AssociatedEntity.ToString();
                                 PokemonSpecies chosenEvo = GeneralUtilities.GetRandomPick(validEvos, _context.Rng); // Get a random one
-                                EvoPlate usedPlate = GeneralUtilities.GetRandomPick([.. _context.TrainerEntity.EvoPlates.Keys.Where(p => chosenEvo.Types.Contains(p.Type))], _context.Rng); // Get a random plate needed
-                                _context.TrainerEntity.EvolveProcess(mon.AssociatedEntity, usedPlate, _context.Rng); // Atp this mon should have evolved
+                                EvoPlate usedPlate = GeneralUtilities.GetRandomPick([.. _context.TrainerInstance.AssociatedEntity.EvoPlates.Keys.Where(p => chosenEvo.Types.Contains(p.Type))], _context.Rng); // Get a random plate needed
+                                _context.TrainerInstance.AssociatedEntity.EvolveProcess(mon.AssociatedEntity, usedPlate, _context.Rng); // Atp this mon should have evolved
                                 Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine($"{preName} has evolved into {mon.Name} using the {usedPlate.Name}!")); // TODO: Also animation later on ig
                             }
                         }
@@ -484,7 +484,7 @@ namespace PanchomonBackend
                     }
                     break;
                 case EncounterType.HP_HEAL:
-                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY && m.HpPercent < 1)];
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.HpPercent > 0 && m.HpPercent < 1)];
                     ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
                     {
                         mon.HpPercent += 0.3;
@@ -492,7 +492,7 @@ namespace PanchomonBackend
                     });
                     break;
                 case EncounterType.FULL_RESTORE:
-                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY && m.HpPercent < 1).OrderBy(m => m.HpPercent)];
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.HpPercent > 0 && m.HpPercent < 1).OrderBy(m => m.HpPercent)];
                     targetMons = targetMons.Count > 0 ? [targetMons[0]] : []; // Get the first element only (or keep an empty list otherwise)
                     ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
                     {
@@ -500,16 +500,15 @@ namespace PanchomonBackend
                     });
                     break;
                 case EncounterType.REVIVE:
-                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.FAINT)];
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.HpPercent <= 0)];
                     targetMons = targetMons.Count > 0 ? [targetMons[0]] : []; // Get the first element only (or keep an empty list otherwise)
                     ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
                     {
                         mon.HpPercent = 1;
-                        mon.Availability = BattleAvailability.READY;
                     });
                     break;
                 case EncounterType.STATUS_CURE:
-                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY && m.NonVolatileStatusConditions.Count > 0)];
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.HpPercent > 1 && m.NonVolatileStatusConditions.Count > 0)];
                     targetMons = targetMons.Count > 0 ? [targetMons[0]] : []; // Get the first element only (or keep an empty list otherwise)
                     ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
                     {
@@ -517,19 +516,14 @@ namespace PanchomonBackend
                     });
                     break;
                 case EncounterType.DAMAGE_TRAP:
-                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY)];
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.HpPercent > 0)];
                     ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
                     {
                         mon.HpPercent -= 0.25;
-                        if (mon.HpPercent < 0)
-                        {
-                            mon.HpPercent = 0;
-                            mon.Availability = BattleAvailability.FAINT;
-                        }
                     });
                     break;
                 case EncounterType.STATUS_TRAP:
-                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY)];
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.HpPercent > 0)];
                     targetMons = targetMons.Count > 0 ? [GeneralUtilities.GetRandomPick(targetMons, _context.Rng)] : []; // Get a random one of these
                     ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
                     {
@@ -537,12 +531,11 @@ namespace PanchomonBackend
                     });
                     break;
                 case EncounterType.KILL_TRAP:
-                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY)];
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.HpPercent > 0)];
                     targetMons = targetMons.Count > 0 ? [GeneralUtilities.GetRandomPick(targetMons, _context.Rng)] : []; // Get a random one of these
                     ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
                     {
                         mon.HpPercent = 0;
-                        mon.Availability = BattleAvailability.FAINT;
                     });
                     break;
                 case EncounterType.JOINER:
@@ -566,8 +559,8 @@ namespace PanchomonBackend
                 case EncounterType.NPC_BATTLE:
                     // Npc rank will be diff dependant, so choose a combo of trainer ranks which will be used for filtering
                     HashSet<TrainerRank> validRanks = new HashSet<TrainerRank>();
-                    if (_context.DungeonData.Difficulty <= 4) validRanks.Add(TrainerRank.UNRANKED);
-                    if (_context.DungeonData.Difficulty >= 4 && _context.DungeonData.Difficulty <= 5) validRanks.Add(TrainerRank.GYM);
+                    if (_context.DungeonData.Difficulty <= 3) validRanks.Add(TrainerRank.UNRANKED);
+                    if (_context.DungeonData.Difficulty >= 3 && _context.DungeonData.Difficulty <= 5) validRanks.Add(TrainerRank.GYM);
                     if (_context.DungeonData.Difficulty >= 4 && _context.DungeonData.Difficulty <= 6) validRanks.Add(TrainerRank.ELITE4);
                     if (_context.DungeonData.Difficulty >= 5) validRanks.Add(TrainerRank.CHAMPION);
                     // Pick a random one, keep name
@@ -590,7 +583,6 @@ namespace PanchomonBackend
                                     {
                                         Type = EncounterEnemyType.SPECIFIC_TRAINER,
                                         EquipType = EncounterItemType.TRAINER,
-                                        EquipChance = GameplayElementsContainer.NPC_ITEM_CHANCE,
                                         Number = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
                                         MaxSimultaneousMons = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
                                         Catchable = false,
@@ -599,25 +591,26 @@ namespace PanchomonBackend
                                 ]
                             };
                     // Finally, need to do some shenanigans with the trainer, including healing to full, using 3 mons max (reverted after!) and reviving mon if needed
-                    _context.TrainerInstance.MaxMonsUsed = GameplayElementsContainer.DEFAULT_BATTLE_NMONS;
+                    List<PokemonInstance> allTrainerMons = _context.TrainerInstance.PokemonInTeam; // Store temporarily
                     // Revive mons until there's at least 3 alive
-                    while (_context.TrainerInstance.PokemonInTeam.Count(m => m.Availability == BattleAvailability.READY) < GameplayElementsContainer.DEFAULT_BATTLE_NMONS)
+                    while (allTrainerMons.Count(m => m.HpPercent > 0) < GameplayElementsContainer.DEFAULT_BATTLE_NMONS)
                     {
-                        targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability != BattleAvailability.READY)];
+                        targetMons = [.. allTrainerMons.Where(m => m.HpPercent <= 0)];
                         PokemonInstance monToRevive = GeneralUtilities.GetRandomPick(targetMons, _context.Rng);
                         monToRevive.HpPercent = 1;
-                        monToRevive.Availability = BattleAvailability.READY;
                     }
                     // Then heal top 3 mons to full hp
-                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.Availability == BattleAvailability.READY)]; // Get alive mons
-                    for (int i = 0; i < GameplayElementsContainer.DEFAULT_BATTLE_NMONS; i++)
+                    targetMons = [.. allTrainerMons.Where(m => m.HpPercent > 0).Take(GameplayElementsContainer.DEFAULT_BATTLE_NMONS)]; // Get 3 alive mons
+                    foreach (PokemonInstance mon in targetMons)
                     {
-                        targetMons[i].HpPercent = 1; // Done!
-                        targetMons[i].NonVolatileStatusConditions.Clear();
+                        mon.HpPercent = 1; // Done!
+                        mon.NonVolatileStatusConditions.Clear();
                     }
+                    _context.TrainerInstance.PokemonInTeam = targetMons; // Equip these mons temporarily to the trainer
                     // Now run it
                     ResolveBattleAndPrizeEncounter(npcBattleEncounter);
-                    _context.TrainerInstance.MaxMonsUsed = int.MaxValue; // Revert to trainer emptying their whole team in battles
+                    // Revert trainer
+                    _context.TrainerInstance.PokemonInTeam = allTrainerMons;
                     break;
                 case EncounterType.UNOWN:
                     string unownWord = GeneralUtilities.GetRandomPick([.. GameplayElementsContainer.GlobalData.UnownLookup.Keys], _context.Rng); // Find a random unown word
@@ -688,12 +681,12 @@ namespace PanchomonBackend
             List<TrainerInstance> allEnemyInstances = []; // Contains all generated enemy instances that will participate in this fight
             // Potential prize tables, if the event allows it, both pokemon and items but only filled if catchable
             List<PokemonInstance> catchableEnemyMons = [];
-            List<string> potentialPrizes = [];
+            List<string> itemEquipHistory = [];
             // Assemble all sides, enemy sides
             HashSet<PokemonSpecies> speciesUsed = []; // Species that have been used by these enemies
             foreach (EnemyParams enemy in encounter.Enemies) // Instance, one by one
             {
-                List<string> itemsUsed = []; // Items that have been used by enemy, there can be duplicates
+                List<string> itemsEquipped = []; // Items that have been used by enemy, there can be duplicates
                 if (enemy.Type == EncounterEnemyType.SPECIFIC_TRAINER)
                 {
                     proceduralStrings.Add(encounter.Params[paramsIndex]); // If a specific trainer, add it here too as otherwise it won't be added to procedural strings to consumptions
@@ -724,43 +717,45 @@ namespace PanchomonBackend
                     _ => throw new Exception("Unknown scripted item type"),
                 };
                 // Then, time to assemble the enemy "NPC trainer"
-                NpcTrainer enemyTrainer;
+                TrainerEntity enemyTrainerEntity;
                 if (enemy.Type == EncounterEnemyType.SPECIFIC_TRAINER) // Fetch the NPC trainer directly from NPC list
                 {
-                    enemyTrainer = GameplayElementsContainer.GlobalData.AllNpcTrainers[encounter.Params[paramsIndex++]];
+                    NpcTrainer enemyNpc = GameplayElementsContainer.GlobalData.AllNpcTrainers[encounter.Params[paramsIndex++]];
+                    if (!enemyNpc.FullyLoadedData) throw new Exception($"{enemyNpc.Name} has no data yet. Will need to add it so that they can battle!");
+                    enemyTrainerEntity = GameplayElementsContainer.GlobalData.CreateNpcEntity(enemyNpc.Name, enemyNpc.PictureUrl, enemyNpc.AvailablePokemon, GameplayElementsContainer.DEFAULT_BATTLE_NMONS, GameplayElementsContainer.GetTrainerRankPowerLevel(enemyNpc.TrainerRank), GameplayElementsContainer.SHINY_CHANCE, enemyNpc.AvailableItems, _context.Rng); // Identical to tournament
                 }
                 else // Otherwise generate the new NPC procedurally
                 {
-                    enemyTrainer = new NpcTrainer()
+                    // How many mons will appear?
+                    int nMons = enemy.Number;
+                    if (encounter.UseEnemyCountSandwich) // Check if the sandwich can alter the count
                     {
-                        // No name or picture, would be left blank in renderer
-                        TrainerRank = TrainerRank.WILD_MONS,
-                        FullyLoadedData = true, // It's generated here...
-                        AvailablePokemon = [.. availablePokemonSpecies],
-                        AvailableItems = availableEquippableItems // Adds the potential items by name, the actual drop amount and prize type would be considered later (if the battle is won!)
-                    };
-                }
-                // How many mons will appear?
-                int nMons = enemy.Number;
-                if (encounter.UseEnemyCountSandwich) // Check if the sandwich can alter the count
-                {
-                    nMons += _context.GetExtraWildPokemon();
-                    if (nMons < 1) // Always at least one enemy...
-                    {
-                        nMons = 1;
+                        nMons += _context.GetExtraWildPokemon();
+                        if (nMons < 1) // Always at least one enemy...
+                        {
+                            nMons = 1;
+                        }
                     }
+                    // Now that I know N mons and the available equippable items, will iterate to pull X items from item pull
+                    for (int i = 0; i < nMons; i++)
+                    {
+                        if (GeneralUtilities.GetRandomBool(enemy.EquipChance, _context.Rng)) // Roll to see if one item is pulled from the pool
+                        {
+                            itemsEquipped.Add(GeneralUtilities.GetRandomPick(availableEquippableItems, _context.Rng)); // Add the next item to the pool
+                        }
+                    }
+                    // Ok finally create trainer instance
+                    // This new system separates power level (e.g. how many moves, abilities) they have while still keeping equippable consistency and just not equipping some items if they don't do anything...
+                    enemyTrainerEntity = GameplayElementsContainer.GlobalData.CreateNpcEntity("Wild Pokemon", "", [.. availablePokemonSpecies], nMons, GetDifficultyPowerLevel(), _context.GetShinyChance(), itemsEquipped, _context.Rng);
                 }
-                // Next, the trainer entity, i.e. from NPC data into an actual entity
-                TrainerEntity enemyTrainerEntity = GameplayElementsContainer.GlobalData.CreateNpcEntity(enemyTrainer, nMons, _context.Rng.Next(), enemy.EquipChance, _context.GetShinyChance(), itemsUsed); // For now the shiny chance is identical to all mons, scripted or not
                 // Finally, the actual instance for game sim, both the trainer AND the mons
                 // Create instance of all mons
                 TrainerInstance enemyTrainerInstance = new TrainerInstance()
                 {
                     Name = enemyTrainerEntity.Name,
+                    AssociatedEntity = enemyTrainerEntity,
                     Team = Side.TOP,
                     MaxMonsInField = enemy.MaxSimultaneousMons,
-                    // No limit for max mon used, will start with 3-10 and then who knows
-                    ActiveJewelry = enemyTrainerEntity.EquippedJewelry,
                     // Will add mons one by one later due to potential customizations
                 };
                 foreach (PokemonEntity enemyMon in enemyTrainerEntity.Pokemon) // Instance one by one
@@ -776,7 +771,7 @@ namespace PanchomonBackend
                 speciesUsed.UnionWith(enemyTrainerEntity.Pokemon.Select(p => p.Species)); // Add to species used, useful for inter-enemy logic
                 if (enemy.Catchable)
                 {
-                    potentialPrizes.AddRange(itemsUsed);
+                    itemEquipHistory.AddRange(itemsEquipped);
                     catchableEnemyMons.AddRange(enemyTrainerInstance.PokemonInTeam); // Add also the mons if catchable
                 }
                 proceduralStrings.Add(string.Join(", ", [.. enemyTrainerInstance.PokemonInTeam.Select(p => p.AssociatedEntity.Species.Name).Distinct().Order()])); // Add this enemy to procedural strings
@@ -790,7 +785,7 @@ namespace PanchomonBackend
                 EncounterItemType.COMMON_ITEM_POOL => [GeneralUtilities.GetRandomPick([.. _context.DungeonData.CommonDrops.Select(d => d.Name)], _context.Rng)], // One item of the common item pool
                 EncounterItemType.RARE_ITEM_POOL => [GeneralUtilities.GetRandomPick([.. _context.DungeonData.RareDrops.Select(d => d.Name)], _context.Rng)], // One item of the rare item pool
                 EncounterItemType.ALL_ITEM_POOLS => [GeneralUtilities.GetRandomPick([.. _context.DropTable.Select(d => d.Name)], _context.Rng)], // Any item from the pool
-                EncounterItemType.EQUIPPED_ITEMS => [.. potentialPrizes], // All the items that were equipped by the enemies
+                EncounterItemType.EQUIPPED_ITEMS => [.. itemEquipHistory], // All the items that were equipped by the enemies
                 EncounterItemType.ENEMIES => [], // Nothing in prizes then (the 0-rank mon appears after)
                 EncounterItemType.IMP => [$"{GeneralUtilities.GetRandomNumber(2, 4, _context.Rng)} IMP"], // Between 2-4 IMP
                 EncounterItemType.DISKS => [GameplayElementsContainer.GlobalData.GetMoveDiskByMove(GeneralUtilities.GetRandomPick([.. GameplayElementsContainer.GlobalData.Moves.Values], _context.Rng)).Name,
@@ -806,9 +801,9 @@ namespace PanchomonBackend
                 EncounterItemType.TRAINER => [.. GameplayElementsContainer.GlobalData.AllNpcTrainers[encounter.Params[paramsIndex++]].AvailableItems],
                 _ => throw new Exception("Unknown scripted item type for prizes"),
             };
-            if (potentialPrizes.Count > 0)
+            if (prizes.Count > 0)
             {
-                proceduralStrings.Add(string.Join(", ", [.. potentialPrizes.Distinct().Order()])); // And also all items
+                proceduralStrings.Add(string.Join(", ", [.. prizes.Distinct().Order()])); // And also all items
             }
             else
             {
@@ -860,7 +855,7 @@ namespace PanchomonBackend
                         if (count < 0) count = 0; // Can't remove items!
                     }
                     int totalCount = (int)Math.Round(count);
-                    GameplayElementsContainer.GlobalData.GivePrizeToTrainer(item, _context.TrainerEntity, totalCount);
+                    GameplayElementsContainer.GlobalData.GivePrizeToTrainer(item, _context.TrainerInstance.AssociatedEntity, totalCount);
                     GeneralUtilities.AddtemToCountDictionary(_context.Prizes.ItemPrizes, item, totalCount); // Add also to log message
                 }
                 // If sandwich for item drop was used, then I roll it
@@ -869,7 +864,7 @@ namespace PanchomonBackend
                     _context.UseSandwichEffect(SandwichEffectType.ITEM_DROP, s => { }); // Need to actually notify renderer about this later on
                 }
                 // Then, the mon tables. Check the CatchableSpecies, which should've been modified during battle
-                foreach (PokemonInstance mon in catchableEnemyMons.Where(m => m.Availability == BattleAvailability.FAINT)) // Can only capture fainted mons
+                foreach (PokemonInstance mon in catchableEnemyMons.Where(m => m.HpPercent <= 0)) // Can only capture fainted mons
                 {
                     AddMonToCatchTable(mon); // Add mon to catchtable
                 }
@@ -889,11 +884,11 @@ namespace PanchomonBackend
         /// </summary>
         void SaveExplorationOutcome()
         {
-            string explFile = $"{_context.TrainerEntity.Name.ToUpper()}_EXPLORATION.expl";
+            string explFile = $"{_context.TrainerInstance.AssociatedEntity.Name.ToUpper()}_EXPLORATION.expl";
             _context.ExplorationMessage.EventText.Clear();
             _context.ExplorationMessage.EventText.AppendLine($"Fate: ||FATE HERE||");
             _context.ExplorationMessage.EventText.AppendLine();
-            _context.ExplorationMessage.EventText.AppendLine($"__{_context.TrainerEntity.Name} has obtained the following items:__");
+            _context.ExplorationMessage.EventText.AppendLine($"__{_context.TrainerInstance.AssociatedEntity.Name} has obtained the following items:__");
             _context.ExplorationMessage.EventText.AppendLine();
             // List of items ordered
             List<string> prizes = [.. _context.Prizes.ItemPrizes.Select(p => $"{p.Key}{((p.Value > 1) ? $" x{p.Value}" : "")}").Order()];
@@ -910,7 +905,7 @@ namespace PanchomonBackend
             }
             _context.ExplorationMessage.EventText.Append($"||"); // Close rank-spoilered text
             // Check if any warning for items
-            string warningString = GameplayElementsContainer.GetTrainerInventoryWarning(_context.TrainerEntity);
+            string warningString = GameplayElementsContainer.GetTrainerInventoryWarning(_context.TrainerInstance.AssociatedEntity);
             if (warningString != "")
             {
                 _context.ExplorationMessage.PostEventText.AppendLine($"**Note: **||{warningString}||");
@@ -964,15 +959,23 @@ namespace PanchomonBackend
             }
         }
         /// <summary>
+        /// Returns the power level of an NPC (i.e. how equipped the mons are) depending on the current dungeon difficulty
+        /// </summary>
+        /// <returns></returns>
+        double GetDifficultyPowerLevel()
+        {
+            return 0.1 + 0.3 * (_context.DungeonData.Difficulty - 1); // Will cap at 4+ to numbers bigger than 1 but it doesn't matter as it just makes chances >1
+        }
+        /// <summary>
         /// Returns, for a specific dungeon, the stat multiplier that needs to apply
         /// </summary>
         /// <returns>The resulting difficulty stat mmultiplier</returns>
         double GetDifficultyStatMult()
         {
             double mult = 1;
-            if (_context.DungeonData.Difficulty > 1)
+            if (_context.DungeonData.Difficulty > 3)
             {
-                mult += _context.DungeonData.Difficulty * 0.05; // Multiplier will go from 1.10 to 1.3 depending on the diff
+                mult += 0.1 * (_context.DungeonData.Difficulty - 3); // Mult will do 0.1 0.2 0.3 at diffs 4,5,6
             }
             return mult;
         }

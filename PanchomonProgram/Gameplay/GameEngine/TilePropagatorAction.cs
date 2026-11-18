@@ -78,6 +78,7 @@ namespace Gameplay.GameEngine
     [JsonConverter(typeof(StringEnumConverter))]
     public enum PropagationTarget
     {
+        BATTLE_FIELD = -11, /// The battlefield (i.e. the field) but the whole thing even if partitioned
         EVERYWHERE = -10, /// The whole grid at once
         ALL_NON_LAUNCHPAD = -9, /// Any room that's not launchpad
         RANDOM_ONE = -8, /// A single room, random one

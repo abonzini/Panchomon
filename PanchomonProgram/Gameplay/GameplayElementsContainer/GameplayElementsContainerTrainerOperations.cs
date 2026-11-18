@@ -6,43 +6,45 @@ namespace Gameplay.GameplayElementsContainer
     public partial class GameplayElementsContainer
     {
         /// <summary>
-        /// Given an npc name, create a trainer instance (temporary) to be used for NPC battles (e.g. wild Pokemon)
+        /// Gets the power level of a trainer given their status, useful for tournaments and other events where they participate
         /// </summary>
-        /// <param name="npcId">Name of Npc to init</param>
-        /// <param name="nMons">Number of mons to give this NPC</param>
-        /// <param name="rngSeed">Seed to be used for making NPC team</param>
-        /// <param name="itemEquipChance">Chance of using each of the npc's item on a mon</param>
-        /// <param name="shinyChance">Chance of each indiv mon being shiny!</param>
-        /// <param name="usedItemsOut">Output of the items that have been used in this design (for exploration droprate), list WILL be modified</param>
-        /// <returns>An instantiated trainer entity to use in battles and such. usedItems list will be also filled</returns>
-        public TrainerEntity CreateNpcEntity(string npcId, int nMons, int rngSeed, double itemEquipChance, int shinyChance, List<string> usedItemsOut)
+        /// <param name="rank">Rank of trainer</param>
+        /// <returns>Power level for this rank</returns>
+        static public double GetTrainerRankPowerLevel(TrainerRank rank)
         {
-            return CreateNpcEntity(AllNpcTrainers[npcId], nMons, rngSeed, itemEquipChance, shinyChance, usedItemsOut);
+            return rank switch
+            {
+                TrainerRank.UNRANKED => 0.2,
+                TrainerRank.GYM => 0.4,
+                TrainerRank.ELITE4 => 0.6,
+                TrainerRank.CHAMPION => 8,
+                _ => 0, // Default no additional power
+            };
         }
         /// <summary>
-        /// Given an npc name, create a trainer instance (temporary) to be used for NPC battles (e.g. wild Pokemon)
+        /// Creates a brand new trainer entity based on the minimum neccesary things needed
         /// </summary>
-        /// <param name="npcTrainer">Name of Npc to init</param>
-        /// <param name="nMons">Number of mons to give this NPC. If int.max will just use all the mon table. Otherwise it'll repeat mons until number is fulfilled</param>
-        /// <param name="rngSeed">Seed to be used for making NPC team</param>
-        /// <param name="itemChance">Chance of using each of the npc's item on a mon. If chance > 1 can roll multiple times!</param>
-        /// <param name="shinyChance">Chance of each indiv mon being shiny!</param>
-        /// <param name="usedItemsOut">Output of the items that have been used in this design (for exploration droprate), list WILL be modified</param>
-        /// <returns>An instantiated trainer entity to use in battles and such. usedItems list will be also filled</returns>
-        public TrainerEntity CreateNpcEntity(NpcTrainer npcTrainer, int nMons, int rngSeed, double itemChance, int shinyChance, List<string> usedItemsOut)
+        /// <param name="name">Name of trainer</param>
+        /// <param name="pictureUrl">Picture URL (if any) for battle</param>
+        /// <param name="pokemonToUse">Which Pokemon will be used</param>
+        /// <param name="nMons">How many mons to use, this can be int.maxvalue to jsut use exactly all the pokemon</param>
+        /// <param name="powerLevel">Power level of Pokemon to be applied after equipping items, this is a number between 0 and 1 equivalent to the chance of every improvement to be used</param>
+        /// <param name="shinyChance">Shiny chance</param>
+        /// <param name="itemsToUse">Which items to attempt to use. Only Move Disks and Held Items are considered, as all others are just subject to powerLevel</param>
+        /// <param name="rng">Rng to use</param>
+        /// <returns>A created npc entity</returns>
+        public TrainerEntity CreateNpcEntity(string name, string pictureUrl, List<PokemonSpecies> pokemonToUse, int nMons, double powerLevel, int shinyChance, List<string> itemsToUse, Random rng)
         {
-            if (!npcTrainer.FullyLoadedData) throw new Exception($"{npcTrainer.Name} has no data yet. Will need to add it so that they can battle!");
-            Random npcRng = new Random(rngSeed);
-            usedItemsOut.Clear();
-            // Ok generate the trainer then
+            // First, generate the trainer
             TrainerEntity newTrainer = new TrainerEntity()
             {
-                Name = npcTrainer.Name,
+                Name = name,
+                PictureUrl = pictureUrl,
                 AutoTeam = true
             };
             // Shuffled list
-            List<PokemonSpecies> allSpeciesShuffled = [.. npcTrainer.AvailablePokemon]; // Copy as it'll be shuffled
-            GeneralUtilities.ShuffleList(allSpeciesShuffled, npcRng);
+            List<PokemonSpecies> allSpeciesShuffled = [.. pokemonToUse]; // Copy as it'll be shuffled
+            GeneralUtilities.ShuffleList(allSpeciesShuffled, rng);
             // Iterator function that will re-generate allSpeciesShuffled
             IEnumerable<PokemonSpecies> RepeatPokemonGenerator()
             {
@@ -53,7 +55,7 @@ namespace Gameplay.GameplayElementsContainer
                     if (i >= allSpeciesShuffled.Count) // If reached end, reset and reshuffle list
                     {
                         i = 0;
-                        GeneralUtilities.ShuffleList(allSpeciesShuffled, npcRng);
+                        GeneralUtilities.ShuffleList(allSpeciesShuffled, rng);
                     }
                     totalYielded++;
                     yield return allSpeciesShuffled[i++];
@@ -64,59 +66,66 @@ namespace Gameplay.GameplayElementsContainer
             IEnumerable<PokemonSpecies> monIterator = (nMons == int.MaxValue) ? allSpeciesShuffled : RepeatPokemonGenerator();
             foreach (PokemonSpecies chosenSpecies in monIterator)
             {
-                PokemonEntity newMon = new PokemonEntity()
-                {
-                    Species = chosenSpecies,
-                    PokeBall = PokeBalls["Poke Ball"], // All npc mons have a pokeball unless specified otherwise
-                    IsShiny = npcRng.Next(0, shinyChance) == 0
-                };
-                RandomizePokemon(newMon, npcRng); // Randomize the rest for this mon
-                // Now, the fun part, if an item is to be assigned to this mon, do a roll and equip where corresponds, only one of each item type ok?
-                double monItemChance = itemChance;
-                while (monItemChance > 0)
-                {
-                    List<string> availableItems = [.. npcTrainer.AvailableItems];
-                    if (availableItems.Count > 0 && npcRng.NextDouble() < monItemChance)
-                    {
-                        // An item will be chosen
-                        string itemChosen = GeneralUtilities.GetRandomPick(availableItems, npcRng);
-                        usedItemsOut.Add(itemChosen);
-                        availableItems.Remove(itemChosen);
-                        switch (GetItemType(itemChosen))
-                        {
-                            case ItemType.GUMMY:
-                                EquipGummyToPokemon(newMon, Gummies[itemChosen], 1); // Equip gummy if possible, randomly into slot 1 if tiebreaks
-                                break;
-                            case ItemType.HELD_ITEM:
-                                newMon.HeldItem = HeldItems[itemChosen];
-                                break;
-                            case ItemType.JEWELRY:
-                                newTrainer.EquippedJewelry = Jewelries[itemChosen]; // This one is funny because it equips to the trainer
-                                newTrainer.EquippedJewelryUses = 1;
-                                break;
-                            case ItemType.MOVE_DISK:
-                                if (newMon.MoveDisks[0] == null)
-                                {
-                                    newMon.MoveDisks[0] = GetMoveDisk(itemChosen);
-                                }
-                                else
-                                {
-                                    newMon.MoveDisks[1] = GetMoveDisk(itemChosen); // Override slot 2 if already has some move disk
-                                }
-                                break;
-                            case ItemType.MINT:
-                                newMon.Nature = Mints[itemChosen].AssociatedNature;
-                                break;
-                            case ItemType.POKE_BALL:
-                                newMon.PokeBall = PokeBalls[itemChosen];
-                                break;
-                            default:
-                                break; // Item can't be equipped in this way to an npc
-                        }
-                    }
-                    monItemChance -= 1; // Roll done, next one
-                }
+
+                PokemonEntity newMon = GlobalData.GenerateBlankPokemon(chosenSpecies, rng.Next(0, shinyChance) == 0); // Instantiate blank Pokemon template with the corresponding shiny chance
+                RandomizePokemon(newMon, rng); // Randomize the rest for this mon
                 newTrainer.Pokemon.Add(newMon);
+            }
+            // Now that trainer has all mons, now comes both the setting of items AND applying remaining power level
+            List<string> usableItems = [.. itemsToUse]; // Copy for shuffling
+            GeneralUtilities.ShuffleList(usableItems, rng);
+            foreach (string item in usableItems) // Will only equip but attempt only when item makes sense
+            {
+                ItemType itemType = GetItemType(item);
+                List<PokemonEntity> validMons = itemType switch
+                {
+                    ItemType.MOVE_DISK => [.. newTrainer.Pokemon.Where(m => m.MoveDisks.Contains(null))], // Only equip to mons that have empty move slots
+                    ItemType.HELD_ITEM => [.. newTrainer.Pokemon.Where(p => p.HeldItem == null && HeldItems[item].IsUseful(p))], // Only on mons who can actually use this shit and have no item already
+                    _ => [] // No mons will attempt to equip this
+                };
+                PokemonEntity monToEquip = GeneralUtilities.GetRandomPick(validMons, rng); // Will apply to a random mon
+                if (itemType == ItemType.MOVE_DISK) // Equip in first blank slot
+                {
+                    if (monToEquip.MoveDisks[0] == null)
+                    {
+                        monToEquip.MoveDisks[0] = GetMoveDisk(item);
+                    }
+                    else
+                    {
+                        monToEquip.MoveDisks[1] = GetMoveDisk(item); // Should never override as this would have not been a valid mon
+                    }
+                }
+                if (itemType == ItemType.HELD_ITEM) // Equip in first blank slot
+                {
+                    monToEquip.HeldItem = HeldItems[item];
+                }
+            }
+            // Finally, apply power level to remaining elements
+            foreach (PokemonEntity mon in newTrainer.Pokemon)
+            {
+                // First, moves. If move disk slot is empty, add blank disks
+                for (int i = 0; i < mon.MoveDisks.Length; i++)
+                {
+                    if (mon.MoveDisks[i] == null && GeneralUtilities.GetRandomBool(powerLevel, rng)) // If move disk slot empty, add a blank disk depending on power luck
+                    {
+                        mon.MoveDisks[i] = GetMoveDisk(MoveDisk.BLANK_DISK);
+                    }
+                }
+                // Then, abilities. Try enabling them
+                for (int i = 0; i < mon.Abilities.Length; i++)
+                {
+                    if (mon.Abilities[i] != null && !mon.AbilityActive[i]) // A valid disabled ability can flip to active
+                    {
+                        mon.AbilityActive[i] = GeneralUtilities.GetRandomBool(powerLevel, rng);
+                    }
+                }
+                // Finally, held items. Add basic held items such as gem (80%) or boosting item (20%) of their specific types if they're usable
+                if (mon.HeldItem == null && GeneralUtilities.GetRandomBool(powerLevel, rng)) // Do i equip random item?
+                {
+                    // Check all potential equips
+                    List<string> potentialEquips = GeneralUtilities.GetRandomBool(0.8, rng) ? [.. mon.Species.Types.Select(t => GameplayElement.GetName(t, "Gem"))] : [.. mon.Species.Types.Select(HeldItem.GetBoostingItemName)];
+                    mon.HeldItem = GeneralUtilities.GetRandomPick([.. potentialEquips.Select(e => HeldItems[e]).Where(i => i.IsUseful(mon))], rng); // Equip an useful one, if any
+                }
             }
             return newTrainer;
         }

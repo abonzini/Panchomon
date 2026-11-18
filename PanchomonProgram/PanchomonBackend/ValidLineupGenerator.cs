@@ -10,16 +10,15 @@ namespace PanchomonBackend
         /// <param name="trainer">Which trainer</param>
         /// <param name="nMons">Number of mons desired in the team</param>
         /// <param name="constraintSets">All the different valid constraints that apply separately, only one needs to succeed</param>
-        /// <param name="acceptLessMons">Whether to accept less pokemon if not enough</param>
         /// <returns>List of possible team builds that satisfy constraints</returns>
-        public static List<List<PokemonSpecies>> GetTrainersSpeciesSets(TrainerEntity trainer, int nMons, List<Constraint> constraintSets, bool acceptLessMons)
+        public static List<List<PokemonEntity>> GetTrainerUsableMons(TrainerEntity trainer, int nMons, List<Constraint> constraintSets)
         {
-            List<List<PokemonSpecies>> resultingBuilds = new List<List<PokemonSpecies>>();
+            List<List<PokemonEntity>> resultingBuilds = new List<List<PokemonEntity>>();
             foreach (Constraint constraint in constraintSets)
             {
                 // Get the possible lineup for this constraint
-                List<PokemonSpecies> thisTeamBuild = GetPossibleBuild(trainer, constraint);
-                if (thisTeamBuild.Count >= nMons || acceptLessMons) // Need to check now if I have enough options to build a team with these constraints
+                List<PokemonEntity> thisTeamBuild = GetPossibleBuild(trainer, constraint);
+                if (thisTeamBuild.Count >= nMons) // Need to check now if I have enough options to build a team with these constraints
                 {
                     resultingBuilds.Add(thisTeamBuild);
                 }
@@ -32,19 +31,14 @@ namespace PanchomonBackend
         /// <param name="trainer">Which trainer</param>
         /// <param name="constraint">The teambuild constraints</param>
         /// <returns>The teambuild that could satisfy all these</returns>
-        static List<PokemonSpecies> GetPossibleBuild(TrainerEntity trainer, Constraint constraint)
+        static List<PokemonEntity> GetPossibleBuild(TrainerEntity trainer, Constraint constraint)
         {
-            List<PokemonSpecies> resultingBuild = new List<PokemonSpecies>();
+            List<PokemonEntity> resultingBuild = new List<PokemonEntity>();
             foreach (PokemonEntity mon in trainer.Pokemon)
             {
-                if (mon.PokeBall.Name == "Heavy Ball")
-                {
-                    // Mon with heavy ball is unusable. (TODO Decide if this should be a pokeball property?)
-                    continue;
-                }
                 if (constraint.IsSatisfiedByPokemon(mon.Species)) // Check if mon would potentially satisfy constraint
                 {
-                    resultingBuild.Add(mon.Species);
+                    resultingBuild.Add(mon);
                 }
             }
             return resultingBuild;
@@ -55,16 +49,15 @@ namespace PanchomonBackend
         /// <param name="npc">Which NPC</param>
         /// <param name="nMons">Number of mons desired in the team</param>
         /// <param name="constraintSets">All the different valid constraints that apply separately, only one needs to succeed</param>
-        /// <param name="acceptLessMons">Whether to accept less pokemon if not enough</param>
         /// <returns>List of possible team builds that satisfy constraints</returns>
-        public static List<List<PokemonSpecies>> GetNpcSpeciesSets(NpcTrainer npc, int nMons, List<Constraint> constraintSets, bool acceptLessMons)
+        public static List<List<PokemonSpecies>> GetNpcSpeciesSets(NpcTrainer npc, int nMons, List<Constraint> constraintSets)
         {
             List<List<PokemonSpecies>> resultingBuilds = new List<List<PokemonSpecies>>();
             foreach (Constraint constraint in constraintSets)
             {
                 // Get the possible lineup for this constraint
                 List<PokemonSpecies> thisTeamBuild = GetPossibleBuild(npc, constraint);
-                if (thisTeamBuild.Count >= nMons || acceptLessMons) // Need to check now if I have enough options to build a team with these constraints
+                if (thisTeamBuild.Count >= nMons) // Need to check now if I have enough options to build a team with these constraints
                 {
                     resultingBuilds.Add(thisTeamBuild);
                 }

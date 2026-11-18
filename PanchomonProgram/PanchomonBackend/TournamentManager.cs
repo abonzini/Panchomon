@@ -47,13 +47,13 @@ namespace PanchomonBackend
             OngoingTournament.RequestAdditionalInfo(nPlayers); // Request tournament-specific info (if needed)
             // Finally, player selection, pre-filter trainers whether they can participate in this event (also all the npcs)
             List<TrainerEntity> trainers = [];
-            List<NpcTrainer> validNpcs = [.. GameplayElementsContainer.GlobalData.AllNpcTrainers.Values.Where(n => ValidLineupGenerator.GetNpcSpeciesSets(n, GameplayElementsContainer.DEFAULT_BATTLE_NMONS, OngoingTournament.Constraints, false).Count > 0)];
+            List<NpcTrainer> validNpcs = [.. GameplayElementsContainer.GlobalData.AllNpcTrainers.Values.Where(n => ValidLineupGenerator.GetNpcSpeciesSets(n, GameplayElementsContainer.DEFAULT_BATTLE_NMONS, OngoingTournament.Constraints).Count > 0)];
             foreach (TrainerEntity trainer in GameplayElementsContainer.GlobalData.Trainers.Values)
             {
-                List<List<PokemonSpecies>> possibleBuilds = ValidLineupGenerator.GetTrainersSpeciesSets(trainer, GameplayElementsContainer.DEFAULT_BATTLE_NMONS, OngoingTournament.Constraints, false); // Always 3 mons, these battles are 3v3 for the foreseeable future
+                List<List<PokemonEntity>> possibleBuilds = ValidLineupGenerator.GetTrainerUsableMons(trainer, GameplayElementsContainer.DEFAULT_BATTLE_NMONS, OngoingTournament.Constraints); // Always 3 mons, these battles are 3v3 for the foreseeable future
                 if (possibleBuilds.Count > 0)
                 {
-                    foreach (List<PokemonSpecies> build in possibleBuilds)
+                    foreach (List<PokemonEntity> build in possibleBuilds)
                     {
                         Console.WriteLine($"{trainer.Name} <@{trainer.DiscordId}>: {string.Join(", ", build.Select(p => p.Name))}");
                     }
@@ -172,7 +172,7 @@ namespace PanchomonBackend
         public string Field { get; set; } = "";
         // Privates
         protected Random _rng;
-        readonly List<TrainerEntity> _participants = new List<TrainerEntity>();
+        readonly List<TrainerInstance> _participants = new List<TrainerInstance>(); // Trainer instances, ready to use in battle
         readonly MessageLogger _tournamentMessage = new MessageLogger();
         /// <summary>
         /// Updates all the participants, generates NPC, randomizes teams if needed
@@ -188,57 +188,71 @@ namespace PanchomonBackend
                 string participantName = participantData.Item1;
                 int participantSeed = participantData.Item2;
                 Random trainerRng = new Random(participantSeed);
+                // If it's an actual trainer, just make their team depedning if auto-team, choose proper build, and instance the trainer ready to go
                 if (GameplayElementsContainer.GlobalData.Trainers.TryGetValue(participantName, out TrainerEntity nextTrainerEntity))
                 {
-                    // Trainer is a player, need to add, and randomize team shuffle if auto-team (lazy way)
                     if (nextTrainerEntity.AutoTeam)
                     {
+                        // If team randomized, then shuffle before
                         GeneralUtilities.ShuffleList(nextTrainerEntity.Pokemon, trainerRng);
                     }
-                    _participants.Add(nextTrainerEntity); // Regardless, add trainer
+                    // Get trainer's build depending on constraints
+                    List<List<PokemonEntity>> possibleBuilds = ValidLineupGenerator.GetTrainerUsableMons(nextTrainerEntity, GameplayElementsContainer.DEFAULT_BATTLE_NMONS, Constraints); // Always 3 mons, these battles are 3v3 for the foreseeable future
+                    List<PokemonEntity> chosenBuild;
+                    if (possibleBuilds.Count == 1) // If only one build, no need to go crazy
+                    {
+                        chosenBuild = possibleBuilds[0];
+                    }
+                    else if (nextTrainerEntity.AutoTeam)
+                    {
+                        // In this case, the build is chosen at random
+                        chosenBuild = GeneralUtilities.GetRandomPick(possibleBuilds, trainerRng);
+                    }
+                    else
+                    {
+                        // This is a weird one, because it means we need to manually choose according to what the trainer has chosen
+                        // (Fortunately this is only in monotype)
+                        Console.WriteLine($"Trainer {nextTrainerEntity.Name} has many valid mon lineups available for this tournament (current mon order is {string.Join(", ", nextTrainerEntity.Pokemon.Select(p => p.Name))})");
+                        for (int i = 0; i < possibleBuilds.Count; i++)
+                        {
+                            Console.WriteLine($"{i}: {string.Join(", ", possibleBuilds[i].Select(p => p.Name))}");
+                        }
+                        Console.WriteLine("Choose?");
+                        chosenBuild = possibleBuilds[int.Parse(Console.ReadLine())];
+                    }
+                    // And finally finally, need to place the mons in order from top to bottom until they satisfy the order that first, the mons present in the build, and then the others
+                    // Bubble up algorithm so that all valids are bubbled up while preserving order
+                    int arrayBase = 0;// Where to put the valid Pokemon into, this masks all indices < arrayBase from being shuffled again as they'd be valid ones
+                    for (int i = 0; i < nextTrainerEntity.Pokemon.Count && arrayBase < GameplayElementsContainer.DEFAULT_BATTLE_NMONS; i++)
+                    {
+                        if (chosenBuild.Contains(nextTrainerEntity.Pokemon[i])) // This pokemon is an allowed mon for the build
+                        {
+                            // Swap with next invalid mon
+                            (nextTrainerEntity.Pokemon[i], nextTrainerEntity.Pokemon[arrayBase]) = (nextTrainerEntity.Pokemon[arrayBase], nextTrainerEntity.Pokemon[i]);
+                            arrayBase++;
+                        }
+                    }
+                    // nextTrainerEntity ready to be instanced and stored
                 }
                 else
                 {
-                    // Trainer is definitely an NPC then, we'll create a placehodler entity (use all mons here because they're filtered by the constraints after
-                    nextTrainerEntity = GameplayElementsContainer.GlobalData.CreateNpcEntity(participantName, int.MaxValue, participantSeed, GameplayElementsContainer.NPC_ITEM_CHANCE, GameplayElementsContainer.SHINY_CHANCE, new List<string>()); // The list itself doesnt matter in this case
-                    _participants.Add(nextTrainerEntity); // Regardless, add trainer
+                    // Trainer is definitely an NPC then. Slightly different workflow: Create an entitiy only with the allowed mons, equip them according to diff level (for now fixed) and then we're ready to instance
+                    NpcTrainer npc = GameplayElementsContainer.GlobalData.AllNpcTrainers[participantName];
+                    if (!npc.FullyLoadedData) throw new Exception($"{npc.Name} has no data yet. Will need to add it so that they can battle!");
+                    List<PokemonSpecies> npcMons = GeneralUtilities.GetRandomPick(ValidLineupGenerator.GetNpcSpeciesSets(npc, GameplayElementsContainer.DEFAULT_BATTLE_NMONS, Constraints), trainerRng);
+                    nextTrainerEntity = GameplayElementsContainer.GlobalData.CreateNpcEntity(npc.Name, npc.PictureUrl, npcMons, GameplayElementsContainer.DEFAULT_BATTLE_NMONS, GameplayElementsContainer.GetTrainerRankPowerLevel(npc.TrainerRank), GameplayElementsContainer.SHINY_CHANCE, npc.AvailableItems, trainerRng); // Create the instance based on npc rng params and other things
                 }
-                // Finally, need to reshuffle trainer's internal team so that the valid N mons are in front
-                List<List<PokemonSpecies>> possibleBuilds = ValidLineupGenerator.GetTrainersSpeciesSets(nextTrainerEntity, GameplayElementsContainer.DEFAULT_BATTLE_NMONS, Constraints, false); // Always 3 mons, these battles are 3v3 for the foreseeable future
-                List<PokemonSpecies> chosenBuild;
-                if (possibleBuilds.Count == 1) // If only one build, no need to go crazy
+                // Create base instance for this trainer (NPC or not)
+                int monSeed = participantData.Item3;
+                Random pokemonRng = new Random(monSeed);
+                TrainerInstance nextTrainerInstance = new TrainerInstance()
                 {
-                    chosenBuild = possibleBuilds[0];
-                }
-                else if (nextTrainerEntity.AutoTeam)
-                {
-                    // In this case, the build is chosen at random
-                    chosenBuild = GeneralUtilities.GetRandomPick(possibleBuilds, trainerRng);
-                }
-                else
-                {
-                    // This is a weird one, because it means we need to manually choose according to what the trainer has chosen
-                    // (Fortunately this is only in monotype)
-                    Console.WriteLine($"Trainer {nextTrainerEntity.Name} has many valid mon lineups available for this tournament (current mon order is {string.Join(", ", nextTrainerEntity.Pokemon.Select(p => p.Name))})");
-                    for (int i = 0; i < possibleBuilds.Count; i++)
-                    {
-                        Console.WriteLine($"{i}: {string.Join(", ", possibleBuilds[i].Select(p => p.Name))}");
-                    }
-                    Console.WriteLine("Choose?");
-                    chosenBuild = possibleBuilds[int.Parse(Console.ReadLine())];
-                }
-                // And finally finally, need to place the mons in order from top to bottom until they satisfy the order that first, the mons present in the build, and then the others
-                // Bubble up algorithm so that all valids are bubbled up while preserving order
-                int arrayBase = 0;// Where to put the valid Pokemon into, this masks all indices < arrayBase from being shuffled again as they'd be valid ones
-                for (int i = 0; i < nextTrainerEntity.Pokemon.Count && arrayBase < GameplayElementsContainer.DEFAULT_BATTLE_NMONS; i++)
-                {
-                    if (chosenBuild.Contains(nextTrainerEntity.Pokemon[i].Species)) // This pokemon is an allowed species for the build
-                    {
-                        // Swap with next invalid mon
-                        (nextTrainerEntity.Pokemon[i], nextTrainerEntity.Pokemon[arrayBase]) = (nextTrainerEntity.Pokemon[arrayBase], nextTrainerEntity.Pokemon[i]);
-                        arrayBase++;
-                    }
-                }
+                    Name = nextTrainerEntity.Name,
+                    AssociatedEntity = nextTrainerEntity,
+                    MaxMonsInField = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
+                    PokemonInTeam = [.. nextTrainerEntity.Pokemon.Select(p => new PokemonInstance(p, new Random(pokemonRng.Next()))).Take(GameplayElementsContainer.DEFAULT_BATTLE_NMONS)]
+                };
+                _participants.Add(nextTrainerInstance);
             }
             // This trainer list should be aligned with the seed one and never shuffled again
         }
@@ -285,7 +299,7 @@ namespace PanchomonBackend
             // First, salary
             for (int i = 0; i < _participants.Count; i++)
             {
-                TrainerEntity participant = _participants[i];
+                TrainerEntity participant = _participants[i].AssociatedEntity;
                 // Prize calc
                 int place = GetParticipantPlace(i);
                 (string, int) prize;
@@ -346,40 +360,28 @@ namespace PanchomonBackend
             if (match.IsBye)
             {
                 match.Winner = match.Player1Index;
-                TrainerEntity player1 = _participants[match.Player1Index];
+                TrainerEntity player1 = _participants[match.Player1Index].AssociatedEntity;
                 Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"{player1.Name} gets a bye"));
             }
             else
             {
-                // Create trainer instances, put in there all the data needed to initialize the battle, wait for the output class, which is used to populate fields
-                // Usage of new system to create the battle (here there'll be crazier team stuff if it's a more special tourn)
-                // Create trainer instances, opposed teams, 3 mons max, apply pokemon seed (may go into method if starts to happen a lot)
-                TrainerEntity player1 = _participants[match.Player1Index];
-                int monSeed = ParticipantSeedAndMonSeed[match.Player1Index].Item3;
-                Random pokemonRng = new Random(monSeed);
-                TrainerInstance trainer1 = new TrainerInstance()
+                // Get trainer instances and ready for battle
+                TrainerInstance trainer1 = _participants[match.Player1Index];
+                trainer1.Team = Side.BOTTOM;
+                foreach (PokemonInstance mon in trainer1.PokemonInTeam) // Full heal all mons
                 {
-                    Name = player1.Name,
-                    Team = Side.BOTTOM,
-                    MaxMonsInField = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
-                    MaxMonsUsed = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
-                    ActiveJewelry = player1.EquippedJewelry,
-                    PokemonInTeam = [.. player1.Pokemon.Select(p => new PokemonInstance(p, new Random(pokemonRng.Next())))]
-                };
-                TrainerEntity player2 = _participants[match.Player2Index];
-                monSeed = ParticipantSeedAndMonSeed[match.Player2Index].Item3;
-                pokemonRng = new Random(monSeed);
-                TrainerInstance trainer2 = new TrainerInstance()
+                    mon.HpPercent = 1;
+                    mon.NonVolatileStatusConditions = [];
+                }
+                TrainerInstance trainer2 = _participants[match.Player2Index];
+                trainer2.Team = Side.TOP;
+                foreach (PokemonInstance mon in trainer2.PokemonInTeam) // Full heal all mons
                 {
-                    Name = player2.Name,
-                    Team = Side.TOP,
-                    MaxMonsInField = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
-                    MaxMonsUsed = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
-                    ActiveJewelry = player2.EquippedJewelry,
-                    PokemonInTeam = [.. player2.Pokemon.Select(p => new PokemonInstance(p, new Random(pokemonRng.Next())))]
-                };
+                    mon.HpPercent = 1;
+                    mon.NonVolatileStatusConditions = [];
+                }
                 // Execute battle now
-                Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Pre {player1.Name} vs {player2.Name}"));
+                Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Pre {trainer1.Name} vs {trainer2.Name}"));
                 TerrainGenerator fightTerrainGen = GameplayElementsContainer.GlobalData.FieldTerrainGenerators[Field];
                 GameParameters gameParams = new GameParameters() // These will be the game params for this tournament
                 {
@@ -387,7 +389,7 @@ namespace PanchomonBackend
                 };
                 GameSimulator.GameSimulator sim = new GameSimulator.GameSimulator();
                 GameOutcome outcome = sim.Simulate([trainer1, trainer2], gameParams, _rng); // Simulates the game
-                Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Post {player1.Name} vs {player2.Name}")); // TODO: Add a bit more info about scores and stuff once actually applied
+                Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Post {trainer1.Name} vs {trainer2.Name}")); // TODO: Add a bit more info about scores and stuff once actually applied
                 // Determine winner
                 if (outcome.WinningTeam == Side.BOTTOM)
                 {
