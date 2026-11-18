@@ -8,6 +8,7 @@
         public bool FullyLoadedData = true;
         public List<PokemonSpecies> AvailablePokemon = new List<PokemonSpecies>();
         public List<string> AvailableItems = new List<string>();
+        public HashSet<PokemonType> TypeSpecializations = [];
         public override string ToString()
         {
             return Name;

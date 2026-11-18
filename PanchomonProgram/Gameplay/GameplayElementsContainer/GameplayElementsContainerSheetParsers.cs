@@ -97,9 +97,9 @@ namespace Gameplay.GameplayElementsContainer
                 PokemonSpecies thePokemon = Dex[nextPokemonName];
                 thePokemon.Name = nextPokemonName;
                 PokemonType theType = Enum.Parse<PokemonType>(fields[TYPE_1_FIELD].Trim().ToUpper());
-                thePokemon.Types = (theType, thePokemon.Types.Item2);
+                if (theType != PokemonType.NONE) thePokemon.Types.Add(theType);
                 theType = Enum.Parse<PokemonType>(fields[TYPE_2_FIELD].Trim().ToUpper());
-                thePokemon.Types = (thePokemon.Types.Item1, theType);
+                if (theType != PokemonType.NONE) thePokemon.Types.Add(theType);
                 // Stats
                 double Hp = int.Parse(fields[HP_FIELD]);
                 double Attack = int.Parse(fields[ATK_FIELD]);
@@ -246,6 +246,7 @@ namespace Gameplay.GameplayElementsContainer
 
             const int NPC_CARD_HEIGHT = 4;
             const int NPC_CARD_NAME_FIELD = 2;
+            const int NPC_SPECIALIZATION_FIELD = 2;
             const int NPC_CARD_POKEMON_FIELD_START = 6;
             const int NPC_CARD_POKEMON_FIELD_END = 17;
             const int NPC_CARD_ITEM_FIELD_START = 18;
@@ -263,6 +264,9 @@ namespace Gameplay.GameplayElementsContainer
                     if (pokemonName == "") continue; // Skip, nothing here
                     theTrainer.AvailablePokemon.Add(Dex[pokemonName]); // Again this will throw if doesnt exist
                 }
+                // Type specialization string is in the 3rd (line+2) field
+                string specializationString = lines[line + 2].Trim().Split(",")[NPC_SPECIALIZATION_FIELD];
+                theTrainer.TypeSpecializations = [.. specializationString.Split(" ").Where(s => s.Contains("-Type")).Select(s => Enum.Parse<PokemonType>(s.Split("-")[0].Trim().ToUpper()))]; // Most deranged type extraction
                 // Finally all items which is a bit more annoying because it's in multiple levels
                 for (int i = 0; i < NPC_CARD_HEIGHT && line + i < lines.Length; i++)
                 {

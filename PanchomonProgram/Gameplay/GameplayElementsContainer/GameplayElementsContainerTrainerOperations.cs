@@ -134,7 +134,7 @@ namespace Gameplay.GameplayElementsContainer
                 // Gummies
                 if (mon.AbilityActive[1])
                 {
-                    PokemonType gummyType = (mon.Species.Types.Item1 != PokemonType.NONE) ? mon.Species.Types.Item1 : mon.Species.Types.Item2;
+                    PokemonType gummyType = mon.Species.Types[0];
                     Gummy replacementGummy = trainer.Gummies.Keys.Where(g => g.Type == gummyType).FirstOrDefault(); // Can apply extra logic filters
                     if (replacementGummy != null) // Can use a gummy to keep active
                     {
@@ -147,7 +147,7 @@ namespace Gameplay.GameplayElementsContainer
                 }
                 if (mon.AbilityActive[2])
                 {
-                    PokemonType gummyType = (mon.Species.Types.Item2 != PokemonType.NONE) ? mon.Species.Types.Item2 : mon.Species.Types.Item1;
+                    PokemonType gummyType = (mon.Species.Types.Count > 1) ? mon.Species.Types[1] : mon.Species.Types[0];
                     Gummy replacementGummy = trainer.Gummies.Keys.Where(g => g.Type == gummyType).FirstOrDefault(); // Can apply extra logic filters
                     if (replacementGummy != null) // Can use a gummy to keep active
                     {

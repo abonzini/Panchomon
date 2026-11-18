@@ -45,7 +45,7 @@ namespace PanchomonBackend
                     case ConstraintType.POKEMON_TYPE:
                         {
                             PokemonType typeToCheck = Enum.Parse<PokemonType>(constraintValue);
-                            checkPassed = (mon.Types.Item1 == typeToCheck || mon.Types.Item2 == typeToCheck);
+                            checkPassed = mon.Types.Contains(typeToCheck);
                             break;
                         }
                     case ConstraintType.POKEMON_HAS_PREVO:

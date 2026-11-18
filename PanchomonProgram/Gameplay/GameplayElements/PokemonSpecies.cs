@@ -3,7 +3,7 @@
     public class PokemonSpecies
     {
         public string Name = "";
-        public (PokemonType, PokemonType) Types = (PokemonType.NONE, PokemonType.NONE);
+        public List<PokemonType> Types = new List<PokemonType>();
         public PokemonSpecies Prevo = null;
         public List<PokemonSpecies> Evos = new List<PokemonSpecies>();
         public PokemonSpecies AlternativeOf = null;

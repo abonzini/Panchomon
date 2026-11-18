@@ -17,7 +17,7 @@ namespace Gameplay.GameplayElements
                 if (type == PokemonType.NONE) continue;
                 yield return new Gummy()
                 {
-                    Name = $"{GeneralUtilities.ApaCapitalize(type.ToString())} Gummy",
+                    Name = GetName(type, "Gummy"),
                     Type = type,
                     _description = $"A {GeneralUtilities.ApaCapitalize(type.ToString())}-type gummy."
                 };

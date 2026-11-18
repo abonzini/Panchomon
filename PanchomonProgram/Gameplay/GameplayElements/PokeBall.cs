@@ -12,7 +12,19 @@
             {
                 Name = "Poke Ball",
                 CramType = PokemonType.NORMAL,
-                _description = "Ball description"
+                _description = "Allows the capture of any Pokemon of Rank 1 and Below"
+            };
+            yield return new PokeBall()
+            {
+                Name = "Great Ball",
+                CramType = PokemonType.NORMAL,
+                _description = "Allows the capture of any Pokemon of Rank 2 and Below"
+            };
+            yield return new PokeBall()
+            {
+                Name = "Ultra Ball",
+                CramType = PokemonType.NORMAL,
+                _description = "Allows the capture of any Pokemon of Rank 3 and Below"
             };
         }
     }

@@ -465,13 +465,13 @@ namespace PanchomonBackend
                         foreach (PokemonInstance mon in targetMons)
                         {
                             // Bit of a long one but basically, get all the evos that can consume any plate from the trainer in order to evolve
-                            List<PokemonSpecies> validEvos = [.. mon.AssociatedEntity.Species.Evos.Where(e => _context.TrainerEntity.EvoPlates.Keys.Any(p => p.Type == e.Types.Item1 || p.Type == e.Types.Item2))];
+                            List<PokemonSpecies> validEvos = [.. mon.AssociatedEntity.Species.Evos.Where(e => _context.TrainerEntity.EvoPlates.Keys.Any(p => e.Types.Contains(p.Type)))];
                             if (validEvos.Count > 0)
                             {
                                 // Mon has a valid evo! Will evolve...
                                 string preName = mon.AssociatedEntity.ToString();
                                 PokemonSpecies chosenEvo = GeneralUtilities.GetRandomPick(validEvos, _context.Rng); // Get a random one
-                                EvoPlate usedPlate = GeneralUtilities.GetRandomPick([.. _context.TrainerEntity.EvoPlates.Keys.Where(p => p.Type == chosenEvo.Types.Item1 || p.Type == chosenEvo.Types.Item2)], _context.Rng); // Get a random plate needed
+                                EvoPlate usedPlate = GeneralUtilities.GetRandomPick([.. _context.TrainerEntity.EvoPlates.Keys.Where(p => chosenEvo.Types.Contains(p.Type))], _context.Rng); // Get a random plate needed
                                 _context.TrainerEntity.EvolveProcess(mon.AssociatedEntity, usedPlate, _context.Rng); // Atp this mon should have evolved
                                 Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.WriteLine($"{preName} has evolved into {mon.Name} using the {usedPlate.Name}!")); // TODO: Also animation later on ig
                             }

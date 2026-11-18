@@ -54,24 +54,17 @@ namespace Gameplay.GameplayElementsContainer
         /// <param name="slot">In case of monotype, which slot (1 or 2) to give, unused otherwise</param>
         public static void EquipGummyToPokemon(PokemonEntity mon, Gummy gummy, int slot)
         {
-            if (mon.Species.Types.Item1 == mon.Species.Types.Item2) // Monotype pokemon detected, then use the slot
+            if (slot == 0) throw new Exception("Cant equip a gummy in slot 0, it's always active!");
+            if (mon.Species.Types.Count == 1) // Monotype pokemon detected, then use the slot
             {
-                if (slot == 0) throw new Exception("Cant equip a gummy in slot 0, it's always active!");
-                if (mon.Species.Types.Item1 == gummy.Type) // If gummy is of correct type, activate the desired ability
+                if (mon.Species.Types[0] == gummy.Type) // If gummy is of correct type, activate the desired ability
                 {
                     mon.AbilityActive[slot] = true;
                 }
             }
             else // Then just check which slot the activation goes
             {
-                if (mon.Species.Types.Item1 == gummy.Type)
-                {
-                    mon.AbilityActive[1] = true;
-                }
-                if (mon.Species.Types.Item2 == gummy.Type)
-                {
-                    mon.AbilityActive[2] = true;
-                }
+                mon.AbilityActive[slot] = (mon.Species.Types[slot - 1] == gummy.Type); // Activate slot if gummy type matches
             }
         }
         /// <summary>

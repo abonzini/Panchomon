@@ -13,7 +13,7 @@ namespace Gameplay.GameplayElements
                 if (type == PokemonType.NONE) continue;
                 yield return new Essence()
                 {
-                    Name = $"{GeneralUtilities.ApaCapitalize(type.ToString())} Essence",
+                    Name = GetName(type, "Essence"),
                     Type = type,
                     _description = $"A {GeneralUtilities.ApaCapitalize(type.ToString())}-type essence."
                 };

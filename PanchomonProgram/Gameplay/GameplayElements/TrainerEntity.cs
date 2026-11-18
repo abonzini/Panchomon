@@ -60,7 +60,7 @@ namespace Gameplay.GameplayElements
                             string nextLinePortion = pokemonLine switch
                             {
                                 // First, the types for each Pokemon, type is mentioned twice if monotype
-                                0 => $"{(thePokemon.Species.Types.Item1 != PokemonType.NONE ? thePokemon.Species.Types.Item1 : thePokemon.Species.Types.Item2)},,{(thePokemon.Species.Types.Item2 != PokemonType.NONE ? thePokemon.Species.Types.Item2 : thePokemon.Species.Types.Item1)},,",
+                                0 => $"{thePokemon.Species.Types[0]},,{(thePokemon.Species.Types.Count > 1 ? thePokemon.Species.Types[1] : thePokemon.Species.Types[0])},,",
                                 // url + nickname
                                 1 => $"{thePokemon.Species.ImageUrl},,{(thePokemon.Nickname == "" ? "Nickname" : thePokemon.Nickname)},,",
                                 // Species descriptor
@@ -139,7 +139,7 @@ namespace Gameplay.GameplayElements
         public void EvolveProcess(PokemonEntity monToEvolve, EvoPlate plateUsed, Random rng)
         {
             if (!Pokemon.Contains(monToEvolve)) throw new Exception("The trainer doesn't own this Pokemon!");
-            PokemonSpecies chosenEvo = GeneralUtilities.GetRandomPick([.. monToEvolve.Species.Evos.Where(e => e.Types.Item1 == plateUsed.Type || e.Types.Item2 == plateUsed.Type)], rng); // Gets the potential evos and chooses one of them
+            PokemonSpecies chosenEvo = GeneralUtilities.GetRandomPick([.. monToEvolve.Species.Evos.Where(e => e.Types.Contains(plateUsed.Type))], rng); // Gets the potential evos and chooses one of them
             // Do abilities now. The issue with abilities is that sometimes mons abilities will switch on evo and sometimes from many->1 or whatever so I make a list
             List<Ability> abiltiesOnlyInPrevo = [.. monToEvolve.Species.Abilities.Where(a => !chosenEvo.Abilities.Contains(a))];
             List<Ability> abiltiesOnlyInEvo = [.. chosenEvo.Abilities.Where(a => !monToEvolve.Species.Abilities.Contains(a))];

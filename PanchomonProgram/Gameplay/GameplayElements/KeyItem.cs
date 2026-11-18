@@ -1,6 +1,4 @@
-﻿using Utilities;
-
-namespace Gameplay.GameplayElements
+﻿namespace Gameplay.GameplayElements
 {
     public class KeyItem : GameplayElement
     {
@@ -14,7 +12,7 @@ namespace Gameplay.GameplayElements
                 if (type == PokemonType.NONE) continue;
                 yield return new KeyItem()
                 {
-                    Name = $"{GeneralUtilities.ApaCapitalize(type.ToString())} Shard",
+                    Name = GetName(type, "Shard"),
                     CramType = type,
                     _description = $"Can be used to craft Jewelry."
                 };
@@ -29,18 +27,6 @@ namespace Gameplay.GameplayElements
                     Name = $"{herbaNames[i]} Herba Mystica",
                     CramType = herbaTypes[i],
                     _description = $"Can be used as a Sandwich ingredient."
-                };
-            }
-            // Apricorns and their types
-            List<string> apricornNames = ["Black", "Blue", "Green", "Red", "White", "Yellow"];
-            List<PokemonType> apricornTypes = [PokemonType.DARK, PokemonType.WATER, PokemonType.GRASS, PokemonType.FIRE, PokemonType.NORMAL, PokemonType.ELECTRIC];
-            for (int i = 0; i < apricornNames.Count; i++)
-            {
-                yield return new KeyItem()
-                {
-                    Name = $"{apricornNames[i]} Apricorn",
-                    CramType = apricornTypes[i],
-                    _description = $"Can be used to craft Poke Balls."
                 };
             }
             // The 5 titan plates
