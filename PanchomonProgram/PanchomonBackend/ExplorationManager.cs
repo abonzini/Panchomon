@@ -410,7 +410,7 @@ namespace PanchomonBackend
                     weight *= _context.TrainerInstance.PokemonInTeam.Any(p => p.HpPercent <= 0) ? 1.2 : 0.8; // If mon dead
                     break;
                 case EncounterType.STATUS_CURE:
-                    weight *= _context.TrainerInstance.PokemonInTeam.Any(p => p.NonVolatileStatusConditions.Count > 0) ? 1.2 : 0.8; // If any mon status'd
+                    weight *= _context.TrainerInstance.PokemonInTeam.Any(p => p.StatusConditions.Count > 0) ? 1.2 : 0.8; // If any mon status'd
                     break;
                 // These events are always base chance
                 case EncounterType.BATTLE_AND_PRIZE:
@@ -508,11 +508,11 @@ namespace PanchomonBackend
                     });
                     break;
                 case EncounterType.STATUS_CURE:
-                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.HpPercent > 1 && m.NonVolatileStatusConditions.Count > 0)];
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.HpPercent > 1 && m.StatusConditions.Count > 0)];
                     targetMons = targetMons.Count > 0 ? [targetMons[0]] : []; // Get the first element only (or keep an empty list otherwise)
                     ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
                     {
-                        mon.NonVolatileStatusConditions.Clear();
+                        mon.StatusConditions.Clear();
                     });
                     break;
                 case EncounterType.DAMAGE_TRAP:
@@ -527,7 +527,7 @@ namespace PanchomonBackend
                     targetMons = targetMons.Count > 0 ? [GeneralUtilities.GetRandomPick(targetMons, _context.Rng)] : []; // Get a random one of these
                     ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
                     {
-                        mon.NonVolatileStatusConditions.Add(GameplayElementsContainer.GlobalData.NvStatuses[encounter.Params[0]]);
+                        mon.StatusConditions.Add(GameplayElementsContainer.GlobalData.NvStatuses[encounter.Params[0]]);
                     });
                     break;
                 case EncounterType.KILL_TRAP:
@@ -604,7 +604,7 @@ namespace PanchomonBackend
                     foreach (PokemonInstance mon in targetMons)
                     {
                         mon.HpPercent = 1; // Done!
-                        mon.NonVolatileStatusConditions.Clear();
+                        mon.StatusConditions.Clear();
                     }
                     _context.TrainerInstance.PokemonInTeam = targetMons; // Equip these mons temporarily to the trainer
                     // Now run it

@@ -41,7 +41,7 @@ namespace Gameplay.GameplayElementsContainer
             LoadAllElements(KeyItems, KeyItem.GetAllKeyItems());
             LoadAllElements(Essences, Essence.GetAllEssences());
             LoadAllElements(Mints, Nature.GetAllMints());
-            LoadAllElements(NvStatuses, NonVolatileStatus.GetAllNonVolatileStatus());
+            LoadAllElements(NvStatuses, StatusCondition.GetAllNonVolatileStatus());
             LoadAllElements(Surfaces, Surface.GetAllSurfaces());
             LoadAllElements(PhysicalObjects, PhysicalObject.GetAllOccupierObjects());
             LoadAllElements(TileEffects, TileEffect.GetAllTileEffects());
@@ -90,7 +90,7 @@ namespace Gameplay.GameplayElementsContainer
         public Dictionary<string, PokemonEntity> BoxedMons = new Dictionary<string, PokemonEntity>();
         public Dictionary<string, TrainerEntity> Trainers = new Dictionary<string, TrainerEntity>();
         public Dictionary<string, Dungeon> Dungeons = new Dictionary<string, Dungeon>();
-        public Dictionary<string, NonVolatileStatus> NvStatuses = new Dictionary<string, NonVolatileStatus>();
+        public Dictionary<string, StatusCondition> NvStatuses = new Dictionary<string, StatusCondition>();
         public Dictionary<string, Surface> Surfaces = new Dictionary<string, Surface>();
         public Dictionary<string, PhysicalInstance> PhysicalObjects = new Dictionary<string, PhysicalInstance>();
         public Dictionary<string, TileEffect> TileEffects = new Dictionary<string, TileEffect>();

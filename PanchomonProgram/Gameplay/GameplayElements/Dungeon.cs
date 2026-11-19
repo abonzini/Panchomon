@@ -102,7 +102,7 @@ namespace Gameplay.GameplayElements
     public class EnemyParams
     {
         public Side Side { get; set; } = Side.TOP; /// By default, enemy and all in same team
-        public HashSet<AdditionalPokemonParameter> AdditionalParameters { get; set; } = [];
+        public bool IsBoss { get; set; } = false; /// If boss, then battle ends when it dies, regardless of other enemies
         public double[] StatMult { get; set; } = [1, 1, 1, 1, 1, 1];
         public EncounterEnemyType Type { get; set; } = EncounterEnemyType.NONE;
         public EncounterItemType EquipType { get; set; } = EncounterItemType.NONE;

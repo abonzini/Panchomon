@@ -371,14 +371,14 @@ namespace PanchomonBackend
                 foreach (PokemonInstance mon in trainer1.PokemonInTeam) // Full heal all mons
                 {
                     mon.HpPercent = 1;
-                    mon.NonVolatileStatusConditions = [];
+                    mon.StatusConditions = [];
                 }
                 TrainerInstance trainer2 = _participants[match.Player2Index];
                 trainer2.Team = Side.TOP;
                 foreach (PokemonInstance mon in trainer2.PokemonInTeam) // Full heal all mons
                 {
                     mon.HpPercent = 1;
-                    mon.NonVolatileStatusConditions = [];
+                    mon.StatusConditions = [];
                 }
                 // Execute battle now
                 Debug.DebugAction(DebugLevel.EVENT_ORGANIZER, () => Console.Write($"Pre {trainer1.Name} vs {trainer2.Name}"));

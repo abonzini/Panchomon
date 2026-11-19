@@ -474,9 +474,7 @@
         "Enemies": [
             {
                 "Side": "TOP",
-                "AdditionalParameters": [
-                    "BOSS"
-                ],
+                "IsBoss": true,
                 "StatMult": [
                     3,
                     1,
@@ -520,9 +518,7 @@
             "Enemies": [
                 {
                     "Side": "TOP",
-                    "AdditionalParameters": [
-                        "BOSS"
-                    ],
+                    "IsBoss": true,
                     "StatMult": [
                         1.15,
                         1.15,
@@ -561,20 +557,17 @@
             "PreEncounterString": "You have arrived to a huge room. An enormous $1 is in the middle, suffering. It seems the great energies of this place have overloaded it and it's out of control.",
             "EncounterSuccessString": "$1 releases all of it's energy and recovers. It's extremely thankful.",
             "EncounterFailureString": "The energies that $1 absorbed are too much. It's terrible to leave this creature suffering, but there's nothing else you can do...",
-            "Note": "Inspired on deepest trench mutant mon. This mon is huge, resistant and slow, it's a survival fight. Will be in high voltage always, open field and try to add the 'giant' tag for impact",
+            "Note": "Won't support giant mons. This mon is just 'supercharged' and suffering",
             "Enemies": [
                 {
                     "Side": "TOP",
-                    "AdditionalParameters": [
-                        "BOSS",
-                        "GIANT"
-                    ],
+                    "IsBoss": true,
                     "StatMult": [
                         4,
                         1.3,
-                        1,
                         1.3,
-                        1,
+                        1.3,
+                        1.3,
                         0.5
                     ],
                     "Type": "CURRENT_FLOOR",
@@ -604,9 +597,7 @@
             "Enemies": [
                 {
                     "Side": "TOP",
-                    "AdditionalParameters": [
-                        "BOSS"
-                    ],
+                    "IsBoss": true,
                     "StatMult": [
                         1,
                         1,

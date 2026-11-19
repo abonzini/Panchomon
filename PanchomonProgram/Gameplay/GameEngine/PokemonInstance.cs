@@ -1,15 +1,7 @@
 ﻿using Gameplay.GameplayElements;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Gameplay.GameEngine
 {
-    [JsonConverter(typeof(StringEnumConverter))]
-    public enum AdditionalPokemonParameter
-    {
-        BOSS, /// Mon is a boss and the whole team loses if boss dies
-        GIANT, /// Boss is giant which means it's just like... very big and bigger hitbox and stuff
-    }
     /// <summary>
     /// An instance of a pokemon in the simulator
     /// </summary>
@@ -17,8 +9,8 @@ namespace Gameplay.GameEngine
     {
         public PokemonEntity AssociatedEntity = null;
         public double HpPercent = 1;
-        public List<NonVolatileStatus> NonVolatileStatusConditions = [];
-        public HashSet<AdditionalPokemonParameter> AdditionalParameters = [];
+        public List<StatusCondition> StatusConditions = [];
+        public bool IsBoss = false;
         public double[] BaseStatMult = [1, 1, 1, 1, 1, 1];
         public override string ToString()
         {
