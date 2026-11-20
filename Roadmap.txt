@@ -25,104 +25,77 @@ White Monastery         - DarkFigFly    - Regice    (titan plate 5)
 Rub-a-Dub pond          - FaiNorWat     - Regigigas (titan plate 6)
 
 TODO:
-- Dungeon/Tourn now using tile generators
-- Tile generators implemented and debugged. Add remaining tile properties
-- Test generation with Debug visualization, add all combos of potential things and propagators until Tourn + power plant atleast are reasonably cool. Add also the elements
-- For game proper: tile proj:
+- Game engine refining and unstuuck
+
+- Natures (when looking for target, range is considered, look for targets WITHIN RANGE, max range unless otherwise):
+    - Serious (template and default behaviour):
+        - PREP: Finds the best/closest target for place to walk towards. Prioritizes current direction
+        - READY: Targets best possible without moving if possible, or closest
+    - Hardy:
+        - PREP: Attempts to find the target that is the most in a straight line without turns, i.e. route that minimizes turns
+        - READY: Serious or continuing to approach in a hardy manner
+    - Quirky:
+        - PREP: Go to a random tile decided in a zigzag manner (i.e. penalize repeated dir by 0.9) and switch it if reached there
+        - READY: Serious but zigzag
+    - Lonely:
+        - PREP: Tries to get away to the most isolated tile in the board
+        - READY: Serious
+    - Docile:
+        - PREP: Stays next to closest ally, on the side if possible
+        - READY: Serious
+    - Bashful:
+        - PREP: Simple movement, best possible that will increase some distance to some enemy or none
+        - READY: Serious
+    - Hasty:
+        - PREP: Approaches average location of all enemies
+        - READY: Serious
+    - Adamant:
+        - PREP: Fixates on target, doesn't switch it at all unless it dies. Immune to redirection
+        - READY: Continues targeting target. Immune to redirection
+    - Naughty:
+        - PREP: Aims for enemy back
+        - READY: Attempts to reach enemy back unless it's running out of time in which case just does target. Hits anything if back/side
+    - Bold:
+        - PREP: Tries to find a chokepoint closest to middle of zones to protect
+        - READY: Serious
+    - Relaxed:
+        - PREP: Serious but takes a break every step
+        - READY: Serious
+    - Lax:
+        - PREP: Random tile once, then no movement at all
+        - READY: Serious
+    - Timid:
+        - PREP: Stay behind closest ally
+        - READY: Serious
+    - Naive:
+        - PREP: Like serious but won't recalculate every step until reached
+        - READY: Serious
+    - Brave: 
+        - PREP: Aims for exact center of contested area (e.g. place of equi distance points and closest to both sides)
+        - READY: Serious
+    - Quirky:
+        - PREP: Serious but zigzag
+        - READY: Serious but zigzag
+    - Rash:
+        - PREP: Serious but movt speed is 1.5x
+        - READY: Uses the move immediately even if no target
+    - Quiet:
+        - PREP: Serious but always stays MAX range + 1
+        - READY: Serious
+    - Careful:
+        - PREP: Serious but avoids being close to walls/objects/enemies unless no other way, also avoids ground objects
+        - READY: Serious, still avoids close tho unless no other choice
+    - Modest:
+        - PREP: 1 speed, Serious but every couple steps, a chance (33.3%?. Needs to speedboost = 1/(1-%)) to instead revert direction
+        - READY: Serious but can still do this
+    - Calm:
+        - PREP: Looks for average position of all teammates (or that which is the closest to it, walkable)
+        - READY: Serious
+
+- Graphics: tile proj:
 1-1-2
 With top end in 2-1-1-2 with top at 2
 And LR at 2-1-1-(1) that las tone could be 2 but would look a bit extra. LR Fits with top of new tile. Tentative size for now is a 31x24 which fits really well with 24x24 PMDO tiles 
-
-AI GENERATED NATURE AI (revise steal, delete):
-The 5 Neutral Natures (Balanced / Unpredictable)
-
-Hardy
-While Charging: Moves steadily forward down the lane at a moderate pace, ignoring minor positioning shifts.
-Post-Charge: Takes the first valid target in range straight ahead; if none, resumes steady advance.
-Docile
-While Charging: Mimics the movement of the nearest ally mon, staying roughly parallel or trailing slightly behind them.
-Post-Charge: Targets whatever enemy the ally it's following is currently targeting (if valid), otherwise targets closest enemy.
-Bashful
-While Charging: Frequently switches behavior—takes a few steps forward, then stutters back or shifts sideways to adjacent rows.
-Post-Charge: Executes attack nervously; if multiple targets, hesitates briefly before picking one randomly.
-Quirky
-While Charging: Moves in erratic zig-zags across the 3 rows, changing columns randomly every turn.
-Post-Charge: Fires immediately at whatever random target is currently in range, regardless of how optimal it is.
-Serious
-While Charging: Takes the absolute shortest precomputed path directly toward its preliminary target.
-Post-Charge: Fires instantly upon the primary target; if out of range, moves straight to it without deviating.
-
-The Attack-Boosted Natures (Aggressive / Forward-Pressuring)
-Lonely
-While Charging: Rushes forward aggressively, but tends to drift toward the edges of the 3-row grid as if "isolated."
-Post-Charge: Immediately attacks the nearest enemy, prioritizing targets that are isolated from other enemies.
-Brave
-While Charging: Charges head-on down the middle row (Row 2), marching straight into the thick of the enemy team.
-Post-Charge: Fires at the strongest-looking enemy or the one furthest ahead in the enemy lines.
-Adamant
-While Charging: Marches relentlessly toward the closest enemy, refusing to step back even if blocked or taking damage.
-Post-Charge: Executes attack with zero hesitation on the first available target in range.
-Naughty
-While Charging: Wanders into blind spots or behind obstacles near the enemy lines to flank them.
-Post-Charge: Targets enemies unpredictably, favoring targets with low health or annoying status effects.
-
-The Defense-Boosted Natures (Cautious / Frontline Anchors)
-Bold
-While Charging: Steps forward to claim the front tiles of its side, then holds its ground stubbornly.
-Post-Charge: Attacks the closest approaching enemy to push them back.
-Relaxed
-While Charging: Barely moves at all; if forced to move by obstacles, takes the slowest possible drift.
-Post-Charge: Waits until an enemy walks directly into its move's optimal range before firing.
-Impish
-While Charging: Bounces back and forth between two adjacent tiles, micro-adjusting position playfully.
-Post-Charge: Prefers targeting enemies that haven't attacked yet or are moving around.
-Lax
-While Charging: Stays completely still, effectively acting as a stationary turret while charging.
-Post-Charge: Fires on whatever target wanders into range; if none, simply stays put and waits for the next cycle.
-
-The Speed-Boosted Natures (Hit-and-Run / Evasive)
-Timid
-While Charging: Retreats backward toward its own board edge, maximizing distance from enemies while charging.
-Post-Charge: Fires max-range moves safely from afar; if an enemy gets too close, immediately steps back.
-Hasty
-While Charging: Sprints diagonally back and forth across the 3 rows at maximum movement speed.
-Post-Charge: Fires the instant the charge completes, rushing forward just enough to hit and then dodging away.
-Jolly
-While Charging: Constantly shifts forward and backward, maintaining a lively, energetic pacing.
-Post-Charge: Targets enemies dynamically, bouncing to a new tile right after the attack executes.
-Naive
-While Charging: Runs carelessly right past enemies into the enemy backline, ignoring danger zones.
-Post-Charge: Turns around wildly and fires at whatever target is closest behind or beside it.
-
-The Special Attack-Boosted Natures (Calculated / Area-Focused)
-
-Modest
-While Charging: Moves steadily to the center row to maximize the potential coverage area of its moves.
-Post-Charge: Deliberately targets groups of enemies or lines up AoE/beam attacks for maximum collateral.
-Mild
-While Charging: Creeps forward cautiously, halting its movement the moment an enemy enters its field of view.
-Post-Charge: Executes attack carefully, backing away slightly if the target is too close for comfort.
-Quiet
-While Charging: Slows its movement down to a crawl, focusing entirely on internal timing.
-Post-Charge: Unleashes its move with pinpoint precision on the highest-priority target in range.
-Rash
-While Charging: Dashes forward haphazardly toward the largest cluster of enemies on the map.
-Post-Charge: Fires immediately at the closest target, completely unconcerned about hitting friendlies (if friendly fire is a factor) or collateral.
-
-The Special Defense-Boosted Natures (Tactical / Defensive Positioning)
-Calm
-While Charging: Smoothly slides behind obstacles or allies to use them as physical cover.
-Post-Charge: Calmly selects a target and executes the move with clinical precision.
-Gentle
-While Charging: Softly drifts away from direct confrontations, favoring the outer rows (Rows 1 or 3) to stay out of the crossfire.
-Post-Charge: Attacks defensive or support-oriented targets if available.
-Sassy
-While Charging: Stays put or takes a slow, mocking step backward, facing the enemy defiantly.
-Post-Charge: Targets the enemy that dealt the most recent damage or the one directly across from it.
-Careful
-While Charging: Scans the grid, actively pathing around hazards, traps, or bottlenecked areas to stay safe.
-Post-Charge: Double-checks target validity; only fires if the target is safely within range and line-of-sight is completely clear.
-
 - Anim:
     - RendererState will be a common instance when generating something to render, choose base path and file name, current frame (and fps? I.e. all relevant info and resolutions)
     - IndividualRenderers which all inherit. They have an internal state and are given actions, either action one by one, or a queue of actions, maybe will be each renderer it's own thing
