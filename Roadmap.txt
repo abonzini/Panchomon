@@ -32,8 +32,8 @@ TODO:
         - PREP: Finds the best/closest target for place to walk towards. Prioritizes current direction
         - READY: Targets best possible without moving if possible, or closest
     - Hardy:
-        - PREP: Attempts to find the target that is the most in a straight line without turns, i.e. route that minimizes turns
-        - READY: Serious or continuing to approach in a hardy manner
+        - PREP: Serious but ignores terrain penalties like water when planning
+        - READY: Serious but ignores terrain penalties like water when planning
     - Quirky:
         - PREP: Go to a random tile decided in a zigzag manner (i.e. penalize repeated dir by 0.9) and switch it if reached there
         - READY: Serious but zigzag
