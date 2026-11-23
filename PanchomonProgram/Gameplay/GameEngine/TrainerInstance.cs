@@ -6,7 +6,7 @@ namespace Gameplay.GameEngine
     /// <summary>
     /// Contains all the data of a trainers in battle
     /// </summary>
-    public class TrainerInstance : SimulationElement
+    public class TrainerInstance : GameplayElement
     {
         public TrainerEntity AssociatedEntity = null; /// Needs to have an associated entity for name, pic, etc
         public Side Team = Side.FIELD; /// Which team they belong and which Side the spawn is. Team 0 is for chaotic agents, some attacks and neutral players (if team 0 wins, it's a tie)

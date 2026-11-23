@@ -1,6 +1,6 @@
 ﻿namespace Gameplay.GameplayElements
 {
-    public class Ability : SimulationElement
+    public class Ability : GameplayElement
     {
         // Massive list of all of them and their effects (less friendly than storing in Json but allow for complex behaviours)
         public static IEnumerable<Ability> GetAllAbilities()

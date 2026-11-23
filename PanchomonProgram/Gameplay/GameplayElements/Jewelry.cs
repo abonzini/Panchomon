@@ -2,7 +2,7 @@
 
 namespace Gameplay.GameplayElements
 {
-    public class Jewelry : SimulationElement
+    public class Jewelry : GameplayElement
     {
         // Massive list of all of them and their effects (less friendly than storing in Json but allow for complex behaviours)
         public static IEnumerable<Jewelry> GetAllJewelry()

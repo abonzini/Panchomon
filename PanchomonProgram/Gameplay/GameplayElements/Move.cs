@@ -1,6 +1,6 @@
 ﻿namespace Gameplay.GameplayElements
 {
-    public class Move : SimulationElement
+    public class Move : GameplayElement
     {
         // Properties
         public PokemonType Type = PokemonType.NONE;

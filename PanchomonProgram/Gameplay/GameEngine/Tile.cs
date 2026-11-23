@@ -15,7 +15,7 @@ namespace Gameplay.GameEngine
         WATERFALL,
         TILE
     }
-    public class Tile : SimulationElement
+    public class Tile : GameplayElement
     {
         public CliffFace CliffFace { get; set; } = CliffFace.NONE;
         public Surface Surface = null;

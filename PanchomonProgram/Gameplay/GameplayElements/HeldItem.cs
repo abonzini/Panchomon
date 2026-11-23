@@ -1,6 +1,6 @@
 ﻿namespace Gameplay.GameplayElements
 {
-    public class HeldItem : SimulationElement
+    public class HeldItem : GameplayElement
     {
         // Properties
         public PokemonType CramType = PokemonType.NONE;

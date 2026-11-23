@@ -5,7 +5,7 @@ namespace Gameplay.GameEngine
     /// <summary>
     /// What a tile is made of, will do stuff depending on who enters, who leaves, etc
     /// </summary>
-    public class Surface : SimulationElement
+    public class Surface : GameplayElement
     {
         public int Elevation = 0; // Elevation of this tile in pixels (to add some fluidity to the pixel art)
         public bool HindersMovement = false; // Defines whether this surface impedes or is harmful to _some_ mons, in order to be treated as a wall

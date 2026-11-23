@@ -1,6 +1,6 @@
 ﻿namespace Gameplay.GameplayElements
 {
-    public class StatusCondition : SimulationElement
+    public class StatusCondition : GameplayElement
     {
         // Massive list of all of them and their effects (less friendly than storing in Json but allow for complex behaviours)
         public bool Permanent = false; /// Permanent ones remain forever and between battles unless specifically cured
