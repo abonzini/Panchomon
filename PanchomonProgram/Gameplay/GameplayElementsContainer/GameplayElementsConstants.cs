@@ -2,11 +2,15 @@
 {
     public partial class GameplayElementsContainer
     {
+        // General gameplay stuff
+        public const int NUM_BATTLE_MOVES = 4; /// Each mon will have 4 moves at most
+        // General teambuild things
         public const int SHINY_CHANCE = 500; /// Shiny chance of 1 in 500
         public const int DEFAULT_BATTLE_NMONS = 3; /// Tournaments are 3v3 and only 3 mon total per team, same for wild mons
         public const int DEFAULT_JEWELRY_DURATION = 3; /// Unsure how I'll deal with jewelry, default 3
         public const int AMULET_COIN_IMP_MULT = 2; /// Amulet coin has a 2x multiplier to cashhh (effect is resolved in prizes unfort)
         public const int TRAINER_SALARY = 2; /// IMP Salary for trainers in tournament
+        // Dungeon stuff
         public const int DUNGEON_NUM_FLOORS = 3; /// Each dungeon will always have 3 floors
         public const int DUNGEON_ROOMS_PER_FLOOR = 5; /// Each dungeon floor has 5 rooms (some hardcoding too)
         public const int MAX_SIMULTANEOUS_ROOM_PICKS = 5; /// How many rooms max we'll get per room choice

@@ -19,6 +19,7 @@ namespace PanchomonBackend
         public MessageLogger ExplorationMessage = new MessageLogger();
         public ExplorationPrizeList Prizes = new ExplorationPrizeList();
         public Dungeon DungeonData;
+        public int DungeonDifficulty;
         public TrainerInstance TrainerInstance;
         public TrainerInstance FollowerInstance = null; // Follower if any
         public Random Rng;
@@ -168,6 +169,7 @@ namespace PanchomonBackend
         public (string, int, int) TrainerAndSeeds { get; set; } // Trainer seed, mon seed
         public string DirectoryPath { get; set; } = "";
         public bool UseExplorationTicket { get; set; } = false;
+        public bool UseRelaxingBalm { get; set; } = false;
         public string ExplFavour { get; set; } = "";
         /// <summary>
         /// Sets up exploration basics to later run it
@@ -192,11 +194,17 @@ namespace PanchomonBackend
             TrainerAndSeeds = (theTrainer.Name, rng.Next(), rng.Next());
             ExplorationSeed = rng.Next();
             // Some extra trainer stuff
-            KeyItem explTicketItem = GameplayElementsContainer.GlobalData.KeyItems["Exploration Ticket"];
-            if (theTrainer.KeyItems.ContainsKey(explTicketItem)) // Fetch the expl ticket key item
+            KeyItem keyItem = GameplayElementsContainer.GlobalData.KeyItems["Exploration Ticket"];
+            if (theTrainer.KeyItems.ContainsKey(keyItem)) // Fetch the expl ticket key item
             {
                 Console.WriteLine("Use ticket? y/N");
                 UseExplorationTicket = Console.ReadLine().ToLower() == "y";
+            }
+            keyItem = GameplayElementsContainer.GlobalData.KeyItems["Relaxing Balm"];
+            if (theTrainer.KeyItems.ContainsKey(keyItem)) // Fetch the relaxing balm key item
+            {
+                Console.WriteLine("Use relaxing balm? y/N");
+                UseRelaxingBalm = Console.ReadLine().ToLower() == "y";
             }
             if (theTrainer.Favours.Count > 0)
             {
@@ -211,10 +219,12 @@ namespace PanchomonBackend
         {
             _context.Rng = new Random(ExplorationSeed);
             _context.ExplorationMessage.Clear(); // This is a new event, so I will clear whatever thet was there before
+            _context.ExplorationMessage.EventText.Clear();
             // Just to help debug
             Console.Clear();
             // Initialize from beginning
             _context.DungeonData = GameplayElementsContainer.GlobalData.Dungeons[Dungeon];
+            _context.DungeonDifficulty = _context.DungeonData.Difficulty;
             TrainerEntity trainerEntity = GameplayElementsContainer.GlobalData.Trainers[TrainerAndSeeds.Item1]; // Find the trainer data
             // Initialize all trainer/mon instances. Will be stored in context
             if (trainerEntity.AutoTeam)
@@ -250,6 +260,8 @@ namespace PanchomonBackend
                 if (favourTrainer != null)
                 {
                     Console.WriteLine($"{favourTrainer.Name} selected");
+                    _context.ExplorationMessage.EventText.AppendLine($"{trainerEntity.Name} invited their friend {favourTrainer.Name} to come and help.");
+                    _context.ExplorationMessage.EventText.AppendLine();
                     GeneralUtilities.AddtemToCountDictionary(trainerEntity.Favours, favourTrainer, -1); // Take favour
                     // Same workflow as tournament NPC init
                     if (!favourTrainer.FullyLoadedData) throw new Exception($"{favourTrainer.Name} has no data yet. Will need to add it so that they can participate!");
@@ -265,6 +277,14 @@ namespace PanchomonBackend
                         PokemonInTeam = [.. favourEntity.Pokemon.Select(p => new PokemonInstance(p, new Random(pokemonRng.Next()))).Take(GameplayElementsContainer.DEFAULT_BATTLE_NMONS)]
                     };
                 }
+            }
+            // Check the adjusted danger level of dungeon
+            if (UseRelaxingBalm)
+            {
+                _context.DungeonDifficulty -= 2;
+                if (_context.DungeonDifficulty <= 0) _context.DungeonDifficulty = 1; // Min danger level
+                _context.ExplorationMessage.EventText.AppendLine($"{trainerEntity.Name} used a Relaxing Balm. It's aroma can be smell throughout the whole {_context.DungeonData.Name} and calms all its residents down.");
+                _context.ExplorationMessage.EventText.AppendLine();
             }
             // Get the mon table for this dungeon (weather and ALL), need to also use the wild alternatives!
             HashSet<string> allWeatherMons = [.. _context.DungeonData.WeatherMons[_context.DungeonData.CurrentWeather], .. _context.DungeonData.WeatherMons["ALL"]];
@@ -885,7 +905,6 @@ namespace PanchomonBackend
         void SaveExplorationOutcome()
         {
             string explFile = $"{_context.TrainerInstance.AssociatedEntity.Name.ToUpper()}_EXPLORATION.expl";
-            _context.ExplorationMessage.EventText.Clear();
             _context.ExplorationMessage.EventText.AppendLine($"Fate: ||FATE HERE||");
             _context.ExplorationMessage.EventText.AppendLine();
             _context.ExplorationMessage.EventText.AppendLine($"__{_context.TrainerInstance.AssociatedEntity.Name} has obtained the following items:__");

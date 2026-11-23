@@ -57,9 +57,9 @@ namespace Gameplay.GameplayElements
                 effect += "a random ";
                 if (Type != PokemonType.NONE)
                 {
-                    effect += $"{Utilities.GeneralUtilities.ApaCapitalize(Type.ToString())}-type ";
+                    effect += $"{GeneralUtilities.ApaCapitalize(Type.ToString())}-type ";
                 }
-                effect += "move in the Pokemon's learnset (for the week).";
+                effect += "move in the Pokemon's learnset.";
             }
             else
             {

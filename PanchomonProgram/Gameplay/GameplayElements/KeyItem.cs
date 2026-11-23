@@ -53,6 +53,12 @@
                 CramType = PokemonType.FAIRY,
                 _description = $"At any time during the week, can go on an exploration to any place of choice.This exploration doesn't count as your weekly action."
             };
+            yield return new KeyItem()
+            {
+                Name = $"Relaxing Balm",
+                CramType = PokemonType.GRASS,
+                _description = $"Can be consumed during exploration in order to reduce the danger level by 2."
+            };
         }
     }
 }

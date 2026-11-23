@@ -48,19 +48,27 @@ namespace Gameplay.GameplayElementsContainer
             // Naturally, some aspects like speices, nickname, pokeball are not changed here
             mon.Nature = GeneralUtilities.GetRandomPick([.. Natures.Values], rng);
             List<Move> availableMoves = [.. mon.Species.Moveset];
-            List<Move> availableStabs = [.. availableMoves]; // TODO Can only find stabs once moves have more info ofc
-            // Move 1 is always a stab (if available)
-            if (availableStabs.Count > 0) mon.Moves[0] = GeneralUtilities.GetRandomPick(availableStabs, rng);
-            if (mon.Moves[0] != null) availableMoves.Remove(mon.Moves[0]); // Remove from list, to reroll move 2
+            // Move 1 is always a stab (if available), a damaging move if unavailable, and any move otherwise
+            List<Move> filteredMoves = [.. availableMoves.Where(m => m.Category != MoveCategory.STATUS && m.DamageType == DamageType.DAMAGE_FORMULA && mon.Species.Types.Contains(m.Type))]; // Try get good old stab
+            if (filteredMoves.Count == 0) filteredMoves = [.. availableMoves.Where(m => m.Category != MoveCategory.STATUS)]; // ok then narrow the search to any damaging move
+            if (filteredMoves.Count == 0) filteredMoves = availableMoves; // Ok whatever give me anything then
+            mon.Moves[0] = GeneralUtilities.GetRandomPick(filteredMoves, rng); // Pick one
+            availableMoves.Remove(mon.Moves[0]); // Remove from list, to reroll move 2
             // Reroll move 2
-            if (availableMoves.Count > 0) mon.Moves[1] = GeneralUtilities.GetRandomPick(availableMoves, rng);
+            mon.Moves[1] = GeneralUtilities.GetRandomPick(availableMoves, rng);
             // Then abilities, simpler
             List<Ability> availableAbilities = [.. mon.Species.Abilities];
             GeneralUtilities.ShuffleList(availableAbilities, rng); // Shuffle it
-            mon.Abilities = [null, null, null]; // Blank list
-            for (int i = 0; i < mon.Abilities.Length && i < availableAbilities.Count; i++) // Add as many as possible
+            for (int i = 0; i < mon.Abilities.Length; i++) // Add as many as possible
             {
-                mon.Abilities[i] = availableAbilities[i];
+                if (i < availableAbilities.Count)
+                {
+                    mon.Abilities[i] = availableAbilities[i];
+                }
+                else
+                {
+                    mon.Abilities[i] = null;
+                }
             }
         }
         /// <summary>

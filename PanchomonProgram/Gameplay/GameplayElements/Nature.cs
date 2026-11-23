@@ -18,12 +18,7 @@
             Console.WriteLine("Getting all Natures");
             yield return new Nature()
             {
-                Name = "Jolly",
-                _description = "Nature description"
-            };
-            yield return new Nature()
-            {
-                Name = "Hardy",
+                Name = "Serious",
                 _description = "Nature description"
             };
         }
