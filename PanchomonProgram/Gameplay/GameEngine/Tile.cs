@@ -28,9 +28,13 @@ namespace Gameplay.GameEngine
             X = x;
             Y = y;
         }
-        public bool IsWalkable()
+        /// <summary>
+        /// Whether this surface can hinder movement, important when map generating in order to not put tiles that block the way passively or actively
+        /// </summary>
+        /// <returns>Whether this tile will alter movement to entities moving through it</returns>
+        public bool IsMovementAffected()
         {
-            return !(Surface.HindersMovement || Occupier != null); // Tile not walkable depending on the surface or if it has an occupier
+            return !(Surface.HindersMovement || (Occupier != null && Occupier.IsSolid)); // Tile not walkable depending on the surface or if it has an occupier
         }
         public override string ToString()
         {

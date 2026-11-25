@@ -75,7 +75,7 @@ namespace GameSimulator
         /// <returns></returns>
         bool IsBrushBlockingWay(TileBrush brush, int x, int y)
         {
-            if (brush.BlocksTheWay && (GetTileIfValid(x, y)?.IsWalkable() ?? false)) // If brush blocks the way, need a precautionary measure. If the tile already was blocker, then I don't care because this brush won't change that ig
+            if (brush.AffectsMovement && (GetTileIfValid(x, y)?.IsMovementAffected() ?? false)) // If brush blocks the way, need a precautionary measure. If the tile already was blocker, then I don't care because this brush won't change that ig
             {
                 // Need to check if the 3x3 area around brush is free
                 bool[] topOccupied = new bool[3];
@@ -91,19 +91,19 @@ namespace GameSimulator
                 for (i = x - 1, idx = 0; i <= x + 1; i++, idx++) // Check vertical occupancy
                 {
                     j = y - 1;
-                    topOccupied[idx] = !(GetTileIfValid(i, j)?.IsWalkable() ?? false); // Tile is occupied if tile oob, non init or it is init but is occupied
+                    topOccupied[idx] = !(GetTileIfValid(i, j)?.IsMovementAffected() ?? false); // Tile is occupied if tile oob, non init or it is init but is occupied
                     topFree &= !topOccupied[idx];
                     j = y + 1;
-                    bottomOccupied[idx] = !(GetTileIfValid(i, j)?.IsWalkable() ?? false);
+                    bottomOccupied[idx] = !(GetTileIfValid(i, j)?.IsMovementAffected() ?? false);
                     bottomFree &= !bottomOccupied[idx];
                 }
                 for (j = y - 1, idx = 0; j <= y + 1; j++, idx++) // Check horizontal occupancy
                 {
                     i = x - 1;
-                    leftOccupied[idx] = !(GetTileIfValid(i, j)?.IsWalkable() ?? false);
+                    leftOccupied[idx] = !(GetTileIfValid(i, j)?.IsMovementAffected() ?? false);
                     leftFree &= !leftOccupied[idx];
                     i = x + 1;
-                    rightOccupied[idx] = !(GetTileIfValid(i, j)?.IsWalkable() ?? false);
+                    rightOccupied[idx] = !(GetTileIfValid(i, j)?.IsMovementAffected() ?? false);
                     rightFree &= !rightOccupied[idx];
                 }
                 // Now, check UD and LR occupance and the result will depend on whether the mon can move lr
@@ -376,7 +376,7 @@ namespace GameSimulator
             (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (dimension + 1, partition.EndY);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 1);
             // Finally, returns whether this part should be removed
-            return !brush.BlocksTheWay;
+            return !brush.AffectsMovement;
         }
         /// <summary>
         /// Divides a partition by placing a square with a wall in the middle, results in 9 partitions somehow, since the division is the square itself plus its potential 8 neighbors.
@@ -453,7 +453,7 @@ namespace GameSimulator
             (minY, maxY) = (yBase + yDim, partition.EndY);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions, 8);
             // Finally, returns whether this part should be removed
-            return !brush.BlocksTheWay;
+            return !brush.AffectsMovement;
         }
         /// <summary>
         /// Divides the current partition into multiple N divisions which may then be offset slightly
@@ -520,7 +520,7 @@ namespace GameSimulator
             (minY, maxY) = (orientation == SplitOrientation.HORIZONTAL) ? (partition.BegY, partition.EndY) : (remainingChunkIndex, partition.EndY);
             AddPartitionIfValid(minX, maxX, minY, maxY, newPartitions);
             // Finally, returns whether this part should be removed
-            return !brush.BlocksTheWay;
+            return !brush.AffectsMovement;
         }
         /// <summary>
         /// Fills a partition with a brush, invalidates it if the brush is non-movement
@@ -530,7 +530,7 @@ namespace GameSimulator
         /// <returns>Whether the element operated on exists as a valid partition</returns>
         bool FillPartition(Partition partition, TilePropagatorAction parameters)
         {
-            bool partitionKill = parameters.Brush.BlocksTheWay; // A brush that serves as a wall would kill the partition if it fills it
+            bool partitionKill = parameters.Brush.AffectsMovement; // A brush that serves as a wall would kill the partition if it fills it
             ApplyBrushToRectangularRegion(parameters.Brush, partition.BegX, partition.BegY, partition.EndX, partition.EndY);
             if (partitionKill)
             {
@@ -840,7 +840,7 @@ namespace GameSimulator
             }
             // Now that points are defined, need to do a second cleanup stage of only the points I can actually legally add. Also make sure they're still within bounds
             allPaintableCoords = [.. allPaintableCoords.Where(c => c.Item1 >= partition.BegX && c.Item2 >= partition.BegY && c.Item1 <= partition.EndX && c.Item2 <= partition.EndY)];
-            allPaintableCoords = [.. allPaintableCoords.Where(c => _grid[c.Item1, c.Item2].IsWalkable() && (parameters.Aggressive || (!IsBrushBlockingWay(parameters.Brush, c.Item1, c.Item2))))];
+            allPaintableCoords = [.. allPaintableCoords.Where(c => _grid[c.Item1, c.Item2].IsMovementAffected() && (parameters.Aggressive || (!IsBrushBlockingWay(parameters.Brush, c.Item1, c.Item2))))];
             GeneralUtilities.ShuffleList(allPaintableCoords, _rng); // Shufflerino to be random
             // Check the rest of params
             PropagationDimension dim = parameters.DimensionalParameters[0];
@@ -917,7 +917,7 @@ namespace GameSimulator
                 int maxLength = 0;
                 foreach (Tile nextTile in RaycastDirection(anchorX, anchorY, dir, auxParams))
                 {
-                    if (nextTile.IsWalkable()) // If valid tile to continue walk
+                    if (nextTile.IsMovementAffected()) // If valid tile to continue walk
                     {
                         maxLength++;
                     }
@@ -1011,7 +1011,7 @@ namespace GameSimulator
                         if (i >= bounds.BegX && i <= bounds.EndX && j >= bounds.BegY && j <= bounds.EndY) // Only check cells within the bounds desired (e.g. not dry stealing from launchpads!)
                         {
                             Tile nextTile = GetTileIfValid(i, j);
-                            if (nextTile != null && nextTile.Surface != brushSurface && nextTile.IsWalkable() && (parameters.Aggressive || !IsBrushBlockingWay(brush, i, j))) // Candidate for painting only if tile extists, has diff surface, is walkable, and, in non-aggresive floods, there's no blocked path
+                            if (nextTile != null && nextTile.Surface != brushSurface && nextTile.IsMovementAffected() && (parameters.Aggressive || !IsBrushBlockingWay(brush, i, j))) // Candidate for painting only if tile extists, has diff surface, is walkable, and, in non-aggresive floods, there's no blocked path
                             {
                                 if (GeneralUtilities.GetRandomBool(floodChance, _rng)) // ok, if floodable, check if the statistics lets us do it
                                 {

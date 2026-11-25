@@ -17,7 +17,7 @@
                 return !(CliffFace == null && TileSurface == null && TileEffect == null && Occupier == null); // Brush has nothing in it, nothing is painted
             }
         }
-        public bool BlocksTheWay
+        public bool AffectsMovement
         {
             get
             {
