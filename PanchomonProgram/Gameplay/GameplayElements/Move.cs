@@ -20,14 +20,14 @@ namespace Gameplay.GameplayElements
         // Properties
         public PokemonType Type = PokemonType.NONE;
         public MoveCategory Category = MoveCategory.STATUS;
-        public int ChargingTurns = 3; // How many chargin turns it takes
+        public int Bars = 3; // How many charging bars it takes
         public int Bp = 0; // Only for damaging moves
         public DamageType DamageType = DamageType.DAMAGE_FORMULA;
         // Later on, targeting, execution type, etc
         public override string GetDescription()
         {
             StringBuilder fullString = new StringBuilder();
-            fullString.Append($"{GeneralUtilities.ApaCapitalize(Type.ToString())}-type move ({GeneralUtilities.ApaCapitalize(Category.ToString())}) {new string('■', ChargingTurns)}. ");
+            fullString.Append($"{GeneralUtilities.ApaCapitalize(Type.ToString())}-type move ({GeneralUtilities.ApaCapitalize(Category.ToString())}) {new string('■', Bars)}. ");
             if (Category != MoveCategory.STATUS)
             {
                 string damageTypeString = DamageType switch
@@ -37,6 +37,7 @@ namespace Gameplay.GameplayElements
                     DamageType.PROPORTIONAL => $"Deals {Bp}% of opponent's HP. ",
                     _ => throw new Exception("Unrecognized damage type")
                 };
+                fullString.Append(damageTypeString);
             }
             fullString.Append(_description);
             return fullString.ToString();
@@ -59,7 +60,7 @@ namespace Gameplay.GameplayElements
                 Bp = 102,
                 Category = MoveCategory.PHYSICAL,
                 DamageType = DamageType.DAMAGE_FORMULA,
-                ChargingTurns = 3
+                Bars = 3
             };
         }
     }

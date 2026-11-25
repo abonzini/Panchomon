@@ -543,11 +543,12 @@ namespace PanchomonBackend
                     });
                     break;
                 case EncounterType.STATUS_TRAP:
-                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.HpPercent > 0)];
+                    StatusCondition nvStatus = GameplayElementsContainer.GlobalData.StatusConditions[encounter.Params[0]];
+                    targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.HpPercent > 0 && !m.StatusConditions.ContainsKey(nvStatus))];
                     targetMons = targetMons.Count > 0 ? [GeneralUtilities.GetRandomPick(targetMons, _context.Rng)] : []; // Get a random one of these
                     ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
                     {
-                        mon.StatusConditions.Add(GameplayElementsContainer.GlobalData.NvStatuses[encounter.Params[0]]);
+                        mon.StatusConditions.Add(nvStatus, 1);
                     });
                     break;
                 case EncounterType.KILL_TRAP:
@@ -776,6 +777,7 @@ namespace PanchomonBackend
                     AssociatedEntity = enemyTrainerEntity,
                     Team = Side.TOP,
                     MaxMonsInField = enemy.MaxSimultaneousMons,
+                    AutoDistributeMons = enemy.AutoDistribute
                     // Will add mons one by one later due to potential customizations
                 };
                 foreach (PokemonEntity enemyMon in enemyTrainerEntity.Pokemon) // Instance one by one
@@ -783,7 +785,7 @@ namespace PanchomonBackend
                     PokemonInstance nextMonInstance = new PokemonInstance(enemyMon, _context.Rng);
                     if (enemy.ApplyDifficultyMods)
                     {
-                        nextMonInstance.BaseStatMult = [.. enemy.StatMult.Select(i => i * GetDifficultyStatMult())]; // Its stats do need to be multiplied depending on danger level and the event's mult
+                        nextMonInstance.FixedStatMult = [.. enemy.StatMult.Select(i => i * GetDifficultyStatMult())]; // Its stats do need to be multiplied depending on danger level and the event's mult
                     }
                     enemyTrainerInstance.PokemonInTeam.Add(nextMonInstance);
                 }
@@ -941,9 +943,9 @@ namespace PanchomonBackend
         {
             foreach (PokemonInstance mon in _context.TrainerInstance.PokemonInTeam)
             {
-                for (int i = 0; i < mon.BaseStatMult.Length; i++)
+                for (int i = 0; i < mon.FixedStatMult.Length; i++)
                 {
-                    mon.BaseStatMult[i] = _context.GetExtraStatMult();
+                    mon.FixedStatMult[i] = _context.GetExtraStatMult();
                 }
             }
         }
@@ -954,9 +956,9 @@ namespace PanchomonBackend
         {
             foreach (PokemonInstance mon in _context.TrainerInstance.PokemonInTeam)
             {
-                for (int i = 0; i < mon.BaseStatMult.Length; i++)
+                for (int i = 0; i < mon.FixedStatMult.Length; i++)
                 {
-                    mon.BaseStatMult[i] = 1;
+                    mon.FixedStatMult[i] = 1;
                 }
                 double postBattleHealing = _context.GetExtraHealing();
                 if (postBattleHealing > 0)

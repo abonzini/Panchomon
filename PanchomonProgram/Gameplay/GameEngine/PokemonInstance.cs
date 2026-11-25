@@ -8,14 +8,19 @@ namespace Gameplay.GameEngine
     /// </summary>
     public class PokemonInstance : PhysicalInstance
     {
+        public TrainerInstance AssociatedTrainer = null;
         public PokemonEntity AssociatedEntity = null;
         public double HpPercent = 1;
-        public List<StatusCondition> StatusConditions = [];
+        public Dictionary<StatusCondition, int> StatusConditions = [];
         public bool IsBoss = false;
-        public double[] BaseStatMult = [1, 1, 1, 1, 1, 1];
+        public double[] FixedStatMult = [1, 1, 1, 1, 1, 1];
         public List<Move> ActiveMoves = [];
         public List<Ability> ActiveAbilities = new List<Ability>();
         public HeldItem ActiveHeldItem = null;
+        // Fields that are reset or calculated during battle
+        public List<Move> ShuffledMoves;
+        public int MovePicker = 0;
+        // Functions
         public override string ToString()
         {
             return $"{AssociatedEntity} ({HpPercent * 100}%)";
@@ -29,8 +34,9 @@ namespace Gameplay.GameEngine
         /// <param name="pokemonEntity">Pokemon to instance</param>
         /// <param name="rng">The Rng to define the rest of this mon's things</param>
         /// <returns>The generated Pokemon instance ready for game</returns>
-        public PokemonInstance(PokemonEntity pokemonEntity, Random rng)
+        public PokemonInstance(TrainerInstance owner, PokemonEntity pokemonEntity, Random rng)
         {
+            AssociatedTrainer = owner;
             AssociatedEntity = pokemonEntity;
             // Init fields
             ActiveHeldItem = AssociatedEntity.HeldItem;

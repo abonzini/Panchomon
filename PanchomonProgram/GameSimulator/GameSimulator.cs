@@ -1,18 +1,11 @@
 ﻿using Gameplay.GameEngine;
-using Utilities;
 
 namespace GameSimulator
 {
     public partial class GameSimulator
     {
-        // Structural elements
-        const int LAUNCHPAD_DEPTH = 3; // Add 3 extra for launchpad
-        const int BOARD_DIM = 15; // Board is 15x15 (plus launchpads)
-        readonly Tile[,] _grid = new Tile[2 * LAUNCHPAD_DEPTH + BOARD_DIM, 2 * LAUNCHPAD_DEPTH + BOARD_DIM]; // All tiles are null but will be init
-        readonly Dictionary<Side, Partition> Launchpads = new Dictionary<Side, Partition>(); // This will contain launchpads and also, specifically separated by side
-        Partition Field; // This partition corresponds to everything that isn't a launchpad
-        List<TrainerInstance> _trainers;
         GameParameters _parameters = new GameParameters();
+        List<TrainerInstance> _activeTrainers;
         // State machine for simulation
         bool _newSim = true;
         Random _rng;
@@ -24,20 +17,19 @@ namespace GameSimulator
         public GameOutcome Simulate(List<TrainerInstance> trainers, GameParameters parameters, Random rng)
         {
             _rng = rng;
-            _trainers = trainers;
+            _activeTrainers = [.. trainers];
             _parameters = parameters;
             if (!_newSim) throw new Exception("Game was already simulated. Can't redo.");
             // First, assemble the battlefield
-            AssembleBattlefield([.. _trainers.Select(t => t.Team).Distinct()], parameters.TerrainGenerator, parameters.BattleTags);
-            // Random winner for now idc
-            HashSet<Side> participatingTeams = [.. _trainers.Select(t => t.Team)];
-            Side winningTeam = GeneralUtilities.GetRandomPick([.. participatingTeams], _rng);
-            List<TrainerInstance> winningTrainers = [.. _trainers.Where(p => p.Team == winningTeam)];
+            AssembleBattlefield([.. _activeTrainers.Select(t => t.Team).Distinct()], parameters.TerrainGenerator, parameters.BattleTags);
+            // Everything ready to go so we sim the battle now
+            Side winningTeam = SimulateBattle();
             // Finish sim
             _newSim = false;
+            // Placeholder for outcome
             return new GameOutcome()
             {
-                WinningTeam = winningTeam,
+                WinningTeam = Side.FIELD, // Whatever
             };
         }
         /// <summary>

@@ -78,7 +78,7 @@ TODO:
         - READY: Serious but zigzag
     - Rash:
         - PREP: Serious but movt speed is 1.5x
-        - READY: Uses the move immediately even if no target
+        - READY: If no target, will jump right to end phase
     - Quiet:
         - PREP: Serious but always stays MAX range + 1
         - READY: Serious

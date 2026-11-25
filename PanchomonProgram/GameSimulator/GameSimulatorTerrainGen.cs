@@ -6,6 +6,11 @@ namespace GameSimulator
 {
     public partial class GameSimulator
     {
+        // Structural elements
+        const int LAUNCHPAD_DEPTH = 3; // Add 3 extra for launchpad
+        const int BOARD_DIM = 15; // Board is 15x15 (plus launchpads)
+        readonly Tile[,] _grid = new Tile[2 * LAUNCHPAD_DEPTH + BOARD_DIM, 2 * LAUNCHPAD_DEPTH + BOARD_DIM]; // All tiles are null but will be init
+        readonly Dictionary<Side, Partition> _namedPartitions = new Dictionary<Side, Partition>(); // This will contain launchpads and also, specifically separated by side
         /// <summary>
         /// Gets a representation of the master partition in order to know more about life
         /// </summary>
@@ -165,14 +170,7 @@ namespace GameSimulator
                         _ => throw new Exception($"The side {side} is not a valid trainer side, something happened"),
                     };
                     CurrentPartitionSpace.AddNewPartition(nextParty);
-                    if (side != Side.FIELD)
-                    {
-                        Launchpads.Add(side, nextParty); // The launchpads are added for additional launchpad-based ops
-                    }
-                    else
-                    {
-                        Field = nextParty;
-                    }
+                    _namedPartitions.Add(side, nextParty); // The launchpads are added for additional launchpad-based ops
                     foreach ((int x, int y) in nextParty.GetAllTileCoords()) // Paint this square with the basic brush
                     {
                         _grid[x, y] = new Tile(x, y); // Instance tile
@@ -197,7 +195,7 @@ namespace GameSimulator
             List<Partition> decoratedRooms = [];
             foreach (TilePropagatorAction action in actions)
             {
-                List<Partition> identifiedRooms = [.. currentPartitions.GetPartitions().Where(p => p.Width > 1 && p.Height > 1 && !Launchpads.ContainsValue(p))];
+                List<Partition> identifiedRooms = [.. currentPartitions.GetPartitions().Where(p => p.Width > 1 && p.Height > 1 && !_namedPartitions.ContainsValue(p))];
                 // Check which action to actually perform. Normally, it's the action itself but if it is templated, fetch the action instead from template db
                 TilePropagatorAction nextAction = (action.Action == PropagationAction.TEMPLATE) ? GameplayElementsContainer.GlobalData.TemplatePropagationActions[action.Tags] : action;
                 if (!string.IsNullOrEmpty(nextAction.Tags))
@@ -212,15 +210,15 @@ namespace GameSimulator
                 // Execute action
                 List<Partition> targets = action.ChildTarget switch // Get all the partitions I'm going to work with
                 {
-                    PropagationTarget.BATTLE_FIELD => [Field],
+                    PropagationTarget.BATTLE_FIELD => [_namedPartitions[Side.FIELD]],
                     PropagationTarget.EVERYWHERE => [GetMasterPartition()],
-                    PropagationTarget.ALL_NON_LAUNCHPAD => [.. currentPartitions.GetPartitions().Where(p => !Launchpads.ContainsValue(p))],
+                    PropagationTarget.ALL_NON_LAUNCHPAD => [.. currentPartitions.GetPartitions().Where(p => !_namedPartitions.ContainsValue(p))],
                     PropagationTarget.RANDOM_ONE => [GeneralUtilities.GetRandomPick([.. currentPartitions.GetPartitions()], _rng)],
                     PropagationTarget.ALL_SHUFFLE => GeneralUtilities.ShuffleList([.. currentPartitions.GetPartitions()], _rng),
                     PropagationTarget.ALL_BLANK_ROOMS => [.. identifiedRooms.Where(p => !decoratedRooms.Contains(p))], // Get all that haven't been marked yet
                     PropagationTarget.N_BLANK_ROOM => [.. GeneralUtilities.ShuffleList([.. identifiedRooms.Where(p => !decoratedRooms.Contains(p))], _rng).Take((int)Math.Round(action.RoomDecorationPercent * identifiedRooms.Count))], // Get the first n random rooms that haven't been marked yet
                     PropagationTarget.ALL_SIMULTANEOUSLY => [currentPartitions.GetPartitions().First()], // It doesn't matter which one, just apply all
-                    PropagationTarget.ALL_LAUNCHPAD => [.. Launchpads.Values],
+                    PropagationTarget.ALL_LAUNCHPAD => [.. _namedPartitions.Where(p => p.Key != Side.FIELD).Select(p => p.Value)],
                     PropagationTarget.INSETS => [.. currentPartitions.GetPartitions().Where(p => p.Id >= 1 && p.Id <= 9)], // The inset pair
                     PropagationTarget.ALL => [.. currentPartitions.GetPartitions()], // All
                     _ => [currentPartitions.GetPartition((int)action.ChildTarget)], // Otherwise try to cast and fuck it
