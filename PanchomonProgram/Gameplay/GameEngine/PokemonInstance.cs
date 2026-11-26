@@ -19,7 +19,8 @@ namespace Gameplay.GameEngine
         public HeldItem ActiveHeldItem = null;
         // Fields that are reset or calculated during battle
         public List<Move> ShuffledMoves;
-        public int MovePicker = 0;
+        public int NextMovePicker = 0;
+        public PokemonSpecies SpeciesOverride = null;
         // Functions
         public override string ToString()
         {
