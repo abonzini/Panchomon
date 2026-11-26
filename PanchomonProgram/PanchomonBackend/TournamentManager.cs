@@ -250,8 +250,8 @@ namespace PanchomonBackend
                     Name = nextTrainerEntity.Name,
                     AssociatedEntity = nextTrainerEntity,
                     MaxMonsInField = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
-                    PokemonInTeam = [.. nextTrainerEntity.Pokemon.Select(p => new PokemonInstance(p, new Random(pokemonRng.Next()))).Take(GameplayElementsContainer.DEFAULT_BATTLE_NMONS)]
                 };
+                nextTrainerInstance.PokemonInTeam = [.. nextTrainerEntity.Pokemon.Select(p => new PokemonInstance(nextTrainerInstance, p, new Random(pokemonRng.Next()))).Take(GameplayElementsContainer.DEFAULT_BATTLE_NMONS)];
                 _participants.Add(nextTrainerInstance);
             }
             // This trainer list should be aligned with the seed one and never shuffled again

@@ -251,6 +251,8 @@ dotnet_diagnostic.IDE0090.severity = none
 dotnet_diagnostic.IDE0290.severity = none
 # Let me name my variables however I want
 dotnet_diagnostic.IDE1006.severity = none
+# Why do i want to use null checks that make my code less readable?
+dotnet_diagnostic.IDE0270.severity = none
 # Disable CA1862 (I respect string invariancy but I don't care)
 dotnet_diagnostic.CA1862.severity = none
 # Disable the regex thing because I do not understand what it means

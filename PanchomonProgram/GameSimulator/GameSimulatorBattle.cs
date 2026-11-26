@@ -14,7 +14,7 @@ namespace GameSimulator
         public InstanceState InterruptedState = InstanceState.NONE; // For states that are interrupted like flinch, etc
         public double InterruptedStateDuration = 0;
         // Location and movement related
-        public Direction Facing = Direction.NONE; // Where is the entity facing (if any) 
+        public Direction Facing = Direction.NONE; // Where is the entity facing (if any)
         public double StepWaitDuration = 0; // A timer that tells you when the next step's going to be
         // Move data
         public int Target = -1; // Keeps track of what mon is targeting, normally would be dynamic but some natures are fixated. Using entity Id
@@ -34,6 +34,7 @@ namespace GameSimulator
         {
             // Init all mons in the field
             if (!RefreshAllTrainers()) throw new Exception("Game was over before it even began!");
+            // TODO: Then, begin the loop of if battle still ongoing, do the refresh, etc, and keep the sync
             // Return the winner (TODO)
             return Side.FIELD;
         }
@@ -117,18 +118,53 @@ namespace GameSimulator
             // Super todo
             if (side == Side.BOTTOM || side == Side.TOP)
             {
-                // Todo get them in order
+                int y = (teamsLaunchpad.EndY + teamsLaunchpad.BegY) / 2; // Get the y point (fixed)
+                for (int x = teamsLaunchpad.BegX; x <= teamsLaunchpad.EndX; x++)
+                {
+                    launchpadValidCoords.Add((x, y));
+                }
             }
             if (side == Side.LEFT || side == Side.RIGHT)
             {
-                // Todo get them in orderr
+                int x = (teamsLaunchpad.EndX + teamsLaunchpad.BegX) / 2; // Get the x point (fixed)
+                for (int y = teamsLaunchpad.EndY; y >= teamsLaunchpad.BegY; y--) // Iterate but on the reverse (makes sense visually!)
+                {
+                    launchpadValidCoords.Add((x, y));
+                }
             }
             else // Field is just the center partition
             {
                 launchpadValidCoords = [.. teamsLaunchpad.GetAllTileCoords()];
                 if (!autoArrange) GeneralUtilities.ShuffleList(launchpadValidCoords, _rng); // If not an even arrangement, at least randomize the coords
             }
-            // todo if auto arrange just shuffle them properly
+            if (autoArrange) // Finally, if auto arranging, use my trademark (??) algorithm for evenly dividing and choosing the best next launchpad tile
+            {
+                // No idea if this works for any number though...
+                List<(int, int)> arrangedCoords = [];
+                for (int level = 0; arrangedCoords.Count < launchpadValidCoords.Count; level++) // Add each level in a bsp-ish way
+                {
+                    List<(int, int)> thisLevelList = [];
+                    int n = 1 << level;
+                    int offset = (launchpadValidCoords.Count - 1) / (n << 1); // Offset is half of the current chunk
+                    int step = (launchpadValidCoords.Count - 1) / n;
+                    for (int i = offset; i < launchpadValidCoords.Count; i += step) // Iterate while i still have element to check
+                    {
+                        thisLevelList.Add(launchpadValidCoords[i]); // Add next elem
+                    }
+                    // Finally, put in final list in an even symmetrical distro
+                    n = thisLevelList.Count;
+                    for (int i = 0; i < n / 2; i++)
+                    {
+                        arrangedCoords.Add(thisLevelList[i]);
+                        int sym = n - i - 1;
+                        if (i != sym) // If there's a mirror element, also add it first
+                        {
+                            arrangedCoords.Add(thisLevelList[sym]);
+                        }
+                    }
+                }
+                launchpadValidCoords = arrangedCoords; // ok now this is the result
+            }
             return launchpadValidCoords;
         }
     }

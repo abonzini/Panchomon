@@ -276,7 +276,7 @@ namespace GameSimulator
             }
         }
         /// <summary>
-        /// Applies a specific brush to a line in the map
+        /// Applies a specific brush to a line or rectangular area in the map
         /// </summary>
         /// <param name="brush">Which brush to apply</param>
         /// <param name="minX">Min X</param>

@@ -13,8 +13,11 @@
         USING_MOVE, /// The moment a move is ready to be actually used. Most instant moves use this after a succesful target but some other complex moves may delay this
         MOVE_FINISHED, /// Hook to insta switch to End Phase, so the state machine knows when to do stuff
         // Interrupt states
-        FLINCH, /// Mon is flinched, will resume state afterwards
+        FLINCH, /// Mon is flinched, will resume state afterwards. Also applies for knockback, with flinch being a special type of knockback of distance 0
         SLEEP, /// Mon is sleeping, will resume state afterwards although the counter may be reset
-
+        // Special movement states
+        AUTO_ADVANCE, /// Auto advance at a specific speed using its own properties, useful for charging like volt tackles, flame wheels etc
+        JUMPING, /// Mon is jumping with a fixed heading and speed, makes them also ungrounded
+        BULLDOZING, /// Mon is moving forward like auto advance but reverts crashing meanings. Goes through physical destructible objects but stops when reaching a non destructible object (or no object)
     }
 }

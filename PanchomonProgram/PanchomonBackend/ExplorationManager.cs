@@ -240,8 +240,8 @@ namespace PanchomonBackend
                 Team = Side.BOTTOM,
                 AssociatedEntity = trainerEntity,
                 MaxMonsInField = GameplayElementsContainer.DEFAULT_BATTLE_NMONS,
-                PokemonInTeam = [.. trainerEntity.Pokemon.Select(p => new PokemonInstance(p, new Random(pokemonRng.Next()))).Take(GameplayElementsContainer.DEFAULT_BATTLE_NMONS)]
             };
+            _context.TrainerInstance.PokemonInTeam = [.. trainerEntity.Pokemon.Select(p => new PokemonInstance(_context.TrainerInstance, p, new Random(pokemonRng.Next()))).Take(GameplayElementsContainer.DEFAULT_BATTLE_NMONS)];
             // Check expl ticket
             if (UseExplorationTicket) // Remove ticket and also different message
             {
@@ -274,8 +274,8 @@ namespace PanchomonBackend
                         AssociatedEntity = favourEntity,
                         Team = Side.BOTTOM,
                         MaxMonsInField = 1, // Otherwise this would be too strong
-                        PokemonInTeam = [.. favourEntity.Pokemon.Select(p => new PokemonInstance(p, new Random(pokemonRng.Next()))).Take(GameplayElementsContainer.DEFAULT_BATTLE_NMONS)]
                     };
+                    _context.FollowerInstance.PokemonInTeam = [.. favourEntity.Pokemon.Select(p => new PokemonInstance(_context.FollowerInstance, p, new Random(pokemonRng.Next()))).Take(GameplayElementsContainer.DEFAULT_BATTLE_NMONS)];
                 }
             }
             // Check the adjusted danger level of dungeon
@@ -570,7 +570,7 @@ namespace PanchomonBackend
                             IsShiny = _context.Rng.Next(0, _context.GetShinyChance()) == 0 // Depending on shiny chance ofc
                         };
                         GameplayElementsContainer.GlobalData.RandomizePokemon(newMon, _context.Rng); // Randomize the rest for this mon
-                        PokemonInstance joinerInstance = new PokemonInstance(newMon, _context.Rng); // Creates rest of instance
+                        PokemonInstance joinerInstance = new PokemonInstance(_context.TrainerInstance, newMon, _context.Rng); // Creates rest of instance
                         // Finally, add the joiner to the team AND the catchtable
                         _context.TrainerInstance.PokemonInTeam.Add(joinerInstance);
                         AddMonToCatchTable(joinerInstance, 0);
@@ -782,7 +782,7 @@ namespace PanchomonBackend
                 };
                 foreach (PokemonEntity enemyMon in enemyTrainerEntity.Pokemon) // Instance one by one
                 {
-                    PokemonInstance nextMonInstance = new PokemonInstance(enemyMon, _context.Rng);
+                    PokemonInstance nextMonInstance = new PokemonInstance(enemyTrainerInstance, enemyMon, _context.Rng);
                     if (enemy.ApplyDifficultyMods)
                     {
                         nextMonInstance.FixedStatMult = [.. enemy.StatMult.Select(i => i * GetDifficultyStatMult())]; // Its stats do need to be multiplied depending on danger level and the event's mult

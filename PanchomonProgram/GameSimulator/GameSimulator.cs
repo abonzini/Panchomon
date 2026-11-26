@@ -29,7 +29,7 @@ namespace GameSimulator
             // Placeholder for outcome
             return new GameOutcome()
             {
-                WinningTeam = Side.FIELD, // Whatever
+                WinningTeam = winningTeam, // Whatever
             };
         }
         /// <summary>
