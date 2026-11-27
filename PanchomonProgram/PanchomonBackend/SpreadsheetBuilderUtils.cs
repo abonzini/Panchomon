@@ -22,7 +22,6 @@ namespace PanchomonBackend
             GameplayElementsContainer.GlobalData.HeldItems.ToList().ForEach(x => glossary[x.Key] = x.Value.GetDescription());
             GameplayElementsContainer.GlobalData.Jewelries.ToList().ForEach(x => glossary[x.Key] = x.Value.GetDescription());
             GameplayElementsContainer.GlobalData.KeyItems.ToList().ForEach(x => glossary[x.Key] = x.Value.GetDescription());
-            GameplayElementsContainer.GlobalData.Mints.ToList().ForEach(x => glossary[x.Key] = x.Value.GetDescription());
             GameplayElementsContainer.GlobalData.Moves.ToList().ForEach(x => glossary[x.Key] = x.Value.GetDescription());
             GameplayElementsContainer.GlobalData.MoveDiskLookup.ToList().ForEach(x => glossary[x.Key] = x.Value.GetDescription());
             GameplayElementsContainer.GlobalData.Natures.ToList().ForEach(x => glossary[x.Key] = x.Value.GetDescription());
@@ -81,7 +80,6 @@ namespace PanchomonBackend
             GameplayElementsContainer.GlobalData.Gummies.ToList().ForEach(x => cramDict[x.Key] = x.Value.Type);
             GameplayElementsContainer.GlobalData.HeldItems.ToList().ForEach(x => cramDict[x.Key] = x.Value.CramType);
             GameplayElementsContainer.GlobalData.KeyItems.ToList().ForEach(x => cramDict[x.Key] = x.Value.CramType);
-            GameplayElementsContainer.GlobalData.Mints.ToList().ForEach(x => cramDict[x.Key] = PokemonType.GRASS); // All mints are grass idk
             GameplayElementsContainer.GlobalData.MoveDiskLookup.ToList().ForEach(x => cramDict[x.Key] = x.Value.GetCramType()); // Type of move
             GameplayElementsContainer.GlobalData.PokeBalls.ToList().ForEach(x => cramDict[x.Key] = x.Value.CramType);
             GameplayElementsContainer.GlobalData.SandwichLookup.ToList().ForEach(x => cramDict[x.Key] = x.Value.CramType);

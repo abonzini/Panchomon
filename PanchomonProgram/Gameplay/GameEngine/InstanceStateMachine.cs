@@ -1,6 +1,13 @@
 ﻿namespace Gameplay.GameEngine
 {
     /// <summary>
+    /// Aux variables present in a SM that can be operated on
+    /// </summary>
+    public enum SmVariable
+    {
+        MOVEMENT_STATE_REMAINING_TILES, /// How many tiles remain in a current movement state
+    }
+    /// <summary>
     /// State machine of a simulated instance. Some will be auto-dealt with simulator but these can be controlled by moves and other effects which is why it's public here
     /// </summary>
     public enum InstanceState
@@ -13,7 +20,8 @@
         USING_MOVE, /// The moment a move is ready to be actually used. Most instant moves use this after a succesful target but some other complex moves may delay this
         MOVE_FINISHED, /// Hook to insta switch to End Phase, so the state machine knows when to do stuff
         // Interrupt states
-        FLINCH, /// Mon is flinched, will resume state afterwards. Also applies for knockback, with flinch being a special type of knockback of distance 0
+        FLINCH, /// Mon is flinched, will resume state afterwards
+        KNOCKBACK, /// Mon is being knocked back, with the timer being the "speed" and an aux var that measures number of steps left
         SLEEP, /// Mon is sleeping, will resume state afterwards although the counter may be reset
         // Special movement states
         AUTO_ADVANCE, /// Auto advance at a specific speed using its own properties, useful for charging like volt tackles, flame wheels etc
@@ -33,13 +41,14 @@
         public double InterruptedStateCounter = 0;
         // Location and movement related
         public Direction Facing = Direction.NONE; // Where is the entity facing (if any)
+        public Direction MovementDireciton = Direction.NONE; // Where is the entity moving towards
         public bool CanPlanMovement = false;
         public double StepParam = 0; // In steps per second
         public double StepPercentage = 0; // When reaches 1, a step is performed
         // Move data
         public int Target = -1; // Keeps track of what mon is targeting, normally would be dynamic but some natures are fixated. Using entity Id
         // Others
-        public Dictionary<string, int> AuxVariables = []; // Keeps a list of variables that may become useful for special effects and the sort, used by moves and stuff
+        public Dictionary<SmVariable, int> AuxVariables = []; // Keeps a list of variables that may become useful for special effects and the sort, used by moves and stuff
         /// <summary>
         /// Gets the next update time of an instance, given by its state machine
         /// </summary>

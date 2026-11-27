@@ -5,7 +5,7 @@ namespace GameSimulator
 {
     public partial class GameSimulator
     {
-        Dictionary<int, PokemonInstance> _ingameMonInstances = [];
+        List<PokemonInstance> _ingameMonInstances = [];
         int _nextInstanceId = 0;
         /// <summary>
         /// Performs the battle simulation
@@ -22,17 +22,29 @@ namespace GameSimulator
                 // Update all mons
                 double thisDelta = nextTimeDelta;
                 nextTimeDelta = float.MaxValue;
-                foreach (PokemonInstance nextMon in _ingameMonInstances.Values)
+                foreach (PokemonInstance nextMon in _ingameMonInstances)
                 {
                     nextTimeDelta = Math.Min(nextTimeDelta, UpdateState(nextMon, thisDelta)); // Calculate which delta to do next
                 }
                 // Then update all everything else (projectiles, weather entities, etc)
                 // TODO, no dict yet...
                 // After all objects resolved, next pass involves checking if any mon still alive, check if game ends, etc
-                foreach (int nextMonId in _ingameMonInstances.Keys)
+                bool monAmountReduced = false;
+                for (int i = 0; i < _ingameMonInstances.Count; i++)
                 {
-                    // Todo checks if mon alive, checks if trainer needs to refresh, checks if game is over due to highlighted mon dying
+                    PokemonInstance nextMon = _ingameMonInstances[i];
+                    if (nextMon.HpPercent <= 0 || !_activeTrainers.Contains(nextMon.AssociatedTrainer)) // If mon has died or their trainer lost the game for any reason
+                    {
+                        monAmountReduced = true;
+                        if (nextMon.IsBoss)
+                        {
+                            _activeTrainers.Remove(nextMon.AssociatedTrainer); // Remove this trainer from the set, they lost because bossmon lost
+                        }
+                        _ingameMonInstances.RemoveAt(i); // Remove this mon from queue
+                        i--;
+                    }
                 }
+                if (monAmountReduced) battleFinished |= RefreshAllTrainers(); // If battle ongoing, then do a check for all trainers to make sure all have the correct amount, and check if any team has lost
             }
             // Return the winner (TODO)
             return Side.FIELD;
@@ -56,7 +68,7 @@ namespace GameSimulator
                 }
             }
             bool gameContinues = _activeTrainers.Select(t => t.Team).Distinct().Count() > 1; // Game still on as long as there's more than 1 team still in the fight
-            gameContinues &= (_parameters.FocusedSide != Side.ALL) && _activeTrainers.Any(t => t.Team == _parameters.FocusedSide); // Game will stop also if there's a focused side and no more trainer of this side
+            gameContinues &= (_parameters.FocusedSide != Side.ALL) && !_activeTrainers.Any(t => t.Team == _parameters.FocusedSide); // Game will stop also if there's a focused side and no more trainer of this side
             return gameContinues;
         }
         /// <summary>
@@ -66,7 +78,7 @@ namespace GameSimulator
         /// <returns>Whether the trainer can continue</returns>
         bool UpdateTrainerMonsInField(TrainerInstance trainer)
         {
-            int nMons = _ingameMonInstances.Values.Where(p => p.AssociatedTrainer == trainer).Count(); // Check the already present mons in the field that are owned by this trainer
+            int nMons = _ingameMonInstances.Where(p => p.AssociatedTrainer == trainer).Count(); // Check the already present mons in the field that are owned by this trainer
             List<(int, int)> thisTrainersLaunchpad = GetLaunchpadValidCoords(trainer.Team, trainer.AutoDistributeMons);
             while (nMons < trainer.MaxMonsInField) // If I can add more, I add
             {
@@ -94,7 +106,7 @@ namespace GameSimulator
         /// <returns>The mon, or null if there's none</returns>
         PokemonInstance PrepareTrainersNextMon(TrainerInstance trainer)
         {
-            PokemonInstance mon = trainer.PokemonInTeam.Where(p => p.HpPercent > 0 && !_ingameMonInstances.ContainsValue(p)).FirstOrDefault(); // Get all mons that can actually fight and not already init
+            PokemonInstance mon = trainer.PokemonInTeam.Where(p => p.HpPercent > 0 && !_ingameMonInstances.Contains(p)).FirstOrDefault(); // Get all mons that can actually fight and not already init
             if (mon == null)
             {
                 // If not null, can then initialize it
@@ -103,7 +115,10 @@ namespace GameSimulator
                 // Then create a state machine for the mon and add into db
                 int id = _nextInstanceId++;
                 _ingameMonInstances[id] = mon;
-                mon.Sm = new InstanceStateMachine(); // Also create a brand new state machine for it
+                mon.Sm = new InstanceStateMachine
+                {
+                    StepParam = GetMonMvtSpeed(mon)
+                }; // Also create a brand new state machine for it
             }
             return mon;
         }
@@ -203,7 +218,8 @@ namespace GameSimulator
             // Finally, if there's a new state either caused by state transition, will execute its beginning (init)
             if (instance.Sm.State != newState)
             {
-                // TODO... begin state
+                instance.Sm.State = newState; // Apply new state
+                StartState(instance);
             }
             // Should be good? Return the needed update time for this sm
             return instance.Sm.GetNextUpdateTime();
@@ -230,8 +246,6 @@ namespace GameSimulator
                         {
                             RefreshMonMoves(mon);
                         }
-                        mon.Sm.StateCounter = mon.ShuffledMoves[mon.NextMovePicker].Bars; // Set bars
-                        mon.Sm.StateParam = (GetMonStat(mon, MonStat.SPEED) / 500) + 0.1; // TODO Revise bar speed formula I think it was this
                     }
                     break;
                 case InstanceState.END_PHASE:
@@ -252,26 +266,118 @@ namespace GameSimulator
                     }
                     break;
                 case InstanceState.TARGETING:
+                    instance.Sm.StateCounter -= updateDelta;
+                    // Todo the actual targeting and move execution if found any
+                    if (instance.Sm.StateCounter <= 0) // Meaning the move reached a timeout and mon lost the window for targeting
+                    {
+                        newState = InstanceState.END_PHASE;
+                    }
                     break;
                 case InstanceState.USING_MOVE:
+                    // Todo actually use the move, the game state machine takes charge here and notifies
                     break;
                 case InstanceState.MOVE_FINISHED:
+                    instance.Sm.StateCounter -= updateDelta;
+                    if (instance.Sm.StateCounter <= 0) // Move to end phase, nothing to do here
+                    {
+                        newState = InstanceState.END_PHASE;
+                    }
                     break;
-                case InstanceState.FLINCH:
+                case InstanceState.FLINCH: // Flinch state will resume the state as if nothing happened (probably)
+                    instance.Sm.StateCounter -= updateDelta;
+                    if (instance.Sm.StateCounter <= 0) // Flinch ended, will restore state
+                    {
+                        // TODO Check with move if it's ok to restore, or instead jump elsewhere
+                        newState = instance.Sm.InterruptedState; // Nothing happened here lmao
+                        instance.Sm.State = newState; // Restore state as if nothing happened
+                        instance.Sm.StateCounter = instance.Sm.InterruptedStateCounter;
+                    }
+                    break;
+                case InstanceState.KNOCKBACK:
+                    instance.Sm.StateCounter -= updateDelta;
+                    if (instance.Sm.StateCounter <= 0) // Time to do knockback step
+                    {
+                        GeneralUtilities.AddtemToCountDictionary(instance.Sm.AuxVariables, SmVariable.MOVEMENT_STATE_REMAINING_TILES, -1); // Remove one tile of the kb tiles
+                        // TODO Perform knockback step, if crashed here, also notify
+                        instance.Sm.StateCounter = instance.Sm.StepParam; // Prepare for next one
+                        if (instance.Sm.AuxVariables.TryGetValue(SmVariable.MOVEMENT_STATE_REMAINING_TILES, out int remainingKb) && remainingKb == 0) // Restore if reached end or for some reason there's no more kb
+                        {
+                            // Restoration like when flinching
+                            newState = instance.Sm.InterruptedState;
+                            instance.Sm.State = newState;
+                            instance.Sm.StateCounter = instance.Sm.InterruptedStateCounter;
+                        }
+                    }
                     break;
                 case InstanceState.SLEEP:
+                    instance.Sm.StateCounter -= updateDelta;
+                    if (instance.Sm.StateCounter <= 0) // Time to wake up
+                    {
+                        // TODO Check with move if it's ok to restore, or instead jump elsewhere
+                        newState = instance.Sm.InterruptedState; // Restores indirectly, by forcing state to start again
+                        instance.Sm.StateCounter = instance.Sm.InterruptedStateCounter; // Restore this just in case the state has no begin handler
+                    }
                     break;
-                case InstanceState.AUTO_ADVANCE:
-                    break;
+                case InstanceState.AUTO_ADVANCE: // Very similar states, move until end and then will need to ask whichever move decided to do this
                 case InstanceState.JUMPING:
-                    break;
                 case InstanceState.BULLDOZING:
+                    instance.Sm.StateCounter -= updateDelta;
+                    if (instance.Sm.StateCounter <= 0) // Time to do step
+                    {
+                        GeneralUtilities.AddtemToCountDictionary(instance.Sm.AuxVariables, SmVariable.MOVEMENT_STATE_REMAINING_TILES, -1); // Remove one tile of the kb tiles
+                        // TODO Perform step, if crashed here, also notify etc
+                        instance.Sm.StateCounter = instance.Sm.StepParam; // Prepare for next one
+                        if (instance.Sm.AuxVariables.TryGetValue(SmVariable.MOVEMENT_STATE_REMAINING_TILES, out int remainingKb) && remainingKb == 0) // Restore if reached end or for some reason there's no more kb
+                        {
+                            // Notify end of state, otherwise this is an infinite loop
+                        }
+                    }
                     break;
                 case InstanceState.NONE: // Unrecognised or unimplemented states go here and will throw until i do something about them
                 default:
                     throw new Exception($"State {newState} not implemented");
             }
             return newState;
+        }
+        /// <summary>
+        /// Begins a new state in this instance, already set in sm
+        /// </summary>
+        /// <param name="instance">Instance to apply beginning of state</param>
+        void StartState(PhysicalInstance instance)
+        {
+            switch (instance.Sm.State)
+            {
+                case InstanceState.START_PHASE:
+                    instance.Sm.StateCounter = 0; // State will end next frame
+                    break;
+                case InstanceState.END_PHASE:
+                    instance.Sm.StateCounter = 0; // State will end next frame
+                    break;
+                case InstanceState.PREPARATION:
+                    // Prepare state to use movement, with chargin amount being the move bars needed and speed dependent, also restart movement
+                    instance.Sm.StepPercentage = 0;
+                    PokemonInstance mon = (PokemonInstance)instance;
+                    mon.Sm.StateCounter = mon.ShuffledMoves[mon.NextMovePicker].Bars;
+                    mon.Sm.StateParam = GetMonMoveChargeSpeed(mon);
+                    break;
+                case InstanceState.TARGETING:
+                    instance.Sm.StateCounter = TARGET_PHASE_TIMEOUT; // Set targeting phase timeout
+                    break;
+                // States that do no extra stuff when they begin, either because their counters were already set or whatever
+                // Coincidentally they're all move-related so the move can always re-set all the timers they want
+                case InstanceState.USING_MOVE:
+                case InstanceState.MOVE_FINISHED:
+                case InstanceState.FLINCH:
+                case InstanceState.KNOCKBACK:
+                case InstanceState.SLEEP:
+                case InstanceState.AUTO_ADVANCE:
+                case InstanceState.JUMPING:
+                case InstanceState.BULLDOZING:
+                case InstanceState.NONE:
+                    break;
+                default: // Unknown and unhandled states need to be consciously added
+                    throw new Exception($"State {instance.Sm.State} not implemented");
+            }
         }
         #endregion
     }

@@ -14,7 +14,6 @@ namespace Gameplay.GameplayElementsContainer
         JEWELRY,
         KEY_ITEM,
         MOVE_DISK,
-        MINT,
         POKE_BALL,
         SANDWICH,
         POKEMON,
@@ -41,7 +40,6 @@ namespace Gameplay.GameplayElementsContainer
             else if (Jewelries.ContainsKey(itemName)) resultingType = ItemType.JEWELRY;
             else if (HeldItems.ContainsKey(itemName)) resultingType = ItemType.HELD_ITEM;
             else if (GetMoveDisk(itemName) != null) resultingType = ItemType.MOVE_DISK;
-            else if (Mints.ContainsKey(itemName)) resultingType = ItemType.MINT;
             else if (PokeBalls.ContainsKey(itemName)) resultingType = ItemType.POKE_BALL;
             else if (Dex.ContainsKey(itemName)) resultingType = ItemType.POKEMON;
             else if (GetSandwich(itemName) != null) resultingType = ItemType.SANDWICH;
@@ -96,9 +94,6 @@ namespace Gameplay.GameplayElementsContainer
                     break;
                 case ItemType.MOVE_DISK:
                     auxCount = GeneralUtilities.AddtemToCountDictionary(trainer.MoveDisks, GetMoveDisk(prizeName), count, TrainerEntity.MAX_NUMBER_BAG);
-                    break;
-                case ItemType.MINT:
-                    auxCount = GeneralUtilities.AddtemToCountDictionary(trainer.Mints, Mints[prizeName], count, TrainerEntity.MAX_NUMBER_BAG);
                     break;
                 case ItemType.POKE_BALL:
                     auxCount = GeneralUtilities.AddtemToCountDictionary(trainer.PokeBalls, PokeBalls[prizeName], count, TrainerEntity.MAX_NUMBER_BAG);

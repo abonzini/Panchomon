@@ -87,12 +87,10 @@ namespace Gameplay.GameplayElementsContainer
                 const int RANK_FIELD = 10;
                 const int WEIGHT_FIELD = 11;
                 const int HEIGHT_FIELD = 12;
-                const int ABILITY_1_FIELD = 13;
-                const int ABILITY_2_FIELD = 14;
-                const int ABILITY_3_FIELD = 15;
-                const int PREEVO_FIELD = 16;
-                const int ALTERNATE_OF_FIELD = 17;
-                const int IMAGE_URL_FIELD = 18;
+                const int ABILITIES_FIELD = 13;
+                const int PREEVO_FIELD = 14;
+                const int ALTERNATE_OF_FIELD = 15;
+                const int IMAGE_URL_FIELD = 16;
                 string nextPokemonName = fields[NAME_FIELD];
                 PokemonSpecies thePokemon = Dex[nextPokemonName];
                 thePokemon.Name = nextPokemonName;
@@ -112,12 +110,14 @@ namespace Gameplay.GameplayElementsContainer
                 thePokemon.Weight = double.Parse(fields[WEIGHT_FIELD]);
                 thePokemon.Height = double.Parse(fields[HEIGHT_FIELD]);
                 // Ability
-                string theAbility = fields[ABILITY_1_FIELD].Trim();
-                if (theAbility != "" && Abilities.TryGetValue(theAbility, out Ability nextValidAbility)) thePokemon.Abilities.Add(nextValidAbility);
-                theAbility = fields[ABILITY_2_FIELD].Trim();
-                if (theAbility != "" && Abilities.TryGetValue(theAbility, out nextValidAbility)) thePokemon.Abilities.Add(nextValidAbility);
-                theAbility = fields[ABILITY_3_FIELD].Trim();
-                if (theAbility != "" && Abilities.TryGetValue(theAbility, out nextValidAbility)) thePokemon.Abilities.Add(nextValidAbility);
+                string abilities = fields[ABILITIES_FIELD].Trim();
+                foreach (string theAbility in abilities.Split('/').Select(s => s.Trim())) // Split and trim
+                {
+                    if (Abilities.TryGetValue(theAbility, out Ability nextValidAbility))
+                    {
+                        thePokemon.Abilities.Add(nextValidAbility);
+                    }
+                }
                 if (thePokemon.Name.ToLower().Contains("unown")) // Unown will also carry all other abilities
                 {
                     char letter = thePokemon.Name.ToLower().Last();
@@ -335,7 +335,7 @@ namespace Gameplay.GameplayElementsContainer
 
             // Iterate for all trainers, keeping in mind the dimensions of row/col
             const int TRANER_CARD_WIDTH = 21; // Width is 20 but the margin to the right is considered the trainer's
-            const int TRANER_CARD_HEIGHT = 45; // Height is 44 (?) but the margin to the bottom is considered the trainer's
+            const int TRANER_CARD_HEIGHT = 43; // Height is 44 (?) but the margin to the bottom is considered the trainer's
             for (int i = 1; i < rows.Length; i += TRANER_CARD_HEIGHT) // Ignore the first row/col since these are just formatting spaces
             {
                 for (int j = 1; j < sampleCols.Length; j += TRANER_CARD_WIDTH)
@@ -460,12 +460,11 @@ namespace Gameplay.GameplayElementsContainer
                     parseBagFields(22, newTrainer.Gummies, Gummies); // Row 23, gummies
                     parseBagFields(24, newTrainer.MoveDisks, MoveDiskLookup); // Row 25, move disk
                     parseBagFields(26, newTrainer.HeldItems, HeldItems); // Row 27, held items
-                    parseBagFields(28, newTrainer.Mints, Mints); // Row 29, mints
-                    parseBagFields(30, newTrainer.EvoPlates, EvoPlates); // Row 31, evo plates
-                    parseBagFields(32, newTrainer.Essences, Essences); // Row 33, essences
-                    parseBagFields(34, newTrainer.KeyItems, KeyItems); // Row 35, key items
-                    parseBagFields(36, newTrainer.PokeBalls, PokeBalls); // Row 37, key items
-                    parseBagFields(40, newTrainer.Favours, AllNpcTrainers); // Row 41, favours
+                    parseBagFields(28, newTrainer.EvoPlates, EvoPlates); // Row 29, evo plates
+                    parseBagFields(30, newTrainer.Essences, Essences); // Row 31, essences
+                    parseBagFields(32, newTrainer.KeyItems, KeyItems); // Row 33, key items
+                    parseBagFields(34, newTrainer.PokeBalls, PokeBalls); // Row 35, key items
+                    parseBagFields(36, newTrainer.Favours, AllNpcTrainers); // Row 37, favours
                     // Some weird special ones, the sandwiches (order-important) and the boxed (the lookup is the key and not the value)
                     { // 39, sandwiches
                         string field;

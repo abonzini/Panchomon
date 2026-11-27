@@ -19,7 +19,7 @@ namespace Gameplay.GameplayElements
     {
         NONE, // Move doesn't target, can be used immediately
         TILES, // Move targets tiles in front and side of the caster, can be many tiles, while they all apply simultaneously. Direction is always the caster's no matter the tile
-        STRAIGHT_LINE, // Move targets a line projected relative to front of caster, direction being the line's always, and the trajectory being a mess of caster perspective/projection
+        STRAIGHT_LINE, // Move targets a line projected from a start tile relative in orientation to front of caster
         RANGED_LINE, // Move targets a line but which is free to move within a range and not limited to the 8 cardinal directions
     }
     /// <summary>

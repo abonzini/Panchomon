@@ -6,6 +6,16 @@
         public static IEnumerable<KeyItem> GetAllKeyItems()
         {
             Console.WriteLine("Getting all Key Items");
+            // Nature mints go here idk
+            foreach (Nature nature in Nature.GetAllNatures())
+            {
+                yield return new KeyItem()
+                {
+                    Name = $"{nature.Name} Mint",
+                    CramType = PokemonType.GRASS,
+                    _description = $"Permanently changes a Pokemon's nature to {nature.Name}: {nature.GetDescription()}"
+                };
+            }
             // Shards are one per type so just automate it
             foreach (PokemonType type in Enum.GetValues<PokemonType>())
             {

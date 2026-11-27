@@ -18,7 +18,6 @@ namespace Gameplay.GameplayElements
         public Dictionary<Gummy, int> Gummies = new Dictionary<Gummy, int>();
         public Dictionary<MoveDisk, int> MoveDisks = new Dictionary<MoveDisk, int>();
         public Dictionary<HeldItem, int> HeldItems = new Dictionary<HeldItem, int>();
-        public Dictionary<Mint, int> Mints = new Dictionary<Mint, int>();
         public Dictionary<EvoPlate, int> EvoPlates = new Dictionary<EvoPlate, int>();
         public Dictionary<Essence, int> Essences = new Dictionary<Essence, int>();
         public Dictionary<KeyItem, int> KeyItems = new Dictionary<KeyItem, int>();
@@ -117,7 +116,6 @@ namespace Gameplay.GameplayElements
             fillBagLines("GUMMIES:", [.. Gummies.Select(k => $"{k.Key.Name},{k.Value},").Order()]);
             fillBagLines("MOVE DISKS:", [.. MoveDisks.Select(k => $"{k.Key.Name},{k.Value},").Order()]);
             fillBagLines("HELD ITEMS:", [.. HeldItems.Select(k => $"{k.Key.Name},{k.Value},").Order()]);
-            fillBagLines("MINTS:", [.. Mints.Select(k => $"{k.Key.Name},{k.Value},").Order()]);
             fillBagLines("EVO PLATES:", [.. EvoPlates.Select(k => $"{k.Key.Name},{k.Value},").Order()]);
             fillBagLines("ESSENCES:", [.. Essences.Select(k => $"{k.Key.Name},{k.Value},").Order()]);
             fillBagLines("KEY/CRAFTING:", [.. KeyItems.Select(k => $"{k.Key.Name},{k.Value},").Order()]);

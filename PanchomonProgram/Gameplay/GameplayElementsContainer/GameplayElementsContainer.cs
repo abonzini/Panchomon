@@ -40,7 +40,6 @@ namespace Gameplay.GameplayElementsContainer
             LoadAllElements(Gummies, Gummy.GetAllGummies());
             LoadAllElements(KeyItems, KeyItem.GetAllKeyItems());
             LoadAllElements(Essences, Essence.GetAllEssences());
-            LoadAllElements(Mints, Nature.GetAllMints());
             LoadAllElements(StatusConditions, StatusCondition.GetAllNonVolatileStatus());
             LoadAllElements(Surfaces, Surface.GetAllSurfaces());
             LoadAllElements(PhysicalObjects, PhysicalObject.GetAllOccupierObjects());
@@ -82,7 +81,6 @@ namespace Gameplay.GameplayElementsContainer
         public Dictionary<string, Gummy> Gummies = new Dictionary<string, Gummy>();
         public Dictionary<string, HeldItem> HeldItems = new Dictionary<string, HeldItem>();
         public Dictionary<string, Nature> Natures = new Dictionary<string, Nature>();
-        public Dictionary<string, Mint> Mints = new Dictionary<string, Mint>();
         public Dictionary<string, Essence> Essences = new Dictionary<string, Essence>();
         public Dictionary<string, PokeBall> PokeBalls = new Dictionary<string, PokeBall>();
         public Dictionary<string, Sandwich> SandwichLookup = new Dictionary<string, Sandwich>();

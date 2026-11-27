@@ -235,7 +235,6 @@ namespace Gameplay.GameplayElementsContainer
             result += WarnBag(trainer.Gummies.Count, TrainerEntity.MAX_NUMBER_BAG, threshold, "Gummies");
             result += WarnBag(trainer.MoveDisks.Count, TrainerEntity.MAX_NUMBER_BAG, threshold, "Move Disks");
             result += WarnBag(trainer.HeldItems.Count, TrainerEntity.MAX_NUMBER_BAG, threshold, "Held Items");
-            result += WarnBag(trainer.Mints.Count, TrainerEntity.MAX_NUMBER_BAG, threshold, "Mints");
             result += WarnBag(trainer.EvoPlates.Count, TrainerEntity.MAX_NUMBER_BAG, threshold, "Evolution Plates");
             result += WarnBag(trainer.Essences.Count, TrainerEntity.MAX_NUMBER_BAG, threshold, "Essences");
             result += WarnBag(trainer.KeyItems.Count, TrainerEntity.MAX_NUMBER_BAG, threshold, "Key/Crafting Items");

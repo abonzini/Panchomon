@@ -51,5 +51,33 @@ namespace GameSimulator
             };
             return result * statMult; // Multiply by mult and return
         }
+        /// <summary>
+        /// Returns the mon weight in Kg
+        /// </summary>
+        /// <param name="mon">Which mon</param>
+        /// <returns>Weight in kg</returns>
+        double GetMonWeight(PokemonInstance mon)
+        {
+            PokemonSpecies speciesToCheck = mon.SpeciesOverride ?? mon.AssociatedEntity.Species; // Get the override unless the mon is just normal base
+            return speciesToCheck.Weight;
+        }
+        /// <summary>
+        /// Gets the mon mvt speed in tile/s
+        /// </summary>
+        /// <param name="mon">Which mon</param>
+        /// <returns>Mvt Speed</returns>
+        double GetMonMvtSpeed(PokemonInstance mon)
+        {
+            return Math.Sqrt(GetMonStat(mon, MonStat.SPEED) / (GetMonWeight(mon) + EXTRA_MON_WEIGHT));
+        }
+        /// <summary>
+        /// Returns the move charging speed in bars/s
+        /// </summary>
+        /// <param name="mon">Which mon</param>
+        /// <returns>Charge speed</returns>
+        double GetMonMoveChargeSpeed(PokemonInstance mon)
+        {
+            return (GetMonStat(mon, MonStat.SPEED) / MOVE_CHARGE_CONSTANT) + MIN_MOVE_CHARGE_SPEED;
+        }
     }
 }
