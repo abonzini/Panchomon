@@ -1,4 +1,6 @@
 ﻿using Gameplay.GameEngine;
+using Gameplay.GameplayElements;
+using Gameplay.GameplayElementsContainer;
 using Utilities;
 
 namespace GameSimulator
@@ -6,13 +8,14 @@ namespace GameSimulator
     public partial class GameSimulator
     {
         List<PokemonInstance> _ingameMonInstances = [];
-        int _nextInstanceId = 0;
+        StatusCondition _sleepStatus;
         /// <summary>
         /// Performs the battle simulation
         /// </summary>
         /// <returns>The winning team</returns>
         Side SimulateBattle()
         {
+            _sleepStatus = GameplayElementsContainer.GlobalData.StatusConditions["Sleep"];
             // Init all mons in the field
             if (!RefreshAllTrainers()) throw new Exception("Game was over before it even began!");
             bool battleFinished = false;
@@ -113,12 +116,16 @@ namespace GameSimulator
                 mon.ShuffledMoves = [.. mon.ActiveMoves];
                 RefreshMonMoves(mon);
                 // Then create a state machine for the mon and add into db
-                int id = _nextInstanceId++;
-                _ingameMonInstances[id] = mon;
+                _ingameMonInstances.Add(mon);
                 mon.Sm = new InstanceStateMachine
                 {
                     StepParam = GetMonMvtSpeed(mon)
                 }; // Also create a brand new state machine for it
+                if (mon.StatusConditions.TryGetValue(_sleepStatus, out int sleepDuration))
+                {
+                    mon.Sm.State = InstanceState.SLEEP; // In this case mon will begin at sleep and not start phase
+                    mon.Sm.StateCounter = sleepDuration;
+                }
             }
             return mon;
         }
@@ -256,6 +263,11 @@ namespace GameSimulator
                         newState = InstanceState.START_PHASE;
                         PokemonInstance mon = (PokemonInstance)instance;
                         mon.NextMovePicker++;
+                        // Clean 1 stage of status effects
+                        foreach (StatusCondition status in mon.StatusConditions.Keys.Where(s => s != _sleepStatus))
+                        {
+                            GeneralUtilities.AddtemToCountDictionary(mon.StatusConditions, status, -1); // Remove 1 count of status
+                        }
                     }
                     break;
                 case InstanceState.PREPARATION:
@@ -314,8 +326,16 @@ namespace GameSimulator
                     if (instance.Sm.StateCounter <= 0) // Time to wake up
                     {
                         // TODO Check with move if it's ok to restore, or instead jump elsewhere
-                        newState = instance.Sm.InterruptedState; // Restores indirectly, by forcing state to start again
-                        instance.Sm.StateCounter = instance.Sm.InterruptedStateCounter; // Restore this just in case the state has no begin handler
+                        ((PokemonInstance)instance).StatusConditions.Remove(_sleepStatus); // Remove sleep since it elapsed
+                        if (instance.Sm.InterruptedState != InstanceState.NONE) // If there was a state before (e.g. recover from interrupt)
+                        {
+                            newState = instance.Sm.InterruptedState; // Restores indirectly, by forcing state to start again
+                            instance.Sm.StateCounter = instance.Sm.InterruptedStateCounter; // Restore this just in case the state has no begin handler
+                        }
+                        else
+                        {
+                            newState = InstanceState.START_PHASE;
+                        }
                     }
                     break;
                 case InstanceState.AUTO_ADVANCE: // Very similar states, move until end and then will need to ask whichever move decided to do this

@@ -383,7 +383,9 @@
             "EncounterSuccessString": "Unfortunately, a live wire is touching the water! $1 is electrocuted and is now paralyzed!",
             "EncounterFailureString": "Yikes! Better be careful.",
             "Params": [
-                "Paralysis"
+                "Paralysis",
+                5,
+                10
             ]
         },
         {

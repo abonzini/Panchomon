@@ -544,11 +544,13 @@ namespace PanchomonBackend
                     break;
                 case EncounterType.STATUS_TRAP:
                     StatusCondition nvStatus = GameplayElementsContainer.GlobalData.StatusConditions[encounter.Params[0]];
+                    int minDuration = int.Parse(encounter.Params[1]); // SHame these are strings but what else can you do
+                    int maxDuration = int.Parse(encounter.Params[2]);
                     targetMons = [.. _context.TrainerInstance.PokemonInTeam.Where(m => m.HpPercent > 0 && !m.StatusConditions.ContainsKey(nvStatus))];
                     targetMons = targetMons.Count > 0 ? [GeneralUtilities.GetRandomPick(targetMons, _context.Rng)] : []; // Get a random one of these
                     ResolveActionOnMonsEncounter(encounter, targetMons, mon =>
                     {
-                        mon.StatusConditions.Add(nvStatus, 1);
+                        mon.StatusConditions.Add(nvStatus, GeneralUtilities.GetRandomNumber(minDuration, maxDuration + 1, _context.Rng));
                     });
                     break;
                 case EncounterType.KILL_TRAP:
